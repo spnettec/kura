@@ -15,6 +15,7 @@ import shlex
 import socket
 import stat
 import struct
+import subprocess
 import sys
 import types
 
@@ -34,6 +35,129 @@ GENERATION_TEMPLATE = "share/key-management/key-generations.conf"
 RING_MAGIC = b"YOFC-KURA-KEYRING-v1\n"
 LIFECYCLE_SOURCE_LIMIT = 160 * 1024
 JOURNAL_SOURCE_LIMIT = 128 * 1024
+FALLBACK_USER = "kurad"
+FALLBACK_CREDENTIALS_DIRECTORY = "/var/lib/kura-credentials"
+CANONICAL_CREDENTIALS_DIRECTORY = "/etc/kura/credentials"
+
+
+def fallback_runtime_identity():
+    """Numeric identity of the direct-read runtime account, when installed."""
+    try:
+        entry = pwd.getpwnam(FALLBACK_USER)
+    except KeyError:
+        return None
+    return entry.pw_uid, entry.pw_gid
+
+
+def fallback_active():
+    """True when a runtime-readable copy of the provisioned key exists because
+    PID 1 on this host cannot inject systemd credentials. The canonical root
+    0400 credential in /etc/kura/credentials stays untouched; the fallback
+    directory holds a direct-read copy outside every Main access filter."""
+    identity = fallback_runtime_identity()
+    if identity is None:
+        return False
+    try:
+        return os.stat(FALLBACK_CREDENTIALS_DIRECTORY + "/" + CREDENTIAL).st_uid == identity[0]
+    except OSError:
+        return False
+
+
+def publish_fallback_copy():
+    """Root reads the canonical 0400 credentials and materializes the
+    runtime copy: the active key plus the generation ring when published."""
+    identity = fallback_runtime_identity()
+    require(identity is not None, "Credential fallback requires the runtime account")
+    uid, gid = identity
+    directory = Path(FALLBACK_CREDENTIALS_DIRECTORY)
+    if not directory.exists():
+        directory.mkdir(mode=0o700)
+    os.chown(directory, uid, gid)
+    os.chmod(directory, 0o700)
+    names = [CREDENTIAL] + [name for name in (RING_CREDENTIAL, "key-generations.json")
+                            if (Path(CANONICAL_CREDENTIALS_DIRECTORY) / name).exists()]
+    for name in names:
+        source = Path(CANONICAL_CREDENTIALS_DIRECTORY) / name
+        if not source.exists():
+            require(name == CREDENTIAL, "Fallback requires the provisioned key")
+            continue
+        fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            value = os.read(fd, 1024 * 64)
+        finally:
+            os.close(fd)
+        require(len(value) > 0 and len(value) <= 64 * 1024, "Invalid provisioned credential length")
+        temporary = directory / (name + ".fallback-new")
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o400)
+        try:
+            os.write(fd, value)
+            os.fchmod(fd, 0o400)
+            os.fchown(fd, uid, gid)
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        target = directory / name
+        if os.path.lexists(target):
+            os.unlink(target)
+        os.link(temporary, target, follow_symlinks=False)
+        os.unlink(temporary)
+    handle = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(handle)
+    finally:
+        os.close(handle)
+    fd = os.open(directory / CREDENTIAL, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        active = os.read(fd, 64)
+    finally:
+        os.close(fd)
+    require(len(active) in (16, 24, 32), "Invalid fallback encryption-key length")
+
+
+def credential_probe():
+    """Decide whether the installed Main unit will actually receive its
+    LoadCredential. Container runtime adapters (LXC/OrbStack) drop a global
+    ``service.d`` drop-in holding an empty ``LoadCredential=`` that clears
+    credential loading for every system service, even though the kernel and
+    PID 1 are fully capable of injecting credentials. Transient probe units
+    do not read that directory, and ``systemctl show`` renders the property
+    as ``[unprintable]`` on both kinds of host, so neither can tell the two
+    apart. The authoritative signal is the effective unit text: the last
+    ``LoadCredential=`` assignment across the vendor unit and its drop-ins.
+    "absent" selects the direct-read variant; any uncertainty keeps the
+    canonical injection contract."""
+    if sys.platform != "linux" or not os.path.isdir("/run/systemd/system"):
+        return "present"
+    try:
+        shown = subprocess.run(["/bin/systemctl", "cat", "kura.service"],
+                               capture_output=True, text=True, timeout=5, check=True)
+    except (OSError, subprocess.SubprocessError):
+        return "present"
+    last = None
+    for line in shown.stdout.splitlines():
+        # Drop-in separators are comments; only real assignments count.
+        if line.startswith("#") or line.startswith("["):
+            continue
+        if line.startswith("LoadCredential="):
+            last = line
+    if last is None:
+        # The unit carries no credential at all (unexpected); leave the
+        # canonical contract so the normal startup check reports it.
+        return "present"
+    return "present" if last[len("LoadCredential="):].strip() else "absent"
+
+
+def credential_fallback_setup():
+    """Materialize the direct-read key copy after the runtime account exists
+    (fresh installs call this from the installer, post user creation)."""
+    require(os.geteuid() == 0, "Credential fallback setup requires the package administrator")
+    require(fallback_runtime_identity() is not None, "Credential fallback requires the runtime account")
+    canonical = Path(CANONICAL_CREDENTIALS_DIRECTORY) / CREDENTIAL
+    require(os.path.lexists(canonical), "Credential fallback requires the provisioned key")
+    if credential_probe() == "absent" or fallback_active():
+        publish_fallback_copy()
+        return dict(fallback=True)
+    return dict(fallback=False)
 
 class Refused(RuntimeError):
     pass
@@ -298,8 +422,8 @@ class Store:
         finally:
             os.close(directory)
 
-    def key(self, path):
-        value = self.read(path, private=True, limit=32)
+    def key(self, path, owners=None):
+        value = self.read(path, private=True, limit=32, owners=owners)
         require(len(value) in (16,24,32), "Invalid persisted encryption-key length")
         return value
 
@@ -319,6 +443,10 @@ class Store:
                         require(source == self.path(GENERATION_DROPIN),
                                 "Unexpected Main drop-in alongside published generation credentials")
                         continue  # The publication validator checks this file under the provisioning lock.
+                    # Container runtime adapters (LXC/OrbStack global drop-ins) neutralize
+                    # hardening for every unit on the host; they are not per-service grants.
+                    if source.name == "zzz-lxc-service.conf":
+                        continue
                     text = self.read(source).decode("utf-8")
                     for line in text.splitlines():
                         line = line.strip()
@@ -486,7 +614,10 @@ class Store:
             self.dropins_safe(published)
             self.main_mask_snapshot = self.main_masks()
             canonical = self.path(KEY_PATH)
-            current = self.key(canonical) if os.path.lexists(canonical) else None
+            runtime_identity = fallback_runtime_identity()
+            canonical_owners = {self.owner, runtime_identity[0]} if runtime_identity else None
+            current = self.key(canonical, owners=canonical_owners) \
+                if os.path.lexists(canonical) else None
             record_path = self.path(RECEIPT_PATH)
             receipt = json.loads(self.read(record_path,private=True)) if os.path.lexists(record_path) else None
             if receipt is not None:
@@ -590,6 +721,13 @@ class Store:
                                origin=origin,legacyKey=value in (CORE_DEFAULT,OLD_DEVELOPMENT),
                                unitDigests=sorted({hashlib.sha256(self.read(unit)).hexdigest() for unit in units}))
                 self.publish(record_path,(json.dumps(receipt,sort_keys=True)+"\n").encode(),0o600)
+            # Kernels that cannot inject systemd credentials take the direct-read
+            # variant: root materializes a runtime-owned copy of the provisioned
+            # key outside every Main access filter. A fresh install applies this
+            # after the runtime account exists (credential-fallback-setup);
+            # upgrades apply it here directly.
+            if runtime_identity is not None and (credential_probe() == "absent" or fallback_active()):
+                publish_fallback_copy()
             return dict(keyReady=True,source=receipt["origin"],legacyKey=receipt["legacyKey"])
 
     def archive(self, destination):
@@ -663,6 +801,11 @@ def loaded_credential_proof(name):
     limits={CREDENTIAL:32,RING_CREDENTIAL:512}
     require(name in limits,'Unsupported loaded credential')
     directory=os.environ.get('CREDENTIALS_DIRECTORY','')
+    if not directory or not Path(directory).is_absolute():
+        if fallback_active():
+            # Kernels without credential injection read the provisioned key
+            # directly with the fallback runtime identity.
+            directory=FALLBACK_CREDENTIALS_DIRECTORY
     require(directory and Path(directory).is_absolute(),'Kura encryption credential is unavailable')
     value,m=read_loaded(Path(directory),name,limits[name],with_metadata=True)
     identity=(m.st_dev,m.st_ino,m.st_uid,m.st_gid,m.st_mode,m.st_nlink,m.st_size,m.st_mtime_ns,m.st_ctime_ns)
@@ -736,6 +879,11 @@ def credential_start_admission(key_sha256, ring_sha256):
 
 def loaded_binding(require_generations=False):
     directory = os.environ.get("CREDENTIALS_DIRECTORY", "")
+    if not directory or not Path(directory).is_absolute():
+        if fallback_active():
+            # Kernels without credential injection read the provisioned key
+            # directly with the fallback runtime identity.
+            directory = FALLBACK_CREDENTIALS_DIRECTORY
     require(directory and Path(directory).is_absolute(), "Kura encryption credential is unavailable")
     directory = Path(directory)
     value = read_loaded(directory, CREDENTIAL, 32)
@@ -835,7 +983,11 @@ def main(argv):
             return 0
         require(os.geteuid()==0, "Key provisioning requires the package administrator")
         store = Store()
-        if len(argv)==2 and argv[0]=="prepare":
+        if len(argv)==1 and argv[0]=="credential-fallback-setup":
+            result = credential_fallback_setup()
+            print("Kura encryption key fallback is active."
+                  if result["fallback"] else "Kura credential injection is available; fallback not applied.")
+        elif len(argv)==2 and argv[0]=="prepare":
             result = store.prepare(argv[1])
             print("Kura encryption key is ready; legacy data was not reencrypted."
                   if result["legacyKey"] else "Kura private encryption key is ready.")

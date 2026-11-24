@@ -136,6 +136,9 @@ configure_brokers() {
     chmod 700 "${INSTALL_DIR}/kura/.data/manage_kura_users.sh" || exit 1
     # Retain the historical copy for recovery; execute the installed code only.
     bash "${INSTALL_DIR}/kura/install/manage_kura_users.sh" -i || exit 1
+    # Kernels without systemd credential injection provision the encryption key
+    # for direct runtime reads; probe and apply after the runtime account exists.
+    python3 -I "${INSTALL_DIR}/kura/bin/kura_key_store.py" credential-fallback-setup || exit 1
     python3 -I "${INSTALL_DIR}/kura/bin/kura_key_recovery_setup.py" --install || exit 1
     python3 -I -B "${INSTALL_DIR}/kura/bin/kura_clock_setup.py" install || exit 1
     for key_unit in kura-key-service.socket kura-key-service.service kura-key-recovery.service \
