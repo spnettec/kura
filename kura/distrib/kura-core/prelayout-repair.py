@@ -97,7 +97,7 @@ def admit_prelayout_repair(old_version, new_version):
                     'Unexpected retained Main directory')
 
         secret = policy.read(policy.state/'journal.key', limit=32)
-        require(len(secret) == 32)
+        require(len(secret) == 32, 'Invalid original key-service journal key')
         retained = policy.path('/var/lib/kura-retained')
         policy.directory(retained, private=True)
         require(not os.path.lexists(retained / '.partial-payload'), 'Original retained layout is incomplete')
