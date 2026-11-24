@@ -27,6 +27,7 @@ STATE = "/var/lib/kura-key-service"
 # appears in every unit's DropInPaths; it neutralizes hardening host-wide and
 # grants nothing to this service.
 CONTAINER_ADAPTER_DROPIN = '/run/systemd/system/service.d/zzz-lxc-service.conf'
+DEPLOYMENT_ASSERTION = '/run/systemd/generator.early/kura.service.d/90-kura-deployment-maintenance.conf'
 MAIN_VENDOR_PATHS = ('/lib/systemd/system/kura.service', '/usr/lib/systemd/system/kura.service')
 MAIN_LINKS = {'linked': '/etc/systemd/system/kura.service',
               'linked-runtime': '/run/systemd/system/kura.service'}
@@ -1497,7 +1498,7 @@ class Lifecycle:
         require(properties.keys() == set(fields), 'Unexpected Main unit properties; preserve installation')
         return properties
 
-    def paired_main_unit(self, manifest, choice):
+    def paired_main_unit(self, manifest, choice, *, retained=False):
         expected = self.main_unit_digest(manifest)
         physical = self.main_vendor_path()
         unit = self.read(physical, private=False)
@@ -1507,8 +1508,14 @@ class Lifecycle:
         fragment = properties.pop('FragmentPath')
         drop_ins = [path for path in properties.pop('DropInPaths').split()
                     if path != CONTAINER_ADAPTER_DROPIN]
+        if retained and drop_ins == [DEPLOYMENT_ASSERTION]:
+            # A package-time assertion may only prevent starting Main. All
+            # other effective unit changes still require reviewed migration.
+            require(self.read(self.path(DEPLOYMENT_ASSERTION), limit=128, private=False)
+                    == b'[Unit]\nAssertPathExists=!/\n', 'Unexpected Deployment Main assertion')
+            drop_ins.clear()
         fields = dict(Id='kura.service', Names='kura.service', LoadState='loaded', UnitFileState=choice,
-                      SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no')
+                      SourcePath='', NeedDaemonReload='no', Transient='no')
         require(properties == fields and drop_ins == [] and fragment in MAIN_VENDOR_PATHS,
                 'Effective Main unit requires reviewed migration')
         loaded = self.path(fragment)
@@ -1627,7 +1634,7 @@ class Lifecycle:
                     # When the new package adds [Install], the equivalent
                     # boot choice for a static unit is to leave it disabled.
                     require(current in ('static', 'disabled'), 'Main boot choice changed during retained reinstall')
-                    self.paired_main_unit(self.assets(), current)
+                    self.paired_main_unit(self.assets(), current, retained=True)
                 elif current != expected:
                     require(current == 'disabled' and expected in ('enabled', 'enabled-runtime'),
                             'Main boot choice changed during retained reinstall')
