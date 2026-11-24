@@ -132,6 +132,43 @@ class ClockUnitPairingTest(unittest.TestCase):
             with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
                 broker.check_loaded_dropins(broker.UNITS[1], str(adapter))
 
+    def test_clock_privileges_dropin_is_paired_only_for_its_own_unit(self):
+        dropin = Path('/usr/lib/systemd/system') / broker.CLOCK_PRIVILEGES_DROPIN
+        source = Path(__file__).resolve().parents[2] / 'kura-core/src/main/resources/deb-config' / dropin.name
+        data = source.read_bytes()
+        self.assertEqual(data, broker.CLOCK_PRIVILEGES_SETTINGS)
+        with mock.patch.object(broker, 'unit_directory_present', return_value=True), \
+                mock.patch.object(broker, 'public_file', return_value=data) as read, \
+                mock.patch.object(broker, 'check_container_adapter') as container:
+            broker.check_loaded_dropins(broker.CLOCK_SERVICE, str(dropin))
+            broker.check_loaded_dropins(broker.CLOCK_SERVICE, f'{broker.CONTAINER_ADAPTER} {dropin}')
+            read.assert_called_with(dropin, 4096)
+            container.assert_called_once_with(broker.CONTAINER_ADAPTER, 'UNPAIRED_CODE')
+            for value in (f'{dropin} {broker.CONTAINER_ADAPTER}', f'{dropin} /etc/systemd/system/other.conf',
+                          str(dropin).replace('/usr/lib', '/run'), str(dropin).replace('/usr/lib', '/usr//lib')):
+                with self.subTest(value=value), self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                    broker.check_loaded_dropins(broker.CLOCK_SERVICE, value)
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins('named.service', str(dropin))
+            read.return_value = data + b'User=root\n'
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.CLOCK_SERVICE, str(dropin))
+
+    def test_unit_load_path_accepts_only_the_fixed_clock_privileges_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            dropin = root / broker.CLOCK_PRIVILEGES_DROPIN
+            dropin.parent.mkdir()
+            dropin.write_bytes(broker.CLOCK_PRIVILEGES_SETTINGS)
+            with mock.patch.object(broker, 'unit_load_paths', return_value=(root,)), \
+                    mock.patch.object(broker, 'VENDOR_UNIT_ROOTS', (root,)), \
+                    mock.patch.object(broker, 'unit_directory_present', return_value=True), \
+                    mock.patch.object(broker, 'public_file', side_effect=lambda path, _: path.read_bytes()):
+                broker.unit_sources()
+                dropin.with_name('extra.conf').write_bytes(broker.CLOCK_PRIVILEGES_SETTINGS)
+                with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                    broker.unit_sources()
+
     def test_unreadable_lookup_does_not_become_absence(self):
         with mock.patch.object(broker, 'unit_load_paths', return_value=(Path('/etc/systemd/system.control'),)), \
                 mock.patch.object(broker.Path, 'lstat', side_effect=PermissionError('denied')):

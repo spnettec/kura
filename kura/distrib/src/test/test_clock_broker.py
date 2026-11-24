@@ -861,6 +861,15 @@ class ChronyControlTest(unittest.TestCase):
                 broker.chrony_target('chrony.service')
             self.assertEqual(errno.ESTALE, error.exception.errno)
 
+    def test_chrony_job_refuses_disabled_systemd_property_before_contacting_bus(self):
+        with mock.patch.object(broker, 'systemd_properties', return_value={'NoNewPrivileges': 'no'}) as read_unit, \
+                mock.patch.object(broker.subprocess, 'check_output') as bus:
+            with self.assertRaises(OSError) as refusal:
+                broker.require_chrony_bus_identity()
+        self.assertEqual(errno.EOPNOTSUPP, refusal.exception.errno)
+        read_unit.assert_called_once_with(('NoNewPrivileges',), 'kura-clock-broker.service')
+        bus.assert_not_called()
+
     def test_only_a_bus_process_descriptor_for_system_manager_is_accepted(self):
         credentials = dict(ProcessID=dict(type='u', data=1), UnixUserID=dict(type='u', data=0),
                            ProcessFD=dict(type='h', data=3))
@@ -868,8 +877,10 @@ class ChronyControlTest(unittest.TestCase):
                  dict(credentials, UnixUserID=dict(type='u', data=100)), dict(credentials, ProcessFD=dict(type='u', data=3)),
                  {name: value for name, value in credentials.items() if name != 'ProcessFD'}]
         for reply in cases:
-            with self.subTest(reply=reply), mock.patch.object(broker.subprocess, 'check_output',
-                    return_value=json.dumps(dict(type='a{sv}', data=[reply])).encode()) as probe:
+            with self.subTest(reply=reply), \
+                    mock.patch.object(broker, 'systemd_properties', return_value={'NoNewPrivileges': 'yes'}), \
+                    mock.patch.object(broker.subprocess, 'check_output',
+                                      return_value=json.dumps(dict(type='a{sv}', data=[reply])).encode()) as probe:
                 if reply is credentials:
                     broker.require_chrony_bus_identity()
                 else:

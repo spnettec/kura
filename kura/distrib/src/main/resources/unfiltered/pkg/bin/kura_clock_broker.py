@@ -94,6 +94,9 @@ SYS_TIME = 1 << 25
 VENDOR_UNIT_ROOTS = (Path('/lib/systemd/system'), Path('/usr/lib/systemd/system'))
 CONTAINER_ADAPTER = Path('/run/systemd/system/service.d/zzz-lxc-service.conf')
 CONTAINER_ADAPTER_SHA256 = '95efa48563a96a16697137c70e6f80af7c85acf231d29461624b54a589afbfbd'
+CLOCK_SERVICE = 'kura-clock-broker.service'
+CLOCK_PRIVILEGES_DROPIN = Path(CLOCK_SERVICE + '.d/zzzz-kura-clock-no-new-privileges.conf')
+CLOCK_PRIVILEGES_SETTINGS = b'[Service]\nNoNewPrivileges=yes\n'
 WRITE_ACTIONS = {phase + '-' + suffix: (phase, name)
                  for name, (suffix, _, _) in OPERATIONS.items() for phase in ('prepare', 'commit')}
 # _IOW('p', 0x0a, struct rtc_time) on the release architectures.
@@ -254,8 +257,20 @@ def check_container_adapter(path, reason='UNPAIRED_CODE'):
     require(result.returncode == 0 and result.stdout.strip() == b'lxc', reason)
 
 
+def check_clock_privileges_dropin(path, reason):
+    require(path in {root / CLOCK_PRIVILEGES_DROPIN for root in VENDOR_UNIT_ROOTS}, reason)
+    try:
+        require(unit_directory_present(path.parent), reason)
+        require(public_file(path, 4096) == CLOCK_PRIVILEGES_SETTINGS, reason)
+    except (OSError, Refused) as error:
+        raise Refused(reason) from error
+
+
 def check_loaded_dropins(unit, raw, reason='UNPAIRED_CODE'):
     paths = raw.split()
+    privileges_paths = {str(root / CLOCK_PRIVILEGES_DROPIN) for root in VENDOR_UNIT_ROOTS}
+    if unit == CLOCK_SERVICE and paths and paths[-1] in privileges_paths:
+        check_clock_privileges_dropin(Path(paths.pop()), reason)
     if paths:
         require(unit.endswith('.service') and paths == [str(CONTAINER_ADAPTER)], reason)
         check_container_adapter(CONTAINER_ADAPTER, reason)
@@ -282,7 +297,12 @@ def unit_sources():
                     path.lstat()
                 except FileNotFoundError:
                     continue
-                check_unit_adapter_directory(path)
+                if root in VENDOR_UNIT_ROOTS and entry == CLOCK_PRIVILEGES_DROPIN.parent.name:
+                    dropin = root / CLOCK_PRIVILEGES_DROPIN
+                    check_clock_privileges_dropin(dropin, 'UNPAIRED_CODE')
+                    require(list(path.iterdir()) == [dropin], 'UNPAIRED_CODE')
+                else:
+                    check_unit_adapter_directory(path)
     except OSError as error:
         raise Refused('UNPAIRED_CODE') from error
 
@@ -366,6 +386,14 @@ def chrony_target(unit):
 
 
 def require_chrony_bus_identity():
+    # Polkit reads the effective systemd property, which is distinct from the
+    # kernel NoNewPrivs flag already checked on the broker process.
+    try:
+        settings = systemd_properties(('NoNewPrivileges',), CLOCK_SERVICE)
+    except Refused as error:
+        raise OSError(errno.EOPNOTSUPP, 'Cannot verify the Chrony service-job subject') from error
+    if settings['NoNewPrivileges'] != 'yes':
+        raise OSError(errno.EOPNOTSUPP, 'Systemd did not enable NoNewPrivileges for the clock broker')
     # Polkit only reports the caller's unit for a PID file descriptor supplied
     # by the system bus. An older bus must fail before a service job is sent.
     try:
