@@ -35,11 +35,11 @@ class GenerationPackageTest(unittest.TestCase):
         self.home.mkdir(parents=True, mode=0o750)
         main_template = SOURCE / "filtered/pkg/install/kura.service"
         unit_files = cohort.managed_unit(main_template.read_bytes().replace(b"INSTALL_DIR", b"/opt/eclipse"))
-        for name in lifecycle.NATIVE_VALIDATION_ASSETS | cohort.FIXED_FILES | unit_files:
+        for name in lifecycle.SNAPSHOT_PUBLICATION_ASSETS | cohort.FIXED_FILES | unit_files:
             if name.startswith(cohort.TEMPLATES) or name.startswith("libexec/"):
                 continue
             self.copy(SOURCE / "unfiltered/pkg" / name, self.home / name)
-        for name in (*lifecycle.NATIVE_VALIDATION_UNITS, "kura.service", "manage_kura_users.sh"):
+        for name in (*lifecycle.NATIVE_MAIN_UNITS, "kura.service", "manage_kura_users.sh"):
             base = "filtered" if name == "kura.service" else "unfiltered"
             self.copy(SOURCE / base / "pkg/install" / name, self.home / "install" / name)
         for name in cohort.LAUNCHERS:
@@ -58,7 +58,7 @@ class GenerationPackageTest(unittest.TestCase):
         spec.loader.exec_module(self.builder)
         self.manifest = self.builder.prepare(self.home, CONFIG / "kura/distrib/kura-key-crypto/target",
                                              CONFIG / "kura/tools/kura-offline-recovery/target")
-        for name in (*lifecycle.NATIVE_VALIDATION_UNITS, "kura.service"):
+        for name in (*lifecycle.NATIVE_MAIN_UNITS, "kura.service"):
             self.copy(self.home / "install" / name, self.root / "lib/systemd/system" / name)
         self.generation = self.manifest["generation"]
         self.policy = lifecycle.Lifecycle(self.root, os.geteuid())
