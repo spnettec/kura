@@ -11,6 +11,7 @@ import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_bind_service as bind
+import kura_clock_broker as clock
 
 
 class BindOperationTest(unittest.TestCase):
@@ -32,6 +33,23 @@ class BindOperationTest(unittest.TestCase):
             ActiveState='inactive', MainPID='0', InvocationID='')
         with patch.object(bind, 'unit_properties', return_value=fields):
             with self.assertRaisesRegex(bind.Refused, 'UNPAIRED_BIND_UNIT'):
+                bind.target()
+
+    def test_reviewed_lxc_adapter_still_requires_exact_bind_package_assets(self):
+        fields = dict(Id='named.service', Names='bind9.service named.service',
+            LoadState='loaded', SourcePath='', DropInPaths=str(clock.CONTAINER_ADAPTER),
+            FragmentPath='/usr/lib/systemd/system/named.service', Transient='no', NeedDaemonReload='no',
+            ActiveState='inactive', MainPID='0', InvocationID='')
+        with patch.object(bind, 'unit_properties', side_effect=lambda *_: fields.copy()), \
+                patch.object(clock, 'check_container_adapter') as adapter, \
+                patch.object(bind.subprocess, 'check_output', return_value=b'installed 1:9.20'), \
+                patch.object(bind, 'public_file', return_value=b'package material'), \
+                patch.object(bind, 'checked_package_asset', return_value='0' * 64) as package:
+            self.assertEqual('inactive', bind.target()[1])
+            adapter.assert_called_once_with(clock.CONTAINER_ADAPTER, 'UNPAIRED_BIND_UNIT')
+            self.assertEqual(2, package.call_count)
+            package.side_effect = bind.Refused('UNPAIRED_BIND_UNIT')
+            with self.assertRaisesRegex(bind.Refused, '^UNPAIRED_BIND_UNIT$'):
                 bind.target()
 
 

@@ -16,7 +16,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_bind_config as configuration
 import kura_bind_outcomes as outcomes
-from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, public_file, unit_directory_present
+from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, check_loaded_dropins, public_file, unit_directory_present
 from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, require
 from kura_journal_export import main_peer, paired_unit, unit_properties
 from kura_modem_cohort import active_provider
@@ -129,8 +129,9 @@ def target():
     require(observed['Id'] == UNIT and set(observed['Names'].split()) in ({UNIT}, {UNIT, ALIAS})
             and observed['LoadState'] == 'loaded'
             and observed['FragmentPath'] in {str(root / UNIT) for root in VENDOR_UNIT_ROOTS}
-            and observed['SourcePath'] == observed['DropInPaths'] == ''
+            and observed['SourcePath'] == ''
             and observed['Transient'] == observed['NeedDaemonReload'] == 'no', 'UNPAIRED_BIND_UNIT')
+    check_loaded_dropins(UNIT, observed['DropInPaths'], 'UNPAIRED_BIND_UNIT')
     # An installation interrupted mid-unpack cannot authorize a service job.
     package = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${db:Status-Status} ${Version}', 'bind9'],
                                       env=ENVIRONMENT, timeout=3).decode('ascii')

@@ -23,6 +23,17 @@ SECOND = 'link1,198.51.100.1,24,198.51.100.100,198.51.100.120,,600,0'
 
 
 class DhcpServiceTest(unittest.TestCase):
+    def test_daemon_reads_only_the_systemd_projected_configuration(self):
+        units = Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/install'
+        fields = dict(line.split('=', 1) for line in (units / service.DAEMON_UNIT).read_text().splitlines()
+                      if '=' in line)
+        view = '/run/kura-dhcp-config.conf'
+        self.assertEqual(f'{service.CONFIG}:{view}', fields['BindReadOnlyPaths'])
+        self.assertTrue(fields['ExecStart'].startswith(
+            f'/usr/bin/setpriv --no-new-privs {service.DAEMON} --conf-file={view} '))
+        self.assertEqual('dnsmasq', fields['User'])
+        self.assertEqual('yes', fields['NoNewPrivileges'])
+
     def test_only_fixed_dhcp_options_are_generated(self):
         body = config.render(config.parse(SECOND + ';' + FIRST)).decode()
         self.assertEqual(body, config.render(config.parse(FIRST + ';' + SECOND)).decode())
