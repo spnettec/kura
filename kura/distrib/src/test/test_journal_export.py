@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_journal_export as export
+import kura_clock_broker as clock
 
 
 class JournalExportTest(unittest.TestCase):
@@ -58,6 +59,25 @@ class JournalExportTest(unittest.TestCase):
             read.side_effect = [main, dependencies + b'\n']
             with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
                 export.paired_unit(unit, unit, export.file_hash(main), main=True)
+
+    def test_service_allows_only_the_exact_container_adapter(self):
+        unit = export.ACTOR_UNIT
+        fragment = next(iter(export.VENDOR_UNIT_ROOTS)) / unit
+        loaded = {'Id': unit, 'Names': unit, 'LoadState': 'loaded', 'FragmentPath': str(fragment),
+                  'SourcePath': '', 'DropInPaths': str(clock.CONTAINER_ADAPTER),
+                  'NeedDaemonReload': 'no', 'Transient': 'no'}
+        content = b'[Service]\nProtectSystem=no\n'
+        with patch.object(export, 'unit_properties', return_value=loaded), \
+                patch.object(export, 'public_file', return_value=b'paired unit'), \
+                patch.object(clock, 'public_file', return_value=content), \
+                patch.object(clock, 'CONTAINER_ADAPTER_SHA256', export.file_hash(content)), \
+                patch.object(clock.subprocess, 'run', return_value=subprocess.CompletedProcess(
+                    ['systemd-detect-virt'], 0, b'lxc\n')):
+            expected = export.file_hash(b'paired unit')
+            self.assertEqual(loaded, export.paired_unit(unit, unit, expected))
+            loaded['DropInPaths'] += ' /etc/systemd/system/service.d/site.conf'
+            with self.assertRaisesRegex(export.Refused, '^UNPAIRED_EXPORT$'):
+                export.paired_unit(unit, unit, expected)
 
     def test_typed_scope_and_fields(self):
         self.assertEqual(export.request('kura', 'MESSAGE,_BOOT_ID'),

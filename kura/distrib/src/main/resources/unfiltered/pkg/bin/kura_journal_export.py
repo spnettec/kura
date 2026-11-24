@@ -16,7 +16,7 @@ import tempfile
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, protected, public_file
+from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, check_loaded_dropins, protected, public_file
 from kura_clock_journal import Refused, decode, encode, require
 from kura_reboot_broker import (ENVIRONMENT, MAIN_CGROUP, MAIN_PROPERTIES, MAIN_UNIT,
                                UNIT_PROPERTIES, file_hash, proc_file, proc_status,
@@ -86,14 +86,17 @@ def unit_properties(unit, names):
 
 def paired_unit(unit, template, template_hash, names=(), main=False):
     loaded = unit_properties(unit, UNIT_PROPERTIES + tuple(names))
-    allowed_dropins = ('', str(NETWORKING_DROPIN)) if main else ('',)
     require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
             and loaded['FragmentPath'] in {str(path / template) for path in VENDOR_UNIT_ROOTS}
-            and loaded['SourcePath'] == '' and loaded['DropInPaths'] in allowed_dropins
+            and loaded['SourcePath'] == ''
             and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_EXPORT')
     require(file_hash(public_file(Path(loaded['FragmentPath']))) == template_hash, 'UNPAIRED_EXPORT')
-    if loaded['DropInPaths']:
+    dropins = loaded['DropInPaths'].split()
+    networking = str(NETWORKING_DROPIN)
+    if main and networking in dropins:
         require(file_hash(public_file(NETWORKING_DROPIN)) in NETWORKING_SHAS, 'UNPAIRED_EXPORT')
+        dropins.remove(networking)
+    check_loaded_dropins(unit, ' '.join(dropins), 'UNPAIRED_EXPORT')
     return loaded
 
 
@@ -135,7 +138,7 @@ def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=
             and main['User'] == main['Group'] == CALLER and parent > 1 and pid != parent
             and re.fullmatch(r'[0-9a-f]{32}', main['InvocationID']), 'UNAUTHORIZED')
     if networking is not None:
-        require(main['DropInPaths'] == (str(NETWORKING_DROPIN) if networking else ''), 'UNAUTHORIZED')
+        require((str(NETWORKING_DROPIN) in main['DropInPaths'].split()) == networking, 'UNAUTHORIZED')
     status = proc_status(pid)
     verify_identity(status, uid, gid)
     require(status['PPid'].strip() == str(parent), 'UNAUTHORIZED')
