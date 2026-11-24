@@ -17,7 +17,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, check_loaded_dropins, protected, public_file
-from kura_clock_journal import Refused, decode, encode, require
+from kura_clock_journal import Refused, decode, encode, identity, read, require
 from kura_reboot_broker import (ENVIRONMENT, MAIN_CGROUP, MAIN_PROPERTIES, MAIN_UNIT,
                                UNIT_PROPERTIES, file_hash, proc_file, proc_status,
                                receive, send, socket_peer, verify_alive, verify_identity)
@@ -42,6 +42,8 @@ NETWORKING_SHAS = frozenset((
     'eb1079ba9bc662b196ef873cfc860cc1b53ab3b50813c2ee4437352c4cd65b18',
     '06589b8dede5926f63d760ec0a94a51aa6ef6ce6ddffee1c78dfcf978ec30473',
 ))
+GENERATION_DROPIN = Path('/etc/systemd/system/kura.service.d/40-kura-key-generations.conf')
+GENERATION_SHA = '1bd470f1d538623fb3c02201a52feb21f25b57e49bb7c2e7d45b8511802adb45'
 MAX_DATA = 32 * 1024 * 1024
 READ_TIME = 25
 
@@ -84,6 +86,22 @@ def unit_properties(unit, names):
     return properties
 
 
+def verify_generation_dropin():
+    try:
+        path = protected(GENERATION_DROPIN)
+        directory = path.parent.lstat()
+        source = path.lstat()
+        require(stat.S_ISDIR(directory.st_mode) and directory.st_uid == directory.st_gid == 0
+                and stat.S_IMODE(directory.st_mode) == 0o700 and source.st_gid == 0,
+                'UNPAIRED_EXPORT')
+        contents = read(path, 0, 0o400, 4096)
+        require(identity(source) == identity(path.lstat())
+                and identity(directory) == identity(path.parent.lstat())
+                and file_hash(contents) == GENERATION_SHA, 'UNPAIRED_EXPORT')
+    except (OSError, Refused) as error:
+        raise Refused('UNPAIRED_EXPORT') from error
+
+
 def paired_unit(unit, template, template_hash, names=(), main=False):
     loaded = unit_properties(unit, UNIT_PROPERTIES + tuple(names))
     require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
@@ -96,6 +114,10 @@ def paired_unit(unit, template, template_hash, names=(), main=False):
     if main and networking in dropins:
         require(file_hash(public_file(NETWORKING_DROPIN)) in NETWORKING_SHAS, 'UNPAIRED_EXPORT')
         dropins.remove(networking)
+    generation = str(GENERATION_DROPIN)
+    if main and unit == MAIN_UNIT and generation in dropins:
+        verify_generation_dropin()
+        dropins.remove(generation)
     check_loaded_dropins(unit, ' '.join(dropins), 'UNPAIRED_EXPORT')
     return loaded
 

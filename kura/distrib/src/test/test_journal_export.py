@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: EPL-2.0
 from io import BytesIO
+import os
 from pathlib import Path
 import shutil
 import socket
@@ -59,6 +60,69 @@ class JournalExportTest(unittest.TestCase):
             read.side_effect = [main, dependencies + b'\n']
             with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
                 export.paired_unit(unit, unit, export.file_hash(main), main=True)
+
+    def test_only_main_can_pair_the_published_generation_drop_in(self):
+        unit = export.MAIN_UNIT
+        fragment = next(iter(export.VENDOR_UNIT_ROOTS)) / unit
+        generation = str(export.GENERATION_DROPIN)
+        loaded = {'Id': unit, 'Names': unit, 'LoadState': 'loaded', 'FragmentPath': str(fragment),
+                  'SourcePath': '', 'DropInPaths': f'{generation} {export.NETWORKING_DROPIN}',
+                  'NeedDaemonReload': 'no', 'Transient': 'no'}
+        digest = export.file_hash(b'reviewed')
+        with patch.object(export, 'unit_properties', return_value=loaded), \
+                patch.object(export, 'public_file', return_value=b'reviewed'), \
+                patch.object(export, 'NETWORKING_SHAS', {digest}), \
+                patch.object(export, 'verify_generation_dropin') as verify:
+            self.assertEqual(export.paired_unit(unit, unit, digest, main=True), loaded)
+            verify.assert_called_once()
+            for dropins in (f'{generation} {generation}', f'{generation} /run/systemd/system/site.conf'):
+                loaded['DropInPaths'] = dropins
+                with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                    export.paired_unit(unit, unit, digest, main=True)
+            loaded['DropInPaths'] = generation
+            with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                export.paired_unit(unit, unit, digest)
+            loaded['NeedDaemonReload'] = 'yes'
+            verify.reset_mock()
+            with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                export.paired_unit(unit, unit, digest, main=True)
+            verify.assert_not_called()
+
+    @unittest.skipUnless(os.geteuid() == 0 and sys.platform == 'linux', 'requires Linux root file ownership')
+    def test_generation_drop_in_is_paired_to_exact_private_file(self):
+        template = (Path(__file__).resolve().parents[1]
+                    / 'main/resources/unfiltered/pkg/share/key-management/key-generations.conf')
+        contents = template.read_bytes()
+        self.assertEqual(export.file_hash(contents), export.GENERATION_SHA)
+        with TemporaryDirectory() as location:
+            parent = Path(location)
+            installed = parent / export.GENERATION_DROPIN.name
+            alternate = parent / 'other.conf'
+            # Exercise the real file read below the private directory, using a temporary top level.
+            with patch.object(export, 'GENERATION_DROPIN', installed), \
+                    patch.object(export, 'protected', return_value=installed):
+                installed.write_bytes(contents)
+                installed.chmod(0o400)
+                export.verify_generation_dropin()
+                parent.chmod(0o755)
+                with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                    export.verify_generation_dropin()
+                parent.chmod(0o700)
+                installed.chmod(0o440)
+                with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                    export.verify_generation_dropin()
+                installed.write_bytes(contents + b'# drift\n')
+                installed.chmod(0o400)
+                with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                    export.verify_generation_dropin()
+                installed.write_bytes(contents)
+                os.link(installed, alternate)
+                with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                    export.verify_generation_dropin()
+                installed.unlink()
+                installed.symlink_to(alternate)
+                with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                    export.verify_generation_dropin()
 
     def test_service_allows_only_the_exact_container_adapter(self):
         unit = export.ACTOR_UNIT
