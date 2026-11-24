@@ -384,6 +384,11 @@ policy = {"__name__": "incoming_package_policy"}
 exec(compile(sys.stdin.buffer.read(), "<packaged-key-policy>", "exec"), policy)
 if sys.argv[1:] == ["prepare-retained-generation"]:
     sys.exit(policy["prepare_retained_generation"]())
+if len(sys.argv) == 3 and sys.argv[1] == "check-issued-layout-route":
+    if policy["_KURA_ISSUED_LAYOUT_PLAN"] is not None and sys.argv[2] != "1":
+        print("Core issued layout package requires the reviewed retained upgrade", file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
 if len(sys.argv) == 4 and sys.argv[1] == "admit-retained-layout-repair":
     try:
         policy["admit_prelayout_repair"](*sys.argv[2:])
@@ -399,6 +404,7 @@ raise RuntimeError("Kura key-policy readers were not embedded")
 raise RuntimeError("Kura key provisioner was not embedded")
 PYKURAKEY
 }
+provisionCryptoKey check-issued-layout-route "${RETAINED_REPAIR}" || exit 1
 if [ "${ACTION}" = "--migrate-linked-main" ]; then
     [ "$#" -eq 1 ] || exit 1
     keyServicePackageAdmission --migrate-linked-main

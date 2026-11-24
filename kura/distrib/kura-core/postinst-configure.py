@@ -17,7 +17,7 @@ import types
 
 INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
 CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json', 'configured.json',
-                   'layout-repair.json',
+                   'layout-repair.json', 'issued-layout-handoff.json', 'issued-layout-verified.json',
                    'runtime-data-intent.json', 'runtime-data-handoff.json',
                    'retained-data-intent.json', 'retained-data-handoff.json'} | {
     f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'returned', 'complete')
@@ -77,12 +77,14 @@ def load_lifecycle(physical, expected):
 
 
 class Configure:
-    def __init__(self, api, policy, physical, version, manifest_sha, control_sha, repair_predecessor=None):
+    def __init__(self, api, policy, physical, version, manifest_sha, control_sha, repair_predecessor=None,
+                 issued_layout=None):
         self.api = api
         self.policy = policy
         self.physical = physical
         self.binding = dict(schema=1, packageVersion=version, manifestSha256=manifest_sha, postinstSha256=control_sha)
         self.repair_predecessor = repair_predecessor
+        self.issued_layout = issued_layout
         self.state = policy.path('/var/lib/kura-package-configure')
         self.copies = {'upgrade': policy.path('/opt/eclipse/.kura-preserve'),
                        'reinstall': policy.path('/var/lib/kura-retained')}
@@ -149,13 +151,22 @@ class Configure:
                 or (mode in self.copies and all(type(recovery[k]) is int and recovery[k] > 0
                                                for k in ('device', 'inode'))))
         repair = directory / 'layout-repair.json'
+        if os.path.lexists(directory / ISSUED_LAYOUT_HANDOFF):
+            require(self.issued_layout is not None, 'Issued layout belongs to another package')
+            checked_issued_layout(self.api, policy, directory, original, recovery, secret, self.issued_layout)
+            expected = issued_layout_record(self.api, self.issued_layout, self.package_binding(),
+                                            'AUTHORIZED_HANDOFF', secret)
+            require(policy.read(directory / ISSUED_LAYOUT_HANDOFF, limit=4096) == expected,
+                    'Unpaired issued layout handoff')
+            return recovery, secret
+        require(not os.path.lexists(directory / ISSUED_LAYOUT_VERIFIED), 'Issued layout verification has no handoff')
         if raw == self.body(original, 'intent', recovery, secret):
             require(not os.path.lexists(repair), 'Original configure has handed off to its paired repair')
         else:
             predecessor = self.repair_predecessor
             require(mode == 'reinstall' and predecessor is not None and os.path.lexists(repair),
                     'Configure intent belongs to another package or Root')
-            target = {key: value for key, value in self.binding.items() if key != 'schema'}
+            target = self.package_binding()
             require(predecessor['manifestSha256'] == target['manifestSha256'],
                     'Retained layout repair changed the package payload')
             checked_repair_source(self.api, raw, original, predecessor, recovery, secret)
@@ -163,6 +174,9 @@ class Configure:
                     layout_repair_receipt(self.api, policy, original, raw, recovery, predecessor, target, secret),
                     'Unpaired retained layout repair receipt')
         return recovery, secret
+
+    def package_binding(self):
+        return {key: value for key, value in self.binding.items() if key != 'schema'}
 
     def publish(self, directory, original, phase, recovery, secret):
         destination = directory / f'{phase}.json'
@@ -175,10 +189,24 @@ class Configure:
 
     def setup_state(self, directory, original, recovery, secret):
         completed = []
+        steps = INSTALLER_STEPS
+        if os.path.lexists(directory / ISSUED_LAYOUT_HANDOFF):
+            verified = directory / ISSUED_LAYOUT_VERIFIED
+            if not os.path.lexists(verified):
+                self.api.require({p.name for p in directory.iterdir()} == set(ISSUED_LAYOUT_SOURCES) |
+                                 {ISSUED_LAYOUT_HANDOFF}, 'Issued layout has unexpected later evidence')
+                return completed, 'layout', False
+            raw = self.policy.read(verified, limit=4096)
+            placeholders = self.api.decode(raw)['placeholders']
+            self.api.require(raw == issued_layout_record(self.api, self.issued_layout, self.package_binding(),
+                                                         'POSTCONDITIONS_VERIFIED', secret, placeholders=placeholders),
+                             'Issued layout effects are not authenticated')
+            completed.append('layout')
+            steps = steps[1:]
         issued = None
         returned = False
         gap = False
-        for step in INSTALLER_STEPS:
+        for step in steps:
             intent = directory / f'setup-{step}-intent.json'
             success = directory / f'setup-{step}-returned.json'
             receipt = directory / f'setup-{step}-complete.json'
@@ -310,8 +338,7 @@ class Configure:
                          'Retained reinstall requires a Core-owned unpack directory')
         return info
 
-    def restore_removed_generation(self, original, *, purged=False):
-        """Reconstruct the genuine vendor layout from the paired unpacked release."""
+    def retained_layout_inputs(self, original, *, purged=False):
         policy, require = self.policy, self.api.require
         digest = lambda raw: hashlib.sha256(raw).hexdigest()
         retained = self.copies['reinstall']
@@ -345,6 +372,18 @@ class Configure:
         exec(compile(CORE_RETAINED_PREFLIGHT_SOURCE, '<retained-preflight>', 'exec'), key_policy)
         require(key_policy['prepare_retained_generation'](unpacked_layout=True) == 0,
                 'Original retained generation credentials changed after unpack')
+        return saved, manifest, removal
+
+    def restore_removed_generation(self, original, *, purged=False):
+        """Reconstruct the genuine vendor layout from the paired unpacked release."""
+        policy, require = self.policy, self.api.require
+        digest = lambda raw: hashlib.sha256(raw).hexdigest()
+        retained = self.copies['reinstall']
+        saved, manifest, removal = self.retained_layout_inputs(original, purged=purged)
+        generation = manifest['generation']
+
+        def incoming(name, limit=65536):
+            return policy.read(self.physical / name, limit=limit, private=False)
 
         # The incoming manifest has already been matched to its built digest.
         # Check its exact build-bound unit profile before restoring vendor files.
@@ -431,6 +470,95 @@ class Configure:
         require(self.api.published_cohort_matches(saved['cohortSha256'], policy.generation_assets()),
                 'Restored vendor layout differs from the original published cohort')
         return profile_units
+
+    def finish_issued_layout(self, check_install_policy):
+        plan, policy, require = self.issued_layout, self.policy, self.api.require
+        fence = policy.fence()
+        if fence is None:
+            return
+        original = fence['id']
+        directory = self.state / original
+        if not os.path.lexists(directory / ISSUED_LAYOUT_HANDOFF):
+            return
+        if os.path.lexists(directory / ISSUED_LAYOUT_VERIFIED):
+            # The normal configure reader authenticates the completed effects
+            # even after these temporary directories have been consumed.
+            return
+        require(fence['firstAction'] == 'remove', 'Original issued removal fence is absent')
+        # The retained-main reader independently takes the maintenance lock.
+        # The enclosing dpkg and ordinary-boot guards remain held.
+        require(policy.retained_main_state()['unitFileState'] == 'disabled',
+                'Issued layout requires the original disabled boot choice')
+        with policy.sender_locked(), policy.gwt_locked() as gwt, policy.recovery_locked(), policy.locked():
+            require(policy.fence() == fence, 'Original issued layout fence changed')
+            recovery, secret = self.read_intent(directory, original)
+            require(self.source() == recovery and
+                    self.setup_state(directory, original, recovery, secret) == ([], 'layout', False),
+                    'Issued layout is outside the authorized effect repair')
+            policy.no_overrides()
+            policy.check_records()
+            policy.check_sender_admissions()
+            if gwt is not None:
+                gwt.check()
+            policy.check_package_writers()
+            require(not os.path.lexists(policy.path('/var/lib/kura-recovery-launch/selection.json')),
+                    'Controlled recovery Main still owns this Root')
+            issued_layout_stop(self.api, policy, self.physical, plan, retry=True)
+            data = self.removed_trees(original, self.copies['reinstall'], secret)
+            require(data is not None, 'Original issued layout runtime data capture is missing')
+            capture, holder, _ = data
+            recorded = capture['runtimeDataDirectory']
+            data_identity = dict(zip(('device', 'inode'), plan['data'], strict=True))
+            require({key: recorded[key] for key in data_identity} == data_identity
+                    and self.package_identity(holder / 'data') == data_identity
+                    and stat.S_ISDIR((holder / 'data').lstat().st_mode),
+                    'Issued layout requires the original retained runtime data')
+            saved, _, _ = self.retained_layout_inputs(original)
+            check_install_policy()
+            scripts = check_issued_scripts(self.api, policy, self.physical, plan, templates=True, executable=True)
+            self.restore_issued_shell_modes(scripts)
+            placeholders = {}
+            for name in ('.data', 'data'):
+                path = self.physical / name
+                if not os.path.lexists(path):
+                    with tempfile.TemporaryDirectory(prefix='.kura-layout-', dir=self.physical) as pending:
+                        empty = Path(pending) / name
+                        empty.mkdir(mode=0o700)
+                        empty.chmod(0o755)
+                        policy.sync(empty)
+                        publish_sibling(empty, path)
+                    policy.sync(self.physical)
+                placeholders[name] = self.package_identity(path)
+            issued_layout_stop(self.api, policy, self.physical, plan, retry=True)
+            require(self.api.published_cohort_matches(saved['cohortSha256'], policy.generation_assets()),
+                    'Issued layout does not match the retained generation')
+            verified = check_issued_scripts(self.api, policy, self.physical, plan, templates=False, executable=True)
+            require(all(stat.S_IMODE(info.st_mode) == 0o755 for _, info, _ in verified.values()),
+                    'Issued layout shell files are still non-executable')
+            raw = issued_layout_record(self.api, plan, self.package_binding(), 'POSTCONDITIONS_VERIFIED', secret,
+                                       placeholders=placeholders)
+            publish_issued_layout_record(policy, directory, ISSUED_LAYOUT_VERIFIED, raw)
+
+    def restore_issued_shell_modes(self, scripts):
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+        for path, (before, info, published) in scripts.items():
+            with os.fdopen(os.open(path, flags), 'rb') as stream:
+                self.api.require(os.path.samestat(info, os.fstat(stream.fileno()))
+                                 and os.path.samestat(info, path.lstat()) and stream.read(65537) == before,
+                                 'Issued layout shell file changed before repair')
+                if published is None:
+                    if stat.S_IMODE(info.st_mode) != 0o755:
+                        os.fchmod(stream.fileno(), 0o755)
+                        os.fsync(stream.fileno())
+                    continue
+                with tempfile.TemporaryDirectory(prefix='.kura-launcher-', dir=path.parent) as pending:
+                    staged = Path(pending) / path.name
+                    staged.write_bytes(published)
+                    staged.chmod(0o755)
+                    with staged.open('rb') as output:
+                        os.fsync(output.fileno())
+                    os.replace(staged, path)
+                self.policy.sync(path.parent)
 
     def restore_published_launchers(self, original, secret):
         policy, require = self.policy, self.api.require
@@ -865,7 +993,23 @@ def main():
     version = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Version}', 'kura-core'], text=True)
     lifecycle.require(re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', version))
     configure = Configure(lifecycle, policy, physical, version, manifest_sha, hashlib.sha256(control).hexdigest(),
-                          CORE_CONFIGURE_REPAIR_PREDECESSOR)
+                          CORE_CONFIGURE_REPAIR_PREDECESSOR, CORE_CONFIGURE_ISSUED_LAYOUT_PLAN)
+    if action == 'resume' and configure.issued_layout is not None:
+        lifecycle.require(os.environ.get('DPKG_MAINTSCRIPT_PACKAGE') == 'kura-core'
+                          and os.environ.get('DPKG_MAINTSCRIPT_NAME') == 'postinst'
+                          and os.environ.get('DPKG_ROOT', '') in ('', '/')
+                          and os.environ.get('DPKG_ADMINDIR') == '/var/lib/dpkg',
+                          'Issued layout requires the paired Core postinst')
+
+        def check_install_policy():
+            check = physical / 'install/manage_kura_users.sh'
+            raw = policy.read(check, private=False)
+            lifecycle.require(hashlib.sha256(raw).hexdigest() == configure.issued_layout['installPolicySha256'],
+                              'Unpaired Core install policy')
+            for option in ('--check-polkit', '--check-pam', '--check-nm-policy'):
+                subprocess.run(['/bin/bash', str(check), option], stdout=sys.stderr, check=True, timeout=30)
+
+        configure.finish_issued_layout(check_install_policy)
     if action.startswith('setup-'):
         step = action.removeprefix('setup-')
 

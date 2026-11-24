@@ -241,13 +241,49 @@ def layout_repair_predecessor(assembly, archive):
     return dict(packageVersion=version[1].decode(), manifestSha256=manifest, postinstSha256=postinst)
 
 
-def embed_layout_repair(preinst, postinst, assembly, predecessor):
+def issued_layout_plan(assembly, earlier, issued, path):
+    observed = json.loads(path.read_bytes())
+    require(set(observed) == {'maintenanceId', 'root', 'machineSha256', 'recovery', 'records', 'scripts', 'data'})
+    digest = lambda value: isinstance(value, str) and re.fullmatch(r'[0-9a-f]{64}', value) is not None
+    identity = lambda value: isinstance(value, list) and len(value) == 2 and all(type(x) is int and x > 0 for x in value)
+    operation = observed['maintenanceId']
+    require(isinstance(operation, str) and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', operation))
+    require(identity(observed['root']) and identity(observed['data']) and digest(observed['machineSha256']))
+    recovery = observed['recovery']
+    require(set(recovery) == {'mode', 'device', 'inode'} and recovery['mode'] == 'reinstall'
+            and identity([recovery['device'], recovery['inode']]))
+    records = observed['records']
+    require(set(records) == {'intent.json', 'layout-repair.json', 'setup-layout-intent.json'}
+            and all(len(value) == 3 and identity(value[:2]) and digest(value[2]) for value in records.values()))
+    scripts = {item.name: hashlib.sha256(item.read_bytes()).hexdigest()
+               for item in sorted((assembly / 'bin').glob('*.sh')) if item.is_file() and not item.is_symlink()}
+    require(scripts.keys() == observed['scripts'].keys() and all(map(digest, observed['scripts'].values())))
+    templates = {name: value for name, value in scripts.items() if value != observed['scripts'][name]}
+    require(templates.keys() == {'start_kura.sh', 'start_kura_background.sh', 'start_kura_debug.sh'})
+    require(earlier['manifestSha256'] == issued['manifestSha256']
+            and earlier['packageVersion'] != issued['packageVersion'])
+    config = ast.parse((assembly / 'bin/kura_dhcp_configuration.py').read_bytes())
+    default, = [ast.literal_eval(node.value) for node in config.body if isinstance(node, ast.Assign)
+                and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == 'DEFAULT']
+    return dict(schema=1, **observed, earlier=earlier, issued=issued, templates=templates,
+                dhcpSha256=hashlib.sha256(default).hexdigest(),
+                installPolicySha256=hashlib.sha256((assembly / 'install/manage_kura_users.sh').read_bytes()).hexdigest())
+
+
+def layout_repair_source():
+    return '\n'.join(Path(__file__).with_name(name).read_text()
+                     for name in ('prelayout-repair.py', 'issued-layout-repair.py'))
+
+
+def embed_layout_repair(preinst, postinst, assembly, predecessor, issued=None):
     token = 'raise RuntimeError("Kura retained layout repair was not embedded")'
     content = preinst.read_text()
     require(content.count(token) == 1)
     names = dict(_KURA_LAYOUT_REPAIR_PREDECESSOR=predecessor, _KURA_LAYOUT_REPAIR_HOME=assembly.name,
-                 _KURA_LAYOUT_REPAIR_POSTINST_SHA256=hashlib.sha256(postinst.read_bytes()).hexdigest())
-    source = Path(__file__).with_name('prelayout-repair.py').read_text()
+                 _KURA_LAYOUT_REPAIR_POSTINST_SHA256=hashlib.sha256(postinst.read_bytes()).hexdigest(),
+                 _KURA_ISSUED_LAYOUT_PLAN=issued)
+    source = layout_repair_source()
     helper = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source
     compile(helper, 'prelayout-repair.py', 'exec', dont_inherit=True)
     preinst.write_text(content.replace(token, helper))
@@ -400,11 +436,11 @@ def embed_reboot_guard(control):
     control.write_text(content.replace(token, source))
 
 
-def embed_configure_phases(control, assembly, repair_predecessor=None):
+def embed_configure_phases(control, assembly, repair_predecessor=None, issued=None):
     token = 'raise RuntimeError("Kura Core configure phases were not embedded")'
     manifest = json.loads((assembly/'libexec/key-backup/manifest.json').read_bytes())
     names = dict(CORE_CONFIGURE_HOME=assembly.name, CORE_CONFIGURE_REPAIR_PREDECESSOR=repair_predecessor,
-                 CORE_CONFIGURE_VENDOR_UNITS=tuple(sorted(manifest['units'])))
+                 CORE_CONFIGURE_VENDOR_UNITS=tuple(sorted(manifest['units'])), CORE_CONFIGURE_ISSUED_LAYOUT_PLAN=issued)
     packages = assembly / 'packages'
     factory = {}
     for path in sorted(packages.iterdir()):
@@ -423,8 +459,7 @@ def embed_configure_phases(control, assembly, repair_predecessor=None):
             ('CORE_CONFIGURE_CLOCK_SETUP_SHA', 'bin/kura_clock_setup.py'),
             ('CORE_CONFIGURE_REBOOT_SETUP_SHA', 'bin/kura_reboot_setup.py')):
         names[name] = hashlib.sha256((assembly / relative).read_bytes()).hexdigest()
-    source = (Path(__file__).with_name('prelayout-repair.py').read_text() + '\n'
-              + Path(__file__).with_name('postinst-configure.py').read_text())
+    source = layout_repair_source() + '\n' + Path(__file__).with_name('postinst-configure.py').read_text()
     source = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source
     compile(source, 'postinst-configure.py', 'exec', dont_inherit=True)
     content = control.read_text()
@@ -460,9 +495,14 @@ if __name__ == "__main__":
     assembly = Path(sys.argv[1])
     repair = os.environ.get('KURA_RETAINED_LAYOUT_REPAIR_DEB')
     predecessor = layout_repair_predecessor(assembly, Path(repair)) if repair else None
+    reviewed = os.environ.get('KURA_ISSUED_LAYOUT_REPAIR_PLAN')
+    earlier = os.environ.get('KURA_ISSUED_LAYOUT_EARLIER_DEB')
+    require(bool(reviewed) == bool(earlier) and (not reviewed or predecessor is not None))
+    issued = (issued_layout_plan(assembly, layout_repair_predecessor(assembly, Path(earlier)),
+                                 predecessor, Path(reviewed)) if reviewed else None)
     control = assembly.parent/'filtered-control'
-    embed_configure_phases(control/'postinst', assembly, predecessor)
-    embed_layout_repair(control/'preinst', control/'postinst', assembly, predecessor)
+    embed_configure_phases(control/'postinst', assembly, predecessor, issued)
+    embed_layout_repair(control/'preinst', control/'postinst', assembly, predecessor, issued)
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
         embed_reboot_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)

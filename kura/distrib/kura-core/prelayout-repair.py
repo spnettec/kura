@@ -13,8 +13,8 @@ import tempfile
 LAYOUT_REPAIR = 'layout-repair.json'
 
 
-def checked_repair_source(api, raw, original, predecessor, recovery, secret):
-    body = dict(schema=1, **predecessor, maintenanceId=original, phase='intent', recovery=recovery)
+def checked_repair_source(api, raw, original, predecessor, recovery, secret, *, phase='intent'):
+    body = dict(schema=1, **predecessor, maintenanceId=original, phase=phase, recovery=recovery)
     tag = hmac.new(secret, b'kura-core-postinst-v1\0' + api.encoded(body), hashlib.sha256).hexdigest()
     api.require(raw == api.encoded(dict(body, tag=tag)), 'Retained layout repair does not match the original intent')
 
@@ -68,19 +68,22 @@ def admit_prelayout_repair(old_version, new_version):
         original = fence['id']
         directory = policy.path('/var/lib/kura-package-configure') / original
         policy.directory(directory, private=True)
+        dpkg = subprocess.check_output(['/usr/bin/dpkg-query','-W','-f=${Status}\n${Version}', 'kura-core'],
+                                       text=True, timeout=10).splitlines()
+        control = policy.read(policy.path('/var/lib/dpkg/info/kura-core.postinst'), limit=512 * 1024, private=False)
+        control_sha = hashlib.sha256(control).hexdigest()
+        issued_plan = globals().get('_KURA_ISSUED_LAYOUT_PLAN')
+        if issued_plan is not None:
+            admit_issued_layout(api, policy, directory, original, physical, target, control_sha, dpkg, issued_plan)
+            return
         names = {path.name for path in directory.iterdir()}
         require(names in ({'intent.json'}, {'intent.json', LAYOUT_REPAIR}),
                 'Original layout or another configure phase is already issued')
-        dpkg = subprocess.check_output(['/usr/bin/dpkg-query','-W','-f=${Status}\n${Version}', 'kura-core'],
-                                       text=True, timeout=10).splitlines()
         interrupted_unpack = 'install reinstreq half-installed'
         states = ('install ok half-configured', 'install ok unpacked', interrupted_unpack)
         require(len(dpkg) == 2 and dpkg[0] in states
                 and (dpkg[1] == predecessor['packageVersion'] or dpkg[1] == new_version and LAYOUT_REPAIR in names),
                 'Retained layout package is outside the repair stop')
-        control = policy.read(policy.path('/var/lib/dpkg/info/kura-core.postinst'), limit=512 * 1024, private=False)
-        control_sha = hashlib.sha256(control).hexdigest()
-
         state = policy.main_unit_properties('MainPID', 'ControlPID', 'ActiveState')
         require(state['MainPID'] == state['ControlPID'] == '0' and state['LoadState'] == 'not-found'
                 and state['ActiveState'] == 'inactive', 'Original Main layout is already active or installed')
