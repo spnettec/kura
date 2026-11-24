@@ -223,10 +223,15 @@ class Configure:
             if step == 'layout' and recovery['mode'] == 'upgrade':
                 self.restore_published_launchers(original, secret)
             if step == 'layout' and recovery['mode'] in ('reinstall', 'install') and os.path.lexists(policy.state / 'generation-current.json'):
-                self.restore_removed_generation(original, purged=recovery['mode'] == 'install')
+                restored = self.restore_removed_generation(original, purged=recovery['mode'] == 'install')
                 # PID 1 can still cache a failed unit after its vendor file was
                 # restored. Refresh it before issuing the non-replayable step.
                 policy.command(['daemon-reload'])
+                for unit in self.api.NATIVE_MAIN_UNITS:
+                    state = policy.command(['show', unit, '--property=LoadState']).strip()
+                    require(state in ('LoadState=loaded', 'LoadState=masked') or
+                            state == 'LoadState=not-found' and unit not in restored,
+                            f'PID 1 cannot load {unit}; retained layout has not been issued')
             if step != 'layout':
                 self.paired_home()
             if step == 'brokers' and prepare_brokers is not None:
@@ -425,6 +430,7 @@ class Configure:
         self.paired_home()
         require(self.api.published_cohort_matches(saved['cohortSha256'], policy.generation_assets()),
                 'Restored vendor layout differs from the original published cohort')
+        return profile_units
 
     def restore_published_launchers(self, original, secret):
         policy, require = self.policy, self.api.require

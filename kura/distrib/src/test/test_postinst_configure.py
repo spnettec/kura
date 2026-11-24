@@ -377,6 +377,7 @@ class ConfigureTest(unittest.TestCase):
         vendor.unlink()
         load_state = 'error'
         fail_reload = True
+        refresh_units = False
         command = self.policy.command
 
         def restore(original, *, purged):
@@ -384,6 +385,7 @@ class ConfigureTest(unittest.TestCase):
             self.assertFalse(purged)
             self.assertFalse(intent.exists())
             vendor.write_bytes(b'paired vendor unit')
+            return lifecycle.UNITS
 
         def manager(arguments):
             nonlocal load_state
@@ -392,10 +394,13 @@ class ConfigureTest(unittest.TestCase):
                 self.assertFalse(intent.exists())
                 if fail_reload:
                     raise lifecycle.Refused('PID 1 reload failed')
-                load_state = 'loaded'
+                if refresh_units:
+                    load_state = 'loaded'
                 return ''
-            if arguments == ['show', unit, '--property=LoadState']:
-                return f'LoadState={load_state}\n'
+            if arguments[0] == 'show' and arguments[2:] == ['--property=LoadState']:
+                if arguments[1] == unit:
+                    return f'LoadState={load_state}\n'
+                return command(arguments).splitlines()[0] + '\n'
             return command(arguments)
 
         def invoke():
@@ -410,6 +415,13 @@ class ConfigureTest(unittest.TestCase):
             self.assertFalse(intent.exists())
             self.assertEqual(self.fence, self.policy.fence())
             fail_reload = False
+            for load_state in ('error', 'not-found'):
+                with self.subTest(load_state=load_state):
+                    with self.assertRaisesRegex(lifecycle.Refused, 'PID 1 cannot load kura-key-recovery.service'):
+                        controller.run_step('layout', lambda: self.fail('Dispatched while the unit was unavailable'))
+                    self.assertFalse(intent.exists())
+                    self.assertEqual(self.fence, self.policy.fence())
+            refresh_units = True
             controller.run_step('layout', invoke)
         self.assertTrue((self.stage / 'setup-layout-returned.json').is_file())
 
