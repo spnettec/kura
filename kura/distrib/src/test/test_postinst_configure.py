@@ -54,6 +54,16 @@ class ConfigureTest(unittest.TestCase):
                 self.configure.unpacked_main_directory(logical)
         self.assertTrue(logical.is_dir())
 
+    def test_current_retained_profile_requires_the_exact_manifest_unit_set(self):
+        units = {name: '1' * 64 for name in lifecycle.NATIVE_MAIN_UNITS}
+        manifest = dict(schema=2, protocol=2,
+                        files={name: '2' * 64 for name in lifecycle.SNAPSHOT_PUBLICATION_ASSETS},
+                        units=units, generation={})
+        self.assertEqual(units, self.policy.key_service_profile(manifest))
+        manifest['units'] = {name: '1' * 64 for name in lifecycle.NATIVE_VALIDATION_UNITS}
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unrecognized key-service package profile'):
+            self.policy.key_service_profile(manifest)
+
     def install_steps(self):
         for name in configure.INSTALLER_STEPS:
             self.configure.run_step(name, lambda: None)
@@ -175,6 +185,9 @@ class ConfigureTest(unittest.TestCase):
         capture_dir = controller.copies['upgrade']
         old = capture_dir / '.old-home'
         (old / 'bin').mkdir(mode=0o700, parents=True)
+        saved_manifest = old / 'libexec/key-backup/manifest.json'
+        saved_manifest.parent.mkdir(parents=True)
+        saved_manifest.write_bytes((physical / 'libexec/key-backup/manifest.json').read_bytes())
         capture_dir.chmod(0o700)
         secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
         original = self.fence['id']

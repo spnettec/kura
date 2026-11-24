@@ -316,14 +316,11 @@ class Configure:
         require(key_policy['prepare_retained_generation'](unpacked_layout=True) == 0,
                 'Original retained generation credentials changed after unpack')
 
-        # The independent snapshot validator is part of the current signed
-        # package profile. Restore its two vendor units with the other paired
-        # units before generation_assets() verifies the complete layout.
-        native_validation = frozenset(manifest['files']) == self.api.NATIVE_VALIDATION_ASSETS
-        profile_units = self.api.NATIVE_VALIDATION_UNITS if native_validation else self.api.UNITS
-        require(set(manifest['units']) == set(profile_units), 'Unpaired retained key-service unit profile')
-        units = {name: incoming('install/' + name) for name in manifest['units']}
-        require(all(digest(raw) == manifest['units'][name] for name, raw in units.items()))
+        # Use the same exact profile gate as the installed reader. These
+        # vendor files are still absent until the retained layout is restored.
+        profile_units = policy.key_service_profile(manifest)
+        units = {name: incoming('install/' + name) for name in profile_units}
+        require(all(digest(raw) == profile_units[name] for name, raw in units.items()))
         main = incoming('install/kura.service').replace(b'INSTALL_DIR', b'/opt/eclipse')
         require(digest(main) == generation['unitSha256'])
         units['kura.service'] = main

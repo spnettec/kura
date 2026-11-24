@@ -1729,14 +1729,9 @@ class Lifecycle:
             require(all(re.fullmatch(r'cap_[a-z0-9_]+', cap) for cap in caps) and not {'cap_sys_boot', 'cap_dac_override'}.intersection(caps),
                     'Effective Main capabilities are invalid or include CAP_SYS_BOOT or CAP_DAC_OVERRIDE; preserve package maintenance')
 
-    def assets(self, *, generation_binding=False, _linked_main_unit=None):
-        logical = self.path("/opt/eclipse/kura")
-        physical = logical.resolve(strict=True)
-        require(physical.parent == self.path("/opt/eclipse") and physical.is_dir())
-        if logical.is_symlink():
-            require(logical.lstat().st_uid == self.owner)
-        manifest_raw = self.read(physical / "libexec/key-backup/manifest.json", private=False)
-        manifest = decode(manifest_raw)
+    @staticmethod
+    def key_service_profile(manifest):
+        """Validate the exact package profile before reading or restoring its units."""
         modern = type(manifest.get("schema")) is int and manifest["schema"] == 2
         require(set(manifest) == {"schema", "protocol", "files", "units"} | ({"generation"} if modern else set())
                 and type(manifest["schema"]) is int and manifest["schema"] == (2 if modern else 1)
@@ -1755,13 +1750,25 @@ class Lifecycle:
             recovery_profiles | {(LEGACY_ASSETS, frozenset(LEGACY_UNITS)), (COLD_V1_ASSETS, recovery_units)})
         require(profile in recognized and (not modern or isinstance(manifest['generation'], dict)),
                 'Unrecognized key-service package profile')
+        return manifest['units']
+
+    def assets(self, *, generation_binding=False, _linked_main_unit=None):
+        logical = self.path("/opt/eclipse/kura")
+        physical = logical.resolve(strict=True)
+        require(physical.parent == self.path("/opt/eclipse") and physical.is_dir())
+        if logical.is_symlink():
+            require(logical.lstat().st_uid == self.owner)
+        manifest_raw = self.read(physical / "libexec/key-backup/manifest.json", private=False)
+        manifest = decode(manifest_raw)
+        units = self.key_service_profile(manifest)
+        modern = manifest['schema'] == 2
         for name, expected in manifest["files"].items():
             require(isinstance(name, str) and name and not Path(name).is_absolute()
                     and str(Path(name)) == name and all(p not in ('.', '..') for p in Path(name).parts))
             require(is_digest(expected))
             require(hashlib.sha256(self.read(physical / name, limit=16*1024*1024, private=False)).hexdigest() == expected,
                     "Installed key-service asset differs from its package manifest")
-        for name, expected in manifest["units"].items():
+        for name, expected in units.items():
             require(is_digest(expected))
             unit = self.path("/lib/systemd/system/" + name).resolve(strict=True)
             require(hashlib.sha256(self.read(unit, private=False)).hexdigest() == expected,
