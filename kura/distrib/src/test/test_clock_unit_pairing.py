@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """PID1 pairing and maintenance-failure contracts; never change a clock."""
 import fcntl
+import hashlib
 import os
 from pathlib import Path
 import stat
@@ -94,6 +95,28 @@ class ClockUnitPairingTest(unittest.TestCase):
         self.assertIn('service.d', broker.unit_input_names(broker.UNITS[1]))
         self.assertIn('kura-clock-.service.d', broker.unit_input_names(broker.UNITS[1]))
         self.assertIn('kura-.service.d', broker.unit_input_names(broker.UNITS[1]))
+
+    def test_orbstack_adapter_requires_the_exact_content_and_runtime(self):
+        adapter = broker.CONTAINER_ADAPTER
+        approved = b'[Service]\nProtectSystem=no\n'
+        sha = hashlib.sha256(approved).hexdigest()
+        with mock.patch.object(broker, 'CONTAINER_ADAPTER_SHA256', sha), \
+                mock.patch.object(broker, 'public_file', return_value=approved) as read, \
+                mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(
+                    returncode=0, stdout=b'lxc\n')) as probe:
+            broker.check_loaded_dropins(broker.UNITS[1], str(adapter))
+            read.assert_called_once_with(adapter, 4096)
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[0], str(adapter))
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[1], str(Path('/usr/lib') / adapter.name))
+            probe.return_value.stdout = b'docker\n'
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[1], str(adapter))
+            probe.return_value.stdout = b'lxc\n'
+            read.return_value = approved + b'User=root\n'
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[1], str(adapter))
 
     def test_unreadable_lookup_does_not_become_absence(self):
         with mock.patch.object(broker, 'unit_load_paths', return_value=(Path('/etc/systemd/system.control'),)), \

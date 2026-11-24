@@ -92,6 +92,8 @@ LEGACY_HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/
 HELPERS = (*LEGACY_HELPERS, 'bin/kura_chrony_config.py')
 SYS_TIME = 1 << 25
 VENDOR_UNIT_ROOTS = (Path('/lib/systemd/system'), Path('/usr/lib/systemd/system'))
+CONTAINER_ADAPTER = Path('/run/systemd/system/service.d/zzz-lxc-service.conf')
+CONTAINER_ADAPTER_SHA256 = '95efa48563a96a16697137c70e6f80af7c85acf231d29461624b54a589afbfbd'
 WRITE_ACTIONS = {phase + '-' + suffix: (phase, name)
                  for name, (suffix, _, _) in OPERATIONS.items() for phase in ('prepare', 'commit')}
 # _IOW('p', 0x0a, struct rtc_time) on the release architectures.
@@ -236,54 +238,65 @@ def unit_input_names(name):
     return names
 
 
+def check_container_adapter(path, reason='UNPAIRED_CODE'):
+    require(path == CONTAINER_ADAPTER, reason)
+    try:
+        raw = public_file(path, 4096)
+    except (OSError, Refused) as error:
+        raise Refused(reason) from error
+    require(hashlib.sha256(raw).hexdigest() == CONTAINER_ADAPTER_SHA256, reason)
+    try:
+        result = subprocess.run(['/usr/bin/systemd-detect-virt', '--container'],
+                                env={'PATH': '/usr/bin:/bin', 'LANG': 'C'},
+                                capture_output=True, timeout=5)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise Refused(reason) from error
+    require(result.returncode == 0 and result.stdout.strip() == b'lxc', reason)
+
+
+def check_loaded_dropins(unit, raw, reason='UNPAIRED_CODE'):
+    paths = raw.split()
+    if paths:
+        require(unit.endswith('.service') and paths == [str(CONTAINER_ADAPTER)], reason)
+        check_container_adapter(CONTAINER_ADAPTER, reason)
+
+
+def check_unit_adapter_directory(path, reason='UNPAIRED_CODE'):
+    require(path == CONTAINER_ADAPTER.parent and unit_directory_present(path), reason)
+    require([source for source in path.iterdir() if source.name.endswith('.conf')] == [CONTAINER_ADAPTER], reason)
+    check_container_adapter(CONTAINER_ADAPTER, reason)
+
+
 def unit_sources():
     """Reject overrides in the manager's complete current system load path."""
-    # Container runtime adapters (LXC/OrbStack) install a global service.d
-    # drop-in that neutralizes hardening for every unit on the host. The bare
-    # "<kind>.d" entry generated for every unit name matches that directory on
-    # such hosts even though it carries no clock-specific override. Require the
-    # adapter drop-in to be exactly the known runtime adapter, not other content.
-    generic_dropins = {'service.d', 'socket.d', 'timer.d'}
     try:
         for root in unit_load_paths():
             if not unit_directory_present(root):
                 continue
-            for name in UNITS:
-                inputs = [i for i in unit_input_names(name) if i not in generic_dropins]
-                if root not in VENDOR_UNIT_ROOTS:
-                    inputs.append(name)
-                for entry in inputs:
-                    try:
-                        (root / entry).lstat()
-                    except FileNotFoundError:
-                        continue
-                    raise Refused('UNPAIRED_CODE')
+            inputs = {entry for name in UNITS for entry in unit_input_names(name)}
             if root not in VENDOR_UNIT_ROOTS:
-                for kind in generic_dropins:
-                    directory = root / kind
-                    if not directory.is_dir():
-                        continue
-                    for source in sorted(directory.glob('*.conf')):
-                        require(source.name == 'zzz-lxc-service.conf',
-                                'UNPAIRED_CODE: unreviewed global drop-in')
+                inputs.update(UNITS)
+            for entry in sorted(inputs):
+                path = root / entry
+                try:
+                    path.lstat()
+                except FileNotFoundError:
+                    continue
+                check_unit_adapter_directory(path)
     except OSError as error:
         raise Refused('UNPAIRED_CODE') from error
 
 
 def effective_units(units=UNITS):
-    # Container runtime adapters (LXC/OrbStack) add a global service.d drop-in
-    # to every unit on the host. It carries no clock-specific override, so that
-    # exact adapter path may appear alongside an otherwise clean unit.
-    adapter = '/run/systemd/system/service.d/zzz-lxc-service.conf'
     properties = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
                   'NeedDaemonReload', 'Transient')
     for name in units:
         value = systemd_properties(properties, name)
-        dropins = [p for p in value['DropInPaths'].split() if p != adapter]
         require(value['Id'] == name and value['Names'].split() == [name] and value['LoadState'] == 'loaded'
                 and value['FragmentPath'] in {str(root / name) for root in VENDOR_UNIT_ROOTS}
-                and value['SourcePath'] == '' and not dropins
+                and value['SourcePath'] == ''
                 and value['NeedDaemonReload'] == value['Transient'] == 'no', 'UNPAIRED_CODE')
+        check_loaded_dropins(name, value['DropInPaths'])
 
 
 def chrony_status():

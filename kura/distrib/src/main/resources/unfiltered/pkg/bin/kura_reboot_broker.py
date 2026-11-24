@@ -16,8 +16,8 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import (HOME, VENDOR_UNIT_ROOTS, protected, public_file, unit_directory_present,
-                              unit_input_names, unit_load_paths)
+from kura_clock_broker import (HOME, VENDOR_UNIT_ROOTS, check_loaded_dropins, check_unit_adapter_directory,
+                              protected, public_file, unit_directory_present, unit_input_names, unit_load_paths)
 from kura_clock_journal import Refused, decode, digest, directory, encode, identifier, identity, read, require
 from kura_reboot_journal import RebootJournal
 from kura_reboot_protocol import RebootProtocol, RebootSender
@@ -91,39 +91,25 @@ def manager_properties(unit, names):
 
 
 def verify_unit_sources(units=UNITS):
-    # Container runtime adapters (LXC/OrbStack) install a global service.d
-    # drop-in that neutralizes hardening for every unit on the host. The bare
-    # "<kind>.d" entry generated for every unit name matches that directory on
-    # such hosts even though it carries no reboot-specific override. Require
-    # the adapter directory to contain only the known adapter drop-in.
-    generic_dropins = {'service.d', 'socket.d', 'timer.d'}
-    adapter_conf = Path('/run/systemd/system/service.d/zzz-lxc-service.conf')
     for root in unit_load_paths():
         if not unit_directory_present(root):
             continue
-        for unit in units:
-            names = [i for i in unit_input_names(unit) if i not in generic_dropins]
-            if root not in VENDOR_UNIT_ROOTS:
-                names.append(unit)
-            for name in names:
-                path = root / name
-                try:
-                    metadata = path.lstat()
-                except FileNotFoundError:
-                    continue
-                if path == EMPTY_KEY_DROPINS:
-                    # The key service reserves this private directory even with no drop-in.
-                    require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == metadata.st_gid == 0
-                            and stat.S_IMODE(metadata.st_mode) == 0o700 and not any(path.iterdir())
-                            and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
-                    continue
-                raise Refused('UNPAIRED_UNIT')
-        for kind in generic_dropins:
-            directory = root / kind
-            if not directory.is_dir():
+        names = {name for unit in units for name in unit_input_names(unit)}
+        if root not in VENDOR_UNIT_ROOTS:
+            names.update(units)
+        for name in sorted(names):
+            path = root / name
+            try:
+                metadata = path.lstat()
+            except FileNotFoundError:
                 continue
-            for source in sorted(directory.glob('*.conf')):
-                require(source == adapter_conf, 'UNPAIRED_UNIT')
+            if path == EMPTY_KEY_DROPINS:
+                # The key service reserves this private directory even with no drop-in.
+                require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == metadata.st_gid == 0
+                        and stat.S_IMODE(metadata.st_mode) == 0o700 and not any(path.iterdir())
+                        and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
+                continue
+            check_unit_adapter_directory(path, 'UNPAIRED_UNIT')
 
 
 def account_binding(path=None):
@@ -154,9 +140,6 @@ class Policy:
         return manifest
 
     def check(self, *, actor, include_main=True):
-        # Container runtime adapters (LXC/OrbStack) add a global service.d
-        # drop-in to every unit on the host; exclude that exact adapter path.
-        adapter = '/run/systemd/system/service.d/zzz-lxc-service.conf'
         manifest = self.packaged()
         units = UNITS if include_main else UNITS[:2]
         if actor:
@@ -166,8 +149,8 @@ class Policy:
             require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
                     and loaded['FragmentPath'] in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
                     and loaded['SourcePath'] == ''
-                    and all(p == adapter for p in loaded['DropInPaths'].split())
                     and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_UNIT')
+            check_loaded_dropins(unit, loaded['DropInPaths'], 'UNPAIRED_UNIT')
             packaged_unit = (COHORT.parent / unit).as_posix()
             require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files'][packaged_unit],
                     'UNPAIRED_UNIT')
