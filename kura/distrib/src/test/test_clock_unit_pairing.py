@@ -67,6 +67,20 @@ class ClockUnitPairingTest(unittest.TestCase):
                     with self.assertRaisesRegex(broker.Refused, 'UNPAIRED_CODE'):
                         broker.effective_units()
 
+    def test_clock_workers_keep_no_new_privileges_with_the_lxc_adapter(self):
+        packaged = Path(broker.__file__).resolve().parent.parent / 'install'
+        entrypoints = {'kura-clock-broker.service': 'serve',
+                       'kura-clock-rtc-devices.service': 'serve-rtc',
+                       'kura-clock-chrony-step.service': 'serve-chrony-step',
+                       'kura-clock-chrony-config.service': 'serve-chrony-config'}
+        self.assertEqual(set(entrypoints), {name for name in broker.UNITS if name.endswith('.service')})
+        for name, action in entrypoints.items():
+            with self.subTest(name=name):
+                settings = (packaged / name).read_text().splitlines()
+                self.assertIn('NoNewPrivileges=true', settings)
+                self.assertIn('ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B '
+                              '/usr/libexec/kura-clock-broker/bin/kura_clock_broker.py ' + action, settings)
+
     def test_load_path_comes_from_pid1_including_attached_and_control_roots(self):
         raw = '/etc/systemd/system.control /run/systemd/system.attached /usr/lib/systemd/system'
         with mock.patch.object(broker, 'systemd_properties', return_value={'UnitPath': raw}):
