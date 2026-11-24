@@ -18,7 +18,7 @@ import time
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode, rename_no_replace,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
-from kura_key_store import GENERATION_CREDENTIALS_DIRECTORY, credential_reader_acl
+from kura_key_store import GENERATION_CREDENTIALS_DIRECTORY, Refused as CredentialRefused, credential_reader_acl
 from kura_key_service_lifecycle import (CONTAINER_ADAPTER_DROPIN, Lifecycle, Refused, validate_generation_metadata,
     validate_publication,
     handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
@@ -405,7 +405,10 @@ class Generations:
         require(manager.generations()[1] == value['generation'] and manager.require_generation_cohort() == cohort, 'COHORT_CHANGED')
         self.dropin(generation_mode=True)
         if unit['ContainerAdapter']:
-            self.project_credentials(targets, history, uid)
+            try:
+                self.project_credentials(targets, history, uid)
+            except CredentialRefused as error:
+                raise Failure('UNSAFE_FILESYSTEM') from error
         for name in ('publication', 'current'):
             if not done[name]:
                 data, mode = expected[name]
