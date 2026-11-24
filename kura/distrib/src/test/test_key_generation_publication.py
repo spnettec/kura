@@ -106,6 +106,32 @@ class GenerationPublicationTest(unittest.TestCase):
     def publish(self, request=None):
         return self.component.request(self.publish_request if request is None else request)
 
+    def test_unit_accepts_only_the_paired_platform_and_generation_dropins(self):
+        scope = self.component.unit.__func__.__globals__
+        adapter = scope['CONTAINER_ADAPTER_DROPIN']
+        generation = scope['DROPIN']
+        loaded = adapter
+
+        def with_dropins(command, **options):
+            result = self.run_command(command, **options)
+            result.stdout = result.stdout.replace('DropInPaths=\n', f'DropInPaths={loaded}\n')
+            return result
+
+        self.component.runner = with_dropins
+        with patch.object(scope['Lifecycle'], 'check_container_adapter') as verify:
+            unit = self.component.unit(generation_mode=False)
+            verify.assert_called_once_with()
+            self.assertEqual('', unit['DropInPaths'])
+            loaded = f'{generation} {adapter}'
+            unit = self.component.unit(generation_mode=True, recovery=True)
+            self.assertEqual(generation, unit['DropInPaths'])
+            self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=False))
+            loaded = f'{adapter} /etc/systemd/system/kura.service.d/unreviewed.conf'
+            self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=False))
+            loaded = adapter
+            verify.side_effect = scope['Refused']('unmatched LXC adapter')
+            self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=False))
+
     def count_stops(self):
         return sum(command[-2:] == ('stop', 'kura.service') for command in self.commands)
 

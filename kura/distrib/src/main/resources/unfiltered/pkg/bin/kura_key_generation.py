@@ -18,7 +18,8 @@ import time
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode, rename_no_replace,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
-from kura_key_service_lifecycle import (Lifecycle, Refused, validate_generation_metadata, validate_publication,
+from kura_key_service_lifecycle import (CONTAINER_ADAPTER_DROPIN, Lifecycle, Refused, validate_generation_metadata,
+    validate_publication,
     handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
     validate_start_lease, START_LEASE_CONTEXT, handoff_operation_request)
 
@@ -60,7 +61,18 @@ class Generations:
         require(result['FragmentPath'] in ('/lib/systemd/system/kura.service', '/usr/lib/systemd/system/kura.service')
                 and self.manager.store.path(result['FragmentPath']).resolve(strict=True)
                 == self.manager.store.path('/lib/systemd/system/kura.service').resolve(strict=True), 'UNMANAGED_CORE')
-        require(result['DropInPaths'] in (('', DROPIN) if recovery else ((DROPIN if generation_mode else ''),)), 'UNMANAGED_CORE')
+        dropins = result['DropInPaths'].split()
+        if CONTAINER_ADAPTER_DROPIN in dropins:
+            try:
+                Lifecycle(self.manager.root, self.manager.owner).check_container_adapter()
+            except (OSError, Refused) as error:
+                raise Failure('UNMANAGED_CORE') from error
+            dropins.remove(CONTAINER_ADAPTER_DROPIN)
+        # Recovery uses this value to decide whether the generation drop-in
+        # still needs to be loaded. The paired platform adapter is independent.
+        result['DropInPaths'] = ' '.join(dropins)
+        allowed = ('', DROPIN) if recovery else (DROPIN if generation_mode else '',)
+        require(result['DropInPaths'] in allowed, 'UNMANAGED_CORE')
         require(all(re.fullmatch(r'[0-9]{1,10}', result[k]) is not None for k in ('MainPID', 'ControlPID')), 'UNMANAGED_CORE')
         require(result['ControlGroup'] in ('', '/system.slice/kura.service')
                 and re.fullmatch(r'(?:[0-9a-f]{32})?', result['InvocationID']) is not None, 'UNMANAGED_CORE')
