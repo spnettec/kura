@@ -17,6 +17,7 @@ import types
 
 INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
 CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json', 'configured.json',
+                   'layout-repair.json',
                    'runtime-data-intent.json', 'runtime-data-handoff.json',
                    'retained-data-intent.json', 'retained-data-handoff.json'} | {
     f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'returned', 'complete')
@@ -47,6 +48,13 @@ def publish_sibling(staged, target):
     rename_package_entry(staged, target, 1)  # RENAME_NOREPLACE
 
 
+def retained_vendor_profile(api, manifest, expected):
+    units = manifest['units']
+    api.require(set(units) == set(expected) and set(units) <= set(api.UNITS) | set(api.NATIVE_MAIN_UNITS)
+                and all(api.is_digest(value) for value in units.values()), 'Unpaired retained key-service unit profile')
+    return units
+
+
 def load_lifecycle(physical, expected):
     path = physical / 'bin/kura_key_service_lifecycle.py'
     for parent in reversed(path.parents):
@@ -69,11 +77,12 @@ def load_lifecycle(physical, expected):
 
 
 class Configure:
-    def __init__(self, api, policy, physical, version, manifest_sha, control_sha):
+    def __init__(self, api, policy, physical, version, manifest_sha, control_sha, repair_predecessor=None):
         self.api = api
         self.policy = policy
         self.physical = physical
         self.binding = dict(schema=1, packageVersion=version, manifestSha256=manifest_sha, postinstSha256=control_sha)
+        self.repair_predecessor = repair_predecessor
         self.state = policy.path('/var/lib/kura-package-configure')
         self.copies = {'upgrade': policy.path('/opt/eclipse/.kura-preserve'),
                        'reinstall': policy.path('/var/lib/kura-retained')}
@@ -139,7 +148,20 @@ class Configure:
         require((mode == 'install' and recovery['device'] is None and recovery['inode'] is None)
                 or (mode in self.copies and all(type(recovery[k]) is int and recovery[k] > 0
                                                for k in ('device', 'inode'))))
-        require(raw == self.body(original, 'intent', recovery, secret), 'Configure intent belongs to another package or Root')
+        repair = directory / 'layout-repair.json'
+        if raw == self.body(original, 'intent', recovery, secret):
+            require(not os.path.lexists(repair), 'Original configure has handed off to its paired repair')
+        else:
+            predecessor = self.repair_predecessor
+            require(mode == 'reinstall' and predecessor is not None and os.path.lexists(repair),
+                    'Configure intent belongs to another package or Root')
+            target = {key: value for key, value in self.binding.items() if key != 'schema'}
+            require(predecessor['manifestSha256'] == target['manifestSha256'],
+                    'Retained layout repair changed the package payload')
+            checked_repair_source(self.api, raw, original, predecessor, recovery, secret)
+            require(policy.read(repair, limit=4096) ==
+                    layout_repair_receipt(self.api, policy, original, raw, recovery, predecessor, target, secret),
+                    'Unpaired retained layout repair receipt')
         return recovery, secret
 
     def publish(self, directory, original, phase, recovery, secret):
@@ -316,9 +338,9 @@ class Configure:
         require(key_policy['prepare_retained_generation'](unpacked_layout=True) == 0,
                 'Original retained generation credentials changed after unpack')
 
-        # Use the same exact profile gate as the installed reader. These
-        # vendor files are still absent until the retained layout is restored.
-        profile_units = policy.key_service_profile(manifest)
+        # The incoming manifest has already been matched to its built digest.
+        # Check its exact build-bound unit profile before restoring vendor files.
+        profile_units = retained_vendor_profile(self.api, manifest, CORE_CONFIGURE_VENDOR_UNITS)
         units = {name: incoming('install/' + name) for name in profile_units}
         require(all(digest(raw) == profile_units[name] for name, raw in units.items()))
         main = incoming('install/kura.service').replace(b'INSTALL_DIR', b'/opt/eclipse')
@@ -833,7 +855,8 @@ def main():
     control = policy.read(Path('/var/lib/dpkg/info/kura-core.postinst'), limit=512 * 1024, private=False)
     version = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${Version}', 'kura-core'], text=True)
     lifecycle.require(re.fullmatch(r'[0-9][0-9A-Za-z.+:~_-]{0,199}', version))
-    configure = Configure(lifecycle, policy, physical, version, manifest_sha, hashlib.sha256(control).hexdigest())
+    configure = Configure(lifecycle, policy, physical, version, manifest_sha, hashlib.sha256(control).hexdigest(),
+                          CORE_CONFIGURE_REPAIR_PREDECESSOR)
     if action.startswith('setup-'):
         step = action.removeprefix('setup-')
 

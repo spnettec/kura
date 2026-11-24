@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Assemble the fixed private worker and its manifest; never touch a gateway."""
+import ast
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import sys
+import tarfile
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src/main/resources/unfiltered/pkg/bin"))
@@ -202,13 +206,7 @@ def embed_main_link_migration(preinst):
     preinst.write_text(content.replace(token, '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE = ' + repr(source)))
 
 
-def embed_upgrade_copy(preinst, assembly):
-    token = 'raise RuntimeError("Kura upgrade copy was not embedded")'
-    source = Path(__file__).with_name('preinst-upgrade-copy.py').read_bytes()
-    require(0 < len(source) <= 32768)
-    compile(source, 'preinst-upgrade-copy.py', 'exec', dont_inherit=True)
-    content = preinst.read_text()
-    require(content.count(token) == 1)
+def upgrade_payload(assembly):
     directories, files = [], {}
     for path in sorted(assembly.rglob('*')):
         name = path.relative_to(assembly).as_posix()
@@ -219,11 +217,54 @@ def embed_upgrade_copy(preinst, assembly):
             require(path.is_file())
             with path.open('rb') as stream:
                 files[name] = (path.stat().st_size, hashlib.file_digest(stream, 'sha256').hexdigest())
+    return dict(home=assembly.name, directories=directories, files=files)
+
+
+def layout_repair_predecessor(assembly, archive):
+    require(archive.is_file() and not archive.is_symlink())
+    raw = subprocess.check_output(['dpkg-deb', '--ctrl-tarfile', str(archive)], timeout=20)
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r:') as control:
+        parts = {member.name.removeprefix('./'): control.extractfile(member).read()
+                 for member in control if member.isfile()}
+    metadata = parts['control']
+    version = re.search(rb'(?m)^Version: ([0-9][0-9A-Za-z.+:~_-]{0,199})$', metadata)
+    require(version and re.search(rb'(?m)^Package: kura-core$', metadata))
+    previous = re.search(rb'(?m)^_KURA_EMBEDDED_UPGRADE_PAYLOAD = (.+)$', parts['preinst'])
+    require(previous is not None)
+    published = ast.literal_eval(previous[1].decode())
+    require(set(published) == {'home', 'directories', 'files', 'controls'})
+    payload = upgrade_payload(assembly)
+    require(all(published[name] == value for name, value in payload.items()))
+    postinst = hashlib.sha256(parts['postinst']).hexdigest()
+    require(published['controls']['postinst'] == postinst)
+    manifest = payload['files']['libexec/key-backup/manifest.json'][1]
+    return dict(packageVersion=version[1].decode(), manifestSha256=manifest, postinstSha256=postinst)
+
+
+def embed_layout_repair(preinst, postinst, assembly, predecessor):
+    token = 'raise RuntimeError("Kura retained layout repair was not embedded")'
+    content = preinst.read_text()
+    require(content.count(token) == 1)
+    names = dict(_KURA_LAYOUT_REPAIR_PREDECESSOR=predecessor, _KURA_LAYOUT_REPAIR_HOME=assembly.name,
+                 _KURA_LAYOUT_REPAIR_POSTINST_SHA256=hashlib.sha256(postinst.read_bytes()).hexdigest())
+    source = Path(__file__).with_name('prelayout-repair.py').read_text()
+    helper = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source
+    compile(helper, 'prelayout-repair.py', 'exec', dont_inherit=True)
+    preinst.write_text(content.replace(token, helper))
+
+
+def embed_upgrade_copy(preinst, assembly):
+    token = 'raise RuntimeError("Kura upgrade copy was not embedded")'
+    source = Path(__file__).with_name('preinst-upgrade-copy.py').read_bytes()
+    require(0 < len(source) <= 32768)
+    compile(source, 'preinst-upgrade-copy.py', 'exec', dont_inherit=True)
+    content = preinst.read_text()
+    require(content.count(token) == 1)
     controls = {}
     for hook in ('postinst', 'prerm', 'postrm'):
         with preinst.with_name(hook).open('rb') as stream:
             controls[hook] = hashlib.file_digest(stream, 'sha256').hexdigest()
-    data = dict(home=assembly.name, directories=directories, files=files, controls=controls)
+    data = dict(upgrade_payload(assembly), controls=controls)
     inputs = '_KURA_EMBEDDED_UPGRADE_PAYLOAD = ' + repr(data)
     helper = '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE = ' + repr(source)
     preinst.write_text(content.replace(token, inputs + '\n' + helper))
@@ -359,9 +400,11 @@ def embed_reboot_guard(control):
     control.write_text(content.replace(token, source))
 
 
-def embed_configure_phases(control, assembly):
+def embed_configure_phases(control, assembly, repair_predecessor=None):
     token = 'raise RuntimeError("Kura Core configure phases were not embedded")'
-    names = dict(CORE_CONFIGURE_HOME=assembly.name)
+    manifest = json.loads((assembly/'libexec/key-backup/manifest.json').read_bytes())
+    names = dict(CORE_CONFIGURE_HOME=assembly.name, CORE_CONFIGURE_REPAIR_PREDECESSOR=repair_predecessor,
+                 CORE_CONFIGURE_VENDOR_UNITS=tuple(sorted(manifest['units'])))
     packages = assembly / 'packages'
     factory = {}
     for path in sorted(packages.iterdir()):
@@ -380,7 +423,8 @@ def embed_configure_phases(control, assembly):
             ('CORE_CONFIGURE_CLOCK_SETUP_SHA', 'bin/kura_clock_setup.py'),
             ('CORE_CONFIGURE_REBOOT_SETUP_SHA', 'bin/kura_reboot_setup.py')):
         names[name] = hashlib.sha256((assembly / relative).read_bytes()).hexdigest()
-    source = Path(__file__).with_name('postinst-configure.py').read_text()
+    source = (Path(__file__).with_name('prelayout-repair.py').read_text() + '\n'
+              + Path(__file__).with_name('postinst-configure.py').read_text())
     source = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source
     compile(source, 'postinst-configure.py', 'exec', dont_inherit=True)
     content = control.read_text()
@@ -413,7 +457,12 @@ if __name__ == "__main__":
         control = Path(sys.argv[1]).parent / 'filtered-control' / hook
         embed_package_helper(control, Path(__file__).with_name('addon-code-policy.py'), 'addon-code policy')
         embed_package_helper(control, Path(sys.argv[1]) / 'bin/kura_watchdog_maintenance.py', 'watchdog maintenance')
-    embed_configure_phases(Path(sys.argv[1]).parent/'filtered-control/postinst', Path(sys.argv[1]))
+    assembly = Path(sys.argv[1])
+    repair = os.environ.get('KURA_RETAINED_LAYOUT_REPAIR_DEB')
+    predecessor = layout_repair_predecessor(assembly, Path(repair)) if repair else None
+    control = assembly.parent/'filtered-control'
+    embed_configure_phases(control/'postinst', assembly, predecessor)
+    embed_layout_repair(control/'preinst', control/'postinst', assembly, predecessor)
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
         embed_reboot_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)

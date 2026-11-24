@@ -17,6 +17,8 @@ MODULE = Path(__file__).resolve().parents[2] / 'kura-core/postinst-configure.py'
 spec = importlib.util.spec_from_file_location('postinst_configure', MODULE)
 configure = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(configure)
+repair = MODULE.with_name('prelayout-repair.py').read_bytes()
+exec(compile(repair, 'prelayout-repair.py', 'exec'), vars(configure))
 lifecycle = fixtures.lifecycle
 
 
@@ -59,10 +61,37 @@ class ConfigureTest(unittest.TestCase):
         manifest = dict(schema=2, protocol=2,
                         files={name: '2' * 64 for name in lifecycle.SNAPSHOT_PUBLICATION_ASSETS},
                         units=units, generation={})
-        self.assertEqual(units, self.policy.key_service_profile(manifest))
+        self.assertEqual(units, configure.retained_vendor_profile(lifecycle, manifest, tuple(units)))
         manifest['units'] = {name: '1' * 64 for name in lifecycle.NATIVE_VALIDATION_UNITS}
-        with self.assertRaisesRegex(lifecycle.Refused, 'Unrecognized key-service package profile'):
-            self.policy.key_service_profile(manifest)
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired retained key-service unit profile'):
+            configure.retained_vendor_profile(lifecycle, manifest, tuple(units))
+
+    def test_retained_repair_requires_the_exact_signed_source_and_successor(self):
+        source = self.configure
+        retained = source.copies['reinstall']
+        retained.mkdir(mode=0o700)
+        source.apply('begin')
+        original = self.fence['id']
+        raw = (self.stage / 'intent.json').read_bytes()
+        recovery, secret = source.read_intent(self.stage, original)
+        predecessor = {key: value for key, value in source.binding.items() if key != 'schema'}
+        successor = configure.Configure(lifecycle, self.policy, source.physical, '6.0.0-2',
+                                         self.manifest_sha, '2' * 64, predecessor)
+        with self.assertRaisesRegex(lifecycle.Refused, 'another package or Root'):
+            successor.read_intent(self.stage, original)
+        target = {key: value for key, value in successor.binding.items() if key != 'schema'}
+        receipt = configure.layout_repair_receipt(lifecycle, self.policy, original, raw, recovery,
+                                                  predecessor, target, secret)
+        marker = self.stage / configure.LAYOUT_REPAIR
+        self.policy.create(marker, receipt)
+        self.assertEqual((recovery, secret), successor.read_intent(self.stage, original))
+        self.assertEqual(raw, (self.stage / 'intent.json').read_bytes())
+        with self.assertRaisesRegex(lifecycle.Refused, 'handed off'):
+            source.read_intent(self.stage, original)
+        other = configure.Configure(lifecycle, self.policy, source.physical, '6.0.0-2',
+                                     self.manifest_sha, '3' * 64, predecessor)
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired retained layout repair receipt'):
+            other.read_intent(self.stage, original)
 
     def install_steps(self):
         for name in configure.INSTALLER_STEPS:
