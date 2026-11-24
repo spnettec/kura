@@ -98,6 +98,13 @@ class CoreRemovalHomeTest(unittest.TestCase):
         receipt.write_bytes(b'completed')
         (site / 'dpa.properties').write_bytes(b'site registry')
         actual = (site.stat().st_ino, receipt.stat().st_ino)
+        data = self.target / 'data'
+        data.mkdir(mode=0o700)
+        provider = data / 'store.save'
+        provider.write_bytes(b'retained provider record')
+        provider.chmod(0o600)
+        original_data = data.stat()
+        original_provider = provider.stat()
         root = self.home.PARENT.parent
         key = root / 'journal.key'
         key.write_bytes(os.urandom(32))
@@ -114,6 +121,7 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.home.remove(self.retained)
         self.target.mkdir()
         self.home.HOME.symlink_to(self.target)
+        data.mkdir(mode=0o700)
         site.mkdir()
         (site / 'dpa.properties').write_bytes(b'factory registry')
         (site / 'new.dp').write_bytes(b'factory DP')
@@ -123,6 +131,7 @@ class CoreRemovalHomeTest(unittest.TestCase):
         config = configure_tests.configure.Configure(api, policy, self.target, '1', 'a'*64, 'b'*64)
         config.copies['reinstall'] = self.retained
         config.paired_home = lambda: self.assertEqual(self.target, self.home.HOME.resolve(strict=True))
+        (config.state / self.op).mkdir(mode=0o700, parents=True)
         secret = key.read_bytes()
         module = configure_tests.configure
         rename = module.rename_package_entry
@@ -139,8 +148,16 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.assertEqual(actual, (site.stat().st_ino, receipt.stat().st_ino))
         self.assertEqual(b'site registry', (site / 'dpa.properties').read_bytes())
         self.assertEqual(b'factory DP', (site / 'new.dp').read_bytes())
-        config.retire_removed_packages(self.op, self.retained, secret)
-        config.retire_removed_packages(self.op, self.retained, secret)
+        with patch.object(module, 'rename_package_entry', side_effect=interrupt), self.assertRaises(InterruptedError):
+            config.restore_runtime_data(self.op, 'reinstall', secret)
+        with patch.object(module, 'rename_package_entry', side_effect=AssertionError('repeated exchange')):
+            self.assertEqual('PRESERVED', config.restore_runtime_data(self.op, 'reinstall', secret))
+        self.assertEqual(original_data.st_ino, data.stat().st_ino)
+        self.assertEqual(original_provider, provider.stat())
+        self.assertEqual(original_provider.st_ctime_ns, provider.stat().st_ctime_ns)
+        self.assertEqual(b'retained provider record', provider.read_bytes())
+        config.retire_removed_trees(self.op, self.retained, secret)
+        config.retire_removed_trees(self.op, self.retained, secret)
         self.assertFalse(holder.exists())
 
     def published_generation(self):
@@ -298,10 +315,13 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.assertFalse(staged.exists())
         self.assertEqual(self.op, json.loads(fence.read_bytes())['id'])
 
-    def test_purge_checks_parked_identity_before_deleting(self):
+    def test_purge_checks_all_parked_identities_before_deleting(self):
         site = self.target / 'packages'
         site.mkdir()
         (site / ('.dpa.properties.uninstall-' + 'b' * 64 + '.done')).touch()
+        data = self.target / 'data'
+        data.mkdir()
+        (data / 'store.save').write_bytes(b'original provider data')
         self.home.JOURNAL_KEY = self.home.PARENT.parent / 'journal.key'
         self.home.JOURNAL_KEY.write_bytes(os.urandom(32))
         self.home.JOURNAL_KEY.chmod(0o600)
@@ -309,15 +329,16 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.home.park(self.retained)
         self.home.remove(self.retained)
         holder = self.home.PARENT / self.home.package_record(self.retained)['holder']
-        saved = holder / 'packages'
+        saved = holder / 'data'
         moved = saved.rename(holder / 'different-name')
         saved.mkdir()
-        with self.assertRaisesRegex(ValueError, 'Different deployment directory'):
-            self.home.purge_packages(self.retained)
+        with self.assertRaisesRegex(ValueError, 'Different original directory'):
+            self.home.purge_parked_trees(self.retained)
+        self.assertTrue((holder / 'packages').is_dir())
         saved.rmdir()
         moved.rename(saved)
-        self.home.purge_packages(self.retained)
-        self.home.purge_packages(self.retained)
+        self.home.purge_parked_trees(self.retained)
+        self.home.purge_parked_trees(self.retained)
         self.assertFalse(holder.exists())
 
     def test_missing_legacy_registry_leaves_no_restore_input(self):

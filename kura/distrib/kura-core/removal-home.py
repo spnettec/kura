@@ -77,6 +77,9 @@ def check_purge_mounts(retained):
                     *retained.parent.glob('.kura-retained.purging-*'),
                     ROOT / 'etc/systemd/system/kura.service.d', ROOT / 'var/log/kura',
                     ROOT / 'tmp/.kura', ROOT / 'tmp/kura')
+    record_path = retained / 'removal-home.json'
+    if os.path.lexists(record_path) and 'packageTag' in json.loads(generation_input(record_path, 8192)):
+        no_mounts_below(PARENT / package_record(retained)['holder'])
 
 
 def removal_tag(record, context=b'kura-core-removal-packages-v1\0'):
@@ -261,20 +264,35 @@ def capture_generation(physical, retained, operation):
     sync_dir(retained)
 
 
-def capture_history(physical, retained, record):
+def capture_history(physical, record):
+    data = physical / 'data'
+    if os.path.lexists(data):
+        info = data.lstat()
+        require(stat.S_ISDIR(info.st_mode), 'Unsafe original runtime data directory')
+        record['runtimeDataDirectory'] = dict(device=info.st_dev, inode=info.st_ino, ctimeNs=info.st_ctime_ns)
     packages = physical / 'packages'
-    if not packages.is_dir() or packages.is_symlink():
-        return
-    registry = (packages / 'dpa.properties').resolve()
-    pattern = re.compile(re.escape('.' + registry.name) + r'\.(install|uninstall)-[0-9a-f]{64}\.done')
-    if not registry.parent.is_dir() or not any(pattern.fullmatch(p.name) for p in registry.parent.iterdir()):
+    if packages.is_dir() and not packages.is_symlink():
+        registry = (packages / 'dpa.properties').resolve()
+        pattern = re.compile(re.escape('.' + registry.name) + r'\.(install|uninstall)-[0-9a-f]{64}\.done')
+        if registry.parent.is_dir() and any(pattern.fullmatch(path.name) for path in registry.parent.iterdir()):
+            record['packages'] = identity(packages)
+    if not retained_trees(record):
         return
     # Park on the installation filesystem, even when /var/lib is a different mount.
     holder = Path(tempfile.mkdtemp(prefix='.kura-removed-packages-', dir=PARENT))
     sync_dir(PARENT)
-    record.update(packages=identity(packages), holder=holder.name, holderIdentity=identity(holder),
-                  retained=identity(retained))
+    record.update(holder=holder.name, holderIdentity=identity(holder))
     record['packageTag'] = removal_tag(record)
+
+
+def retained_trees(record):
+    trees = {}
+    if 'packages' in record:
+        trees['packages'] = record['packages']
+    if 'runtimeDataDirectory' in record:
+        data = record['runtimeDataDirectory']
+        trees['data'] = [data['device'], data['inode']]
+    return trees
 
 
 def package_record(retained):
@@ -363,29 +381,40 @@ def locate_retention(destination):
 
 def park(retained):
     record, physical, holder = paired_removal(retained)
-    source, saved = physical / 'packages', holder / 'packages'
-    if os.path.lexists(source):
-        require(identity(source) == record['packages'] and not os.path.lexists(saved),
-                'Original deployment directory changed before removal')
-        no_mounts_below(source)
+    no_mounts_below(holder)
+    transfers = []
+    for name, recorded in retained_trees(record).items():
+        source, saved = physical / name, holder / name
+        if os.path.lexists(source):
+            require(identity(source) == recorded and not os.path.lexists(saved),
+                    f'Original {name} directory changed before removal')
+            if name == 'data':
+                require(source.lstat().st_ctime_ns == record['runtimeDataDirectory']['ctimeNs'],
+                        'Original runtime data directory changed before removal')
+            no_mounts_below(source)
+            transfers.append((source, saved))
+        else:
+            require(identity(saved) == recorded, f'Retained {name} directory changed')
+    for source, saved in transfers:
         source.rename(saved)
-    require(identity(saved) == record['packages'], 'Retained deployment directory changed')
     sync_dir(holder)
     sync_dir(physical)
 
 
-def purge_packages(retained):
+def purge_parked_trees(retained):
     record = package_record(retained)
     holder = PARENT / record['holder']
     if not os.path.lexists(holder):
         return
     protected(holder, True)
     require(identity(holder) == record['holderIdentity'], 'Original purge holding directory changed')
-    saved = holder / 'packages'
-    if os.path.lexists(saved):
-        require(identity(saved) == record['packages'], 'Different deployment directory at purge')
-        no_mounts_below(saved)
-        shutil.rmtree(saved)
+    trees = retained_trees(record)
+    parked = list(holder.iterdir())
+    require(all(path.name in trees and identity(path) == trees[path.name] for path in parked),
+            'Different original directory at purge')
+    no_mounts_below(holder)
+    for path in parked:
+        shutil.rmtree(path)
     holder.rmdir()
     sync_dir(PARENT)
 
@@ -417,7 +446,7 @@ def purge_retained(retained):
                 'Retained directory belongs to another removal')
         remove(retained)
         if 'packageTag' in record:
-            purge_packages(retained)
+            purge_parked_trees(retained)
         no_mounts_below(retained)
         retained.rename(target)
     sync_dir(retained.parent)
@@ -457,7 +486,7 @@ def capture(retained):
                 os.fsync(stream.fileno())
             sync_dir(saved)
     capture_generation(physical, retained, operation)
-    capture_history(physical, retained, record)
+    capture_history(physical, record)
     raw = json.dumps(record, sort_keys=True).encode()
     write_new(retained / 'removal-home.json', raw)
     # An inode number can be reused after a directory is removed.
@@ -484,8 +513,9 @@ def remove(retained):
         holder = PARENT / bound['holder']
         if os.path.lexists(PARENT / rec['name']) or os.path.lexists(PARENT / ('.kura-removing-' + operation)):
             protected(holder, True)
-            require(identity(holder) == bound['holderIdentity'] and identity(holder / 'packages') == bound['packages'],
-                    'Original deployment directory was not parked before removal')
+            require(identity(holder) == bound['holderIdentity']
+                    and all(identity(holder / name) == expected for name, expected in retained_trees(bound).items()),
+                    'Original retained directories were not parked before removal')
     name = rec['name']
     require(Path(name).name == name and (name == 'kura' or name.startswith('kura_')),
             'Invalid original installation name')

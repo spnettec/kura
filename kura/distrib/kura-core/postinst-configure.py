@@ -17,7 +17,8 @@ import types
 
 INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
 CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json', 'configured.json',
-                   'runtime-data-intent.json', 'runtime-data-handoff.json'} | {
+                   'runtime-data-intent.json', 'runtime-data-handoff.json',
+                   'retained-data-intent.json', 'retained-data-handoff.json'} | {
     f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'returned', 'complete')
 }
 
@@ -225,7 +226,7 @@ class Configure:
         info = path.lstat()
         return dict(device=info.st_dev, inode=info.st_ino)
 
-    def removal_history(self, original, copy, secret):
+    def removed_trees(self, original, copy, secret):
         require = self.api.require
         path = copy / 'removal-home.json'
         capture = self.api.decode(self.policy.read(path, limit=4096)) if os.path.lexists(path) else {}
@@ -246,8 +247,10 @@ class Configure:
                 and capture['retained'] == pair(copy) and capture['name'] == self.physical.name,
                 'Deployment history requires its original removal Root and home')
         parked = self.physical.parent / capture['holder']
-        recorded = dict(zip(('device', 'inode'), capture['packages'], strict=True))
-        return parked, capture['holderIdentity'], recorded, tag
+        if os.path.lexists(parked):
+            self.policy.directory(parked, private=True)
+            require(pair(parked) == capture['holderIdentity'], 'Original retained holding directory changed')
+        return capture, parked, tag
 
     def upgrade_capture(self, original, copy, secret):
         require = self.api.require
@@ -461,12 +464,13 @@ class Configure:
         require = self.api.require
         identity = self.package_identity
         if mode == 'reinstall':
-            history = self.removal_history(original, copy, secret)
+            history = self.removed_trees(original, copy, secret)
             if history is None:
                 return 'COPY'
-            parked, holder_identity, recorded, tag = history
-            self.policy.directory(parked, private=True)
-            require(list(identity(parked).values()) == holder_identity, 'Original deployment holding directory changed')
+            capture, parked, tag = history
+            if 'packages' not in capture:
+                return 'COPY'
+            recorded = dict(zip(('device', 'inode'), capture['packages'], strict=True))
         else:
             # Older upgrade installers may have only a staged copy.
             if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
@@ -520,23 +524,35 @@ class Configure:
         return 'PRESERVED'
 
     def restore_runtime_data(self, original, mode, secret):
-        if mode != 'upgrade':
+        if mode not in self.copies:
             return 'COPY'
-        copy = self.copies['upgrade']
-        # An earlier preinst may have retained only a recovery copy.
-        if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
-            return 'COPY'
-        capture, tag = self.upgrade_capture(original, copy, secret)
+        copy = self.copies[mode]
+        require = self.api.require
+        identity = self.package_identity
+        if mode == 'reinstall':
+            history = self.removed_trees(original, copy, secret)
+            if history is None:
+                return 'COPY'
+            capture, parked, tag = history
+            phase = 'retained-data'
+            lineage = dict(root=capture['root'], home=self.physical.name)
+        else:
+            # An earlier preinst may have retained only a recovery copy.
+            if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
+                return 'COPY'
+            capture, tag = self.upgrade_capture(original, copy, secret)
+            if 'runtimeDataDirectory' not in capture:
+                return 'COPY'
+            parked = copy / '.old-home'
+            self.policy.directory(parked)
+            require(capture['source'] == dict(name=self.physical.name, **identity(parked)),
+                    'Original runtime data home differs from the upgrade capture')
+            phase = 'runtime-data'
+            lineage = dict(root=capture['root'], bootId=capture['bootId'], home=self.physical.name)
         recorded = capture.get('runtimeDataDirectory')
         if recorded is None:
             return 'COPY'
-        require = self.api.require
         self.paired_home()
-        parked = copy / '.old-home'
-        self.policy.directory(parked)
-        identity = self.package_identity
-        require(capture['source'] == dict(name=self.physical.name, **identity(parked)),
-                'Original runtime data home differs from the upgrade capture')
         source, destination = parked / 'data', self.physical / 'data'
         old_info, new_info = source.lstat(), destination.lstat()
         require(all(stat.S_ISDIR(info.st_mode) for info in (old_info, new_info)),
@@ -546,20 +562,20 @@ class Configure:
         factory = source if at_destination else destination
         require(not any(factory.iterdir()), 'Incoming runtime data directory must be empty')
         directory = self.state / original
-        binding = dict(root=capture['root'], bootId=capture['bootId'], home=self.physical.name,
-                       originalDirectory=recorded, factoryDirectory=identity(factory), captureTag=tag)
-        intent = directory / 'runtime-data-intent.json'
-        result = directory / 'runtime-data-handoff.json'
+        binding = dict(lineage, originalDirectory=recorded, factoryDirectory=identity(factory), captureTag=tag)
+        intent = directory / f'{phase}-intent.json'
+        result = directory / f'{phase}-handoff.json'
         if os.path.lexists(intent):
-            require(self.policy.read(intent, limit=4096) == self.body(original, 'runtime-data-intent', binding, secret),
+            require(self.policy.read(intent, limit=4096) == self.body(original, f'{phase}-intent', binding, secret),
                     'Runtime data handoff directories changed')
         else:
             require(not at_destination and identity(source) == original_identity,
                     'Original runtime data directory is missing')
-            self.publish(directory, original, 'runtime-data-intent', binding, secret)
+            self.publish(directory, original, f'{phase}-intent', binding, secret)
         if not at_destination:
             require(not os.path.lexists(result) and identity(source) == original_identity
-                    and source.lstat().st_ctime_ns == recorded['ctimeNs'], 'Original runtime data directory changed')
+                    and (mode == 'reinstall' or source.lstat().st_ctime_ns == recorded['ctimeNs']),
+                    'Original runtime data directory changed')
             self.policy.sync(source)
             rename_package_entry(source, destination, 2)  # RENAME_EXCHANGE
         self.policy.sync(parked)
@@ -567,26 +583,38 @@ class Configure:
         require(identity(destination) == original_identity, 'Original runtime data directory was not restored')
         completed = dict(binding, installedCtimeNs=destination.lstat().st_ctime_ns)
         if os.path.lexists(result):
-            require(self.policy.read(result, limit=4096) == self.body(original, 'runtime-data-handoff', completed, secret),
+            require(self.policy.read(result, limit=4096) == self.body(original, f'{phase}-handoff', completed, secret),
                     'Original runtime data handoff result changed')
         else:
-            self.publish(directory, original, 'runtime-data-handoff', completed, secret)
+            self.publish(directory, original, f'{phase}-handoff', completed, secret)
         return 'PRESERVED'
 
-    def retire_removed_packages(self, original, copy, secret):
-        history = self.removal_history(original, copy, secret)
+    def retire_removed_trees(self, original, copy, secret):
+        history = self.removed_trees(original, copy, secret)
         if history is None:
             return
-        parked, holder_identity, recorded, tag = history
-        destination = self.physical / 'packages'
+        capture, parked, tag = history
         require = self.api.require
-        require(self.package_identity(destination) == recorded, 'Different installed deployment directory at retirement')
+        identity = self.package_identity
+        if 'packages' in capture:
+            require(list(identity(self.physical / 'packages').values()) == capture['packages'],
+                    'Different installed deployment directory at retirement')
+        if 'runtimeDataDirectory' in capture:
+            recorded = capture['runtimeDataDirectory']
+            require(identity(self.physical / 'data') == {key: recorded[key] for key in ('device', 'inode')},
+                    'Different installed runtime data directory at retirement')
         if os.path.lexists(parked):
-            self.policy.directory(parked, private=True)
-            require(list(self.package_identity(parked).values()) == holder_identity, 'Different deployment holding directory')
+            expected = ({'packages'} if 'packages' in capture else set()) | (
+                {'data'} if 'runtimeDataDirectory' in capture else set())
+            require({path.name for path in parked.iterdir()} <= expected, 'Unexpected retained directory at retirement')
+            data_factory = parked / 'data'
+            if os.path.lexists(data_factory):
+                self.restore_runtime_data(original, 'reinstall', secret)
+                data_factory.rmdir()
             factory = parked / 'packages'
             if os.path.lexists(factory):
-                binding = dict(originalDirectory=recorded, factoryDirectory=self.package_identity(factory), captureTag=tag)
+                recorded = dict(zip(('device', 'inode'), capture['packages'], strict=True))
+                binding = dict(originalDirectory=recorded, factoryDirectory=identity(factory), captureTag=tag)
                 require(self.policy.read(copy / '.package-history-handoff.json', limit=4096)
                         == self.body(original, 'package-history-handoff', binding, secret),
                         'Different factory directory at retirement')
@@ -711,6 +739,12 @@ class Configure:
                                 require(os.path.lexists(directory / 'runtime-data-handoff.json'),
                                         'Original runtime data handoff is unresolved')
                                 self.restore_runtime_data(original, mode, secret)
+                    if mode == 'reinstall':
+                        history = self.removed_trees(original, self.copies[mode], secret)
+                        if history is not None and 'runtimeDataDirectory' in history[0]:
+                            require(os.path.lexists(directory / 'retained-data-handoff.json'),
+                                    'Original retained runtime data handoff is unresolved')
+                            self.restore_runtime_data(original, mode, secret)
                     # The staged source may be retired as soon as READY is
                     # durable. Flush the restored runtime trees first.
                     os.sync()
@@ -738,7 +772,7 @@ class Configure:
             if action == 'retire-copy' and existing['mode'] != 'install':
                 path = self.copies[mode]
                 if mode == 'reinstall':
-                    self.retire_removed_packages(original, path, secret)
+                    self.retire_removed_trees(original, path, secret)
                 shutil.rmtree(path)
                 policy.sync(path.parent)
             return 'READY', mode
