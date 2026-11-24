@@ -67,7 +67,7 @@ class ConfigureTest(unittest.TestCase):
         with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired retained key-service unit profile'):
             configure.retained_vendor_profile(lifecycle, manifest, tuple(units))
 
-    def test_purge_successor_requires_both_manifest_pins_and_original_start(self):
+    def test_removed_generation_successor_requires_both_manifest_pins_and_original_start(self):
         installed, origin, incoming = '1' * 64, '2' * 64, '3' * 64
         release = dict(manifestSha256=installed, publicationManifestSha256=origin)
         publication = dict(operationId=str(uuid.uuid4()))
@@ -76,14 +76,17 @@ class ConfigureTest(unittest.TestCase):
         exec(compile(source.read_bytes(), str(source), 'exec'), scope)
         secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
 
-        def admit(pins, *, purged=True):
+        def admit(pins):
             scope['_KURA_INCOMING_KEY_PREDECESSORS'] = pins
-            scope['check_removed_generation_release'](lifecycle, self.policy, release, publication, secret, purged=purged)
+            scope['check_removed_generation_release'](lifecycle, self.policy, release, publication, secret)
 
-        for pins, purged in (((installed,), True), ((origin,), True), ((installed, origin), False)):
-            with self.subTest(pins=pins, purged=purged):
+        scope['_KURA_INCOMING_KEY_MANIFEST_SHA256'] = installed
+        admit(())
+        scope['_KURA_INCOMING_KEY_MANIFEST_SHA256'] = incoming
+        for pins in ((installed,), (origin,)):
+            with self.subTest(pins=pins):
                 with self.assertRaisesRegex(lifecycle.Refused, 'differs from the retained generation cohort'):
-                    admit(pins, purged=purged)
+                    admit(pins)
 
         pins = (installed, origin)
         with self.assertRaisesRegex(lifecycle.Refused, 'original completed generation startup'):

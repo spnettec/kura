@@ -6,13 +6,13 @@ startup entry points do not acquire an admission path for removed installations.
 """
 
 
-def check_removed_generation_release(api, lifecycle, saved, publication, secret, *, purged):
+def check_removed_generation_release(api, lifecycle, saved, publication, secret):
     removed_manifest = saved['manifestSha256']
     if removed_manifest == _KURA_INCOMING_KEY_MANIFEST_SHA256:
         return
     predecessors = _KURA_INCOMING_KEY_PREDECESSORS
     origin_manifest = saved.get('publicationManifestSha256', removed_manifest)
-    require(purged and removed_manifest in predecessors and origin_manifest in predecessors,
+    require(removed_manifest in predecessors and origin_manifest in predecessors,
             'Incoming release differs from the retained generation cohort')
 
     operations = lifecycle.state / 'operations'
@@ -76,7 +76,7 @@ def prepare_retained_generation(*, unpacked_layout=False):
             require(len(secret) == 32, 'Invalid original journal key')
             for key in ('operationId', 'verificationId'):
                 api.archive_entry(lifecycle, dict(directory='operations', operationId=publication[key]), secret)
-            check_removed_generation_release(api, lifecycle, saved, publication, secret, purged=purged)
+            check_removed_generation_release(api, lifecycle, saved, publication, secret)
             if not purged:
                 archive = retained / 'encryption'
                 removal['protected'](archive, True)
