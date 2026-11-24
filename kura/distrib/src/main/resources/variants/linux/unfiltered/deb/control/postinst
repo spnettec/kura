@@ -465,14 +465,23 @@ function postInstall {
             fi
             echo "Restoring preserved user/, data/, packages/ and siblings/ from the previous installation" >> ${LOG} 2>&1
             RESTORE_OK=1
-            local packages_route
+            local packages_route data_route
             packages_route=$(packageConfigure restore-packages) || return 1
             case "${packages_route}" in
                 "COPY ${CONFIGURE_MODE} ${CONFIGURE_HOME}"|"PRESERVED ${CONFIGURE_MODE} ${CONFIGURE_HOME}") ;;
                 *) return 1 ;;
             esac
+            # YOFC CORE RUNTIME DATA HANDOFF V1
+            data_route=$(packageConfigure restore-data) || return 1
+            case "${data_route}" in
+                "COPY ${CONFIGURE_MODE} ${CONFIGURE_HOME}"|"PRESERVED ${CONFIGURE_MODE} ${CONFIGURE_HOME}") ;;
+                *) return 1 ;;
+            esac
             for d in user data packages log; do
                 if [ "${d}" = packages ] && [[ "${packages_route}" == "PRESERVED "* ]]; then
+                    continue
+                fi
+                if [ "${d}" = data ] && [[ "${data_route}" == "PRESERVED "* ]]; then
                     continue
                 fi
                 if [ -d "${PRESERVE_DIR}/${d}" ]; then

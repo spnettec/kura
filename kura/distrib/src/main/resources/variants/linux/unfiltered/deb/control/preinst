@@ -485,6 +485,7 @@ raise RuntimeError("Kura addon-code policy was not embedded")
 KURA_ADDON_CODE_POLICY
 }
 
+# YOFC CORE RUNTIME DATA HANDOFF V1
 function preInstall {
     # On an in-place upgrade (apt install of a newer kura-core over an existing
     # one), preserve the user's runtime state across the wipe. The runtime trees

@@ -16,7 +16,8 @@ import types
 
 
 INSTALLER_STEPS = ('layout', 'brokers', 'runtime', 'https', 'ownership')
-CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json', 'configured.json'} | {
+CONFIGURE_FILES = {'intent.json', 'prepared.json', 'ready.json', 'configured.json',
+                   'runtime-data-intent.json', 'runtime-data-handoff.json'} | {
     f'setup-{step}-{phase}.json' for step in INSTALLER_STEPS for phase in ('intent', 'returned', 'complete')
 }
 
@@ -518,6 +519,60 @@ class Configure:
         require(identity(destination) == recorded, 'Original package history was not restored')
         return 'PRESERVED'
 
+    def restore_runtime_data(self, original, mode, secret):
+        if mode != 'upgrade':
+            return 'COPY'
+        copy = self.copies['upgrade']
+        # An earlier preinst may have retained only a recovery copy.
+        if not os.path.lexists(copy / '.capture.json') and not os.path.lexists(copy / '.old-home'):
+            return 'COPY'
+        capture, tag = self.upgrade_capture(original, copy, secret)
+        recorded = capture.get('runtimeDataDirectory')
+        if recorded is None:
+            return 'COPY'
+        require = self.api.require
+        self.paired_home()
+        parked = copy / '.old-home'
+        self.policy.directory(parked)
+        identity = self.package_identity
+        require(capture['source'] == dict(name=self.physical.name, **identity(parked)),
+                'Original runtime data home differs from the upgrade capture')
+        source, destination = parked / 'data', self.physical / 'data'
+        old_info, new_info = source.lstat(), destination.lstat()
+        require(all(stat.S_ISDIR(info.st_mode) for info in (old_info, new_info)),
+                'Original or incoming runtime data directory is unsafe')
+        original_identity = {key: recorded[key] for key in ('device', 'inode')}
+        at_destination = identity(destination) == original_identity
+        factory = source if at_destination else destination
+        require(not any(factory.iterdir()), 'Incoming runtime data directory must be empty')
+        directory = self.state / original
+        binding = dict(root=capture['root'], bootId=capture['bootId'], home=self.physical.name,
+                       originalDirectory=recorded, factoryDirectory=identity(factory), captureTag=tag)
+        intent = directory / 'runtime-data-intent.json'
+        result = directory / 'runtime-data-handoff.json'
+        if os.path.lexists(intent):
+            require(self.policy.read(intent, limit=4096) == self.body(original, 'runtime-data-intent', binding, secret),
+                    'Runtime data handoff directories changed')
+        else:
+            require(not at_destination and identity(source) == original_identity,
+                    'Original runtime data directory is missing')
+            self.publish(directory, original, 'runtime-data-intent', binding, secret)
+        if not at_destination:
+            require(not os.path.lexists(result) and identity(source) == original_identity
+                    and source.lstat().st_ctime_ns == recorded['ctimeNs'], 'Original runtime data directory changed')
+            self.policy.sync(source)
+            rename_package_entry(source, destination, 2)  # RENAME_EXCHANGE
+        self.policy.sync(parked)
+        self.policy.sync(self.physical)
+        require(identity(destination) == original_identity, 'Original runtime data directory was not restored')
+        completed = dict(binding, installedCtimeNs=destination.lstat().st_ctime_ns)
+        if os.path.lexists(result):
+            require(self.policy.read(result, limit=4096) == self.body(original, 'runtime-data-handoff', completed, secret),
+                    'Original runtime data handoff result changed')
+        else:
+            self.publish(directory, original, 'runtime-data-handoff', completed, secret)
+        return 'PRESERVED'
+
     def retire_removed_packages(self, original, copy, secret):
         history = self.removal_history(original, copy, secret)
         if history is None:
@@ -637,15 +692,25 @@ class Configure:
             require(policy.read(prepared, limit=4096) == prepared_body, 'Invalid configure setup receipt')
             self.paired_setup()
             if not os.path.lexists(ready):
-                require(fence is not None and action in ('status', 'restore-packages', 'restore-siblings', 'ready'),
+                require(fence is not None and action in ('status', 'restore-packages', 'restore-data', 'restore-siblings', 'ready'),
                         'Configure data readiness is unresolved')
                 require(self.source() == recovery, 'Original configure recovery copy changed')
                 if action == 'restore-packages':
                     return self.restore_package_history(original, mode, secret), mode
+                if action == 'restore-data':
+                    return self.restore_runtime_data(original, mode, secret), mode
                 if action == 'restore-siblings':
                     require(mode in self.copies, 'No preserved sibling bundles to restore')
                     self.restore_siblings(original, mode)
                 if action == 'ready':
+                    if mode == 'upgrade':
+                        copy = self.copies[mode]
+                        if os.path.lexists(copy / '.capture.json'):
+                            capture, _ = self.upgrade_capture(original, copy, secret)
+                            if 'runtimeDataDirectory' in capture:
+                                require(os.path.lexists(directory / 'runtime-data-handoff.json'),
+                                        'Original runtime data handoff is unresolved')
+                                self.restore_runtime_data(original, mode, secret)
                     # The staged source may be retired as soon as READY is
                     # durable. Flush the restored runtime trees first.
                     os.sync()
@@ -708,7 +773,7 @@ def check_aborted_change(marker, phases):
 
 
 def main():
-    actions = {'check-abort', 'status', 'resume', 'begin', 'prepared', 'restore-packages', 'restore-siblings', 'ready', 'retire-copy',
+    actions = {'check-abort', 'status', 'resume', 'begin', 'prepared', 'restore-packages', 'restore-data', 'restore-siblings', 'ready', 'retire-copy',
                'configured', 'configure-route', 'sibling-code'} | {
         f'setup-{step}' for step in INSTALLER_STEPS
     }

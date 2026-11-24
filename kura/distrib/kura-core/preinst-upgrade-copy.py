@@ -72,6 +72,12 @@ class UpgradeCopy:
         self.policy.directory(physical)
         alias = dict(self.identity(logical), target=os.readlink(logical) if logical.is_symlink() else None)
         source = dict(source=dict(name=physical.name, **self.identity(physical)), logical=alias)
+        runtime = physical / 'data'
+        if physical == self.incoming and os.path.lexists(runtime):
+            info = runtime.lstat()
+            self.api.require(stat.S_ISDIR(info.st_mode) and info.st_dev == physical.stat().st_dev,
+                             'Original runtime data must be a real directory on the Core filesystem')
+            source['runtimeDataDirectory'] = dict(device=info.st_dev, inode=info.st_ino, ctimeNs=info.st_ctime_ns)
         packages = physical / 'packages'
         if packages.is_dir() and not packages.is_symlink():
             registry = (packages / 'dpa.properties').resolve()
@@ -194,8 +200,9 @@ class UpgradeCopy:
                     'Invalid original Core predecessor')
             binding['oldVersion'] = captured_old
         expected = dict(binding, source=source, logical=alias)
-        if 'packageHistoryDirectory' in saved:
-            expected['packageHistoryDirectory'] = saved['packageHistoryDirectory']
+        for field in ('packageHistoryDirectory', 'runtimeDataDirectory'):
+            if field in saved:
+                expected[field] = saved[field]
         require(hmac.compare_digest(raw, self.receipt(self.destination, expected, secret)),
                 'Published upgrade copy belongs to another source, package, boot or Root')
         if reinstall:

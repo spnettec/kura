@@ -97,6 +97,56 @@ class UpgradeCopyTest(unittest.TestCase):
         self.assertEqual(b'original registry', (packages / 'dpa.properties').read_bytes())
         self.assertEqual(b'factory package', (packages / 'new.dp').read_bytes())
 
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux directory exchange')
+    def test_runtime_data_handoff_keeps_enrollment_inodes_when_exchange_is_interrupted(self):
+        home = self.fixture.physical
+        data = home / 'data'
+        receipt = data / 'management-enrollment' / 'identity-receipt'
+        self.fixture.write(receipt, b'original identity receipt')
+        old_data = data.stat()
+        old_receipt = receipt.stat()
+        stage = self.copy.prepare()
+        shutil.copytree(data, stage / 'data')
+        for name in ('kura_encryption_key', 'provisioned.json'):
+            value = self.policy.path('/etc/kura/credentials') / name
+            self.fixture.write(stage / 'encryption' / name, value.read_bytes())
+        with patch.object(upgrade.os, 'sync'):
+            self.copy.publish(stage)
+        with patch.object(self.policy, 'command', return_value='ActiveState=inactive\nMainPID=0\nControlPID=0\n'):
+            self.copy.arrange_source(restore=False)
+        home.mkdir()
+        data.mkdir()
+        logical = self.copy.base / 'kura'
+        if not logical.is_symlink():
+            logical.symlink_to(home.name)
+        module = postinst_tests.configure
+        config = module.Configure(fixtures.lifecycle, self.policy, home, '6.0.0-2', '1' * 64, '2' * 64)
+        directory = config.state / self.fence['id']
+        directory.mkdir(parents=True, mode=0o700)
+        secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
+        factory_file = data / 'unknown'
+        factory_file.write_text('preserve unreviewed incoming data')
+        with self.assertRaisesRegex(fixtures.lifecycle.Refused, 'must be empty'):
+            config.restore_runtime_data(self.fence['id'], 'upgrade', secret)
+        factory_file.unlink()
+        rename = module.rename_package_entry
+
+        def interrupt(source, destination, flags):
+            rename(source, destination, flags)
+            raise InterruptedError('after data exchange')
+
+        with patch.object(module, 'rename_package_entry', side_effect=interrupt):
+            with self.assertRaisesRegex(InterruptedError, 'after data exchange'):
+                config.restore_runtime_data(self.fence['id'], 'upgrade', secret)
+        self.assertFalse((directory / 'runtime-data-handoff.json').exists())
+        self.assertEqual('PRESERVED', config.restore_runtime_data(self.fence['id'], 'upgrade', secret))
+        self.assertEqual(old_data.st_ino, data.stat().st_ino)
+        current = receipt.stat()
+        self.assertEqual((old_receipt.st_ino, old_receipt.st_ctime_ns), (current.st_ino, current.st_ctime_ns))
+        recovery = fixtures.lifecycle.decode((directory / 'runtime-data-handoff.json').read_bytes())['recovery']
+        self.assertEqual(old_data.st_ctime_ns, recovery['originalDirectory']['ctimeNs'])
+        self.assertEqual(data.stat().st_ctime_ns, recovery['installedCtimeNs'])
+
     @unittest.skipUnless(sys.platform == 'linux', 'Linux upgrade publication')
     def test_registered_writer_blocks_capture_and_detach_and_stale_order_is_never_published(self):
         framework = self.fixture.physical / 'framework'
