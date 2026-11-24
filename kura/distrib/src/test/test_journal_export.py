@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unf
 import kura_journal_export as export
 import kura_main_generation_proof as proof
 import kura_clock_broker as clock
+import kura_reboot_broker as reboot
 
 
 class JournalExportTest(unittest.TestCase):
@@ -95,36 +96,36 @@ class JournalExportTest(unittest.TestCase):
         template = (Path(__file__).resolve().parents[1]
                     / 'main/resources/unfiltered/pkg/share/key-management/key-generations.conf')
         contents = template.read_bytes()
-        self.assertEqual(export.file_hash(contents), export.GENERATION_SHA)
+        self.assertEqual(export.file_hash(contents), reboot.GENERATION_SHA)
         with TemporaryDirectory() as location:
             parent = Path(location)
             installed = parent / export.GENERATION_DROPIN.name
             alternate = parent / 'other.conf'
             # Exercise the real file read below the private directory, using a temporary top level.
-            with patch.object(export, 'GENERATION_DROPIN', installed), \
-                    patch.object(export, 'protected', return_value=installed):
+            with patch.object(reboot, 'GENERATION_DROPIN', installed), \
+                    patch.object(reboot, 'protected', return_value=installed):
                 installed.write_bytes(contents)
                 installed.chmod(0o400)
-                export.verify_generation_dropin()
+                reboot.verify_generation_dropin('UNPAIRED_EXPORT')
                 parent.chmod(0o755)
                 with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
-                    export.verify_generation_dropin()
+                    reboot.verify_generation_dropin('UNPAIRED_EXPORT')
                 parent.chmod(0o700)
                 installed.chmod(0o440)
                 with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
-                    export.verify_generation_dropin()
+                    reboot.verify_generation_dropin('UNPAIRED_EXPORT')
                 installed.write_bytes(contents + b'# drift\n')
                 installed.chmod(0o400)
                 with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
-                    export.verify_generation_dropin()
+                    reboot.verify_generation_dropin('UNPAIRED_EXPORT')
                 installed.write_bytes(contents)
                 os.link(installed, alternate)
                 with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
-                    export.verify_generation_dropin()
+                    reboot.verify_generation_dropin('UNPAIRED_EXPORT')
                 installed.unlink()
                 installed.symlink_to(alternate)
                 with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
-                    export.verify_generation_dropin()
+                    reboot.verify_generation_dropin('UNPAIRED_EXPORT')
 
     def test_service_allows_only_the_exact_container_adapter(self):
         unit = export.ACTOR_UNIT

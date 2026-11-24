@@ -32,7 +32,9 @@ SOCKET = Path('/run/kura-reboot-broker/control.sock')
 HELPER = HOME / 'bin/kura_reboot_broker.py'
 COHORT = Path('libexec/reboot-broker/cohort.json')
 MAIN_UNIT = 'kura.service'
-EMPTY_KEY_DROPINS = Path('/etc/systemd/system/kura.service.d')
+KEY_DROPINS = Path('/etc/systemd/system/kura.service.d')
+GENERATION_DROPIN = KEY_DROPINS / '40-kura-key-generations.conf'
+GENERATION_SHA = '1bd470f1d538623fb3c02201a52feb21f25b57e49bb7c2e7d45b8511802adb45'
 NETWORKING_DROPIN = Path('/usr/lib/systemd/system/kura.service.d/kura-networking.conf')
 NETWORKING_TEMPLATE = HOME / 'libexec/addons/networking/kura-networking.conf'
 NETWORKING_SHA256 = '06589b8dede5926f63d760ec0a94a51aa6ef6ce6ddffee1c78dfcf978ec30473'
@@ -110,7 +112,23 @@ def check_networking_dropin(path):
     require(file_hash(template) == NETWORKING_SHA256 and installed == template, 'UNPAIRED_UNIT')
 
 
+def verify_generation_dropin(reason='UNPAIRED_UNIT'):
+    try:
+        path = protected(GENERATION_DROPIN)
+        parent = path.parent.lstat()
+        source = path.lstat()
+        require(stat.S_ISDIR(parent.st_mode) and parent.st_uid == parent.st_gid == 0
+                and stat.S_IMODE(parent.st_mode) == 0o700 and source.st_gid == 0, reason)
+        contents = read(path, 0, 0o400, 4096)
+        require(identity(source) == identity(path.lstat())
+                and identity(parent) == identity(path.parent.lstat())
+                and file_hash(contents) == GENERATION_SHA, reason)
+    except (OSError, Refused) as error:
+        raise Refused(reason) from error
+
+
 def verify_unit_sources(units=UNITS):
+    generation = False
     for root in unit_load_paths():
         if not unit_directory_present(root):
             continue
@@ -123,11 +141,15 @@ def verify_unit_sources(units=UNITS):
                 metadata = path.lstat()
             except FileNotFoundError:
                 continue
-            if path == EMPTY_KEY_DROPINS:
-                # The key service reserves this private directory even with no drop-in.
+            if path == KEY_DROPINS:
                 require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == metadata.st_gid == 0
-                        and stat.S_IMODE(metadata.st_mode) == 0o700 and not any(path.iterdir())
+                        and stat.S_IMODE(metadata.st_mode) == 0o700, 'UNPAIRED_UNIT')
+                entries = list(path.iterdir())
+                require(entries in ([], [GENERATION_DROPIN])
                         and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
+                generation = bool(entries)
+                if generation:
+                    verify_generation_dropin()
                 continue
             if name == NETWORKING_DROPIN.parent.name and root in VENDOR_UNIT_ROOTS:
                 require(unit_directory_present(path) and path.resolve() == NETWORKING_DROPIN.parent
@@ -136,6 +158,7 @@ def verify_unit_sources(units=UNITS):
                 check_networking_dropin(NETWORKING_DROPIN)
                 continue
             check_unit_adapter_directory(path, 'UNPAIRED_UNIT')
+    return generation
 
 
 def account_binding(path=None):
@@ -168,8 +191,7 @@ class Policy:
     def check(self, *, actor, include_main=True):
         manifest = self.packaged()
         units = UNITS if include_main else UNITS[:2]
-        if actor:
-            verify_unit_sources(units)
+        generation_on_disk = verify_unit_sources(units) if actor else None
         for unit in units:
             loaded = manager_properties(unit, UNIT_PROPERTIES)
             require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
@@ -178,9 +200,21 @@ class Policy:
                     and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_UNIT')
             dropins = loaded['DropInPaths'].split()
             networking = str(NETWORKING_DROPIN)
-            if unit == MAIN_UNIT and networking in dropins:
-                check_networking_dropin(NETWORKING_DROPIN)
-                dropins.remove(networking)
+            if unit == MAIN_UNIT:
+                if networking in dropins:
+                    check_networking_dropin(NETWORKING_DROPIN)
+                    dropins.remove(networking)
+                generation = str(GENERATION_DROPIN)
+                generation_loaded = generation in dropins
+                if actor:
+                    require(generation_loaded == generation_on_disk, 'UNPAIRED_UNIT')
+                if generation_loaded:
+                    # Main can see the manager's path but cannot read the private
+                    # declaration. The actor checks it before answering context,
+                    # which the sender needs before recording any new intent.
+                    if actor:
+                        verify_generation_dropin()
+                    dropins.remove(generation)
             check_loaded_dropins(unit, ' '.join(dropins), 'UNPAIRED_UNIT')
             packaged_unit = (COHORT.parent / unit).as_posix()
             require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files'][packaged_unit],

@@ -124,7 +124,7 @@ class PackagePairingTest(unittest.TestCase):
             return dict(Id=unit, Names=unit, LoadState='loaded', FragmentPath=str(vendor / unit),
                         SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no')
         with patch.multiple(broker, HOME=self.home, VENDOR_UNIT_ROOTS=(vendor,), public_file=Path.read_bytes,
-                            verify_unit_sources=Mock(), manager_properties=Mock(side_effect=loaded),
+                            verify_unit_sources=Mock(return_value=False), manager_properties=Mock(side_effect=loaded),
                             account_binding=Mock(return_value=marker)):
             self.assertEqual((broker.digest(manifest), marker), broker.Policy().check(actor=True))
             broker.account_binding.assert_called_once_with()
@@ -194,7 +194,7 @@ class PackagePairingTest(unittest.TestCase):
             with self.assertRaisesRegex(Refused, '^UNPAIRED_ACCOUNT$'):
                 broker.account_binding()
 
-    def test_only_the_reserved_empty_private_main_dropin_directory_is_accepted(self):
+    def test_private_main_dropin_directory_accepts_only_the_generation_declaration(self):
         root = self.home / 'system'
         root.mkdir()
         reserved = root / 'kura.service.d'
@@ -209,13 +209,50 @@ class PackagePairingTest(unittest.TestCase):
                 return SimpleNamespace(**values)
             return actual
 
-        with patch.multiple(broker, EMPTY_KEY_DROPINS=reserved, unit_load_paths=Mock(return_value=[root]),
-                            unit_directory_present=Mock(return_value=True)), patch.object(Path, 'lstat', root_owned):
-            broker.verify_unit_sources()
+        generation = reserved / broker.GENERATION_DROPIN.name
+        with patch.multiple(broker, KEY_DROPINS=reserved, GENERATION_DROPIN=generation,
+                            unit_load_paths=Mock(return_value=[root]),
+                            unit_directory_present=Mock(return_value=True),
+                            verify_generation_dropin=Mock()), patch.object(Path, 'lstat', root_owned):
+            self.assertFalse(broker.verify_unit_sources())
+            generation.write_text('reviewed fixture')
+            self.assertTrue(broker.verify_unit_sources())
+            broker.verify_generation_dropin.assert_called_once_with()
             unapproved = reserved / 'site.conf'
             unapproved.write_text('[Service]\n')
             with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
                 broker.verify_unit_sources()
+            self.assertFalse(broker.verify_unit_sources(broker.UNITS[:2]))
+
+    def test_generation_layout_is_verified_by_the_actor_and_must_match_the_manager(self):
+        manifest = broker.package_cohort(self.home)
+        vendor = self.home / 'install'
+        binding = {'callerUid': 991, 'callerGid': 992}
+        main_dropins = str(broker.GENERATION_DROPIN)
+
+        def properties(unit, _):
+            return dict(Id=unit, Names=unit, LoadState='loaded', FragmentPath=str(vendor / unit),
+                        SourcePath='', DropInPaths=main_dropins if unit == broker.MAIN_UNIT else '',
+                        NeedDaemonReload='no', Transient='no')
+
+        with patch.multiple(broker, HOME=self.home, VENDOR_UNIT_ROOTS=(vendor,), public_file=Path.read_bytes,
+                            verify_unit_sources=Mock(return_value=True), verify_generation_dropin=Mock(),
+                            manager_properties=Mock(side_effect=properties), account_binding=Mock(return_value=binding)), \
+                patch.object(broker.os, 'statvfs', return_value=SimpleNamespace(f_flag=os.ST_RDONLY)):
+            self.assertEqual((broker.digest(manifest), binding), broker.Policy().check(actor=False))
+            broker.verify_generation_dropin.assert_not_called()
+            self.assertEqual((broker.digest(manifest), binding), broker.Policy().check(actor=True))
+            broker.verify_generation_dropin.assert_called_once_with()
+            broker.verify_generation_dropin.side_effect = Refused('UNPAIRED_UNIT')
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.Policy().check(actor=True)
+            broker.verify_generation_dropin.side_effect = None
+            main_dropins = ''
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.Policy().check(actor=True)
+            main_dropins = str(broker.GENERATION_DROPIN) + ' /run/systemd/system/service.d/site.conf'
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.Policy().check(actor=False)
 
 
 class SocketFrameTest(unittest.TestCase):
