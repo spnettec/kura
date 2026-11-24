@@ -104,8 +104,13 @@ class WatchdogMaintenanceTest(unittest.TestCase):
     def test_packaged_unit_binds_typed_handoff_in_manifest(self):
         template = BIN.parents[2] / "filtered/pkg/install/kura.service"
         unit = template.read_bytes().replace(b"INSTALL_DIR", b"/opt/eclipse")
-        self.assertEqual(cohort.managed_unit(unit),
-                         {cohort.FRAMEWORK_PID, cohort.FRAMEWORK_STOP, cohort.WATCHDOG_MAINTENANCE, "bin/kura_modem_cohort.py"})
+        self.assertEqual(cohort.managed_unit(unit), {
+            cohort.FRAMEWORK_PID,
+            cohort.FRAMEWORK_STOP,
+            cohort.WATCHDOG_MAINTENANCE,
+            "bin/kura_modem_cohort.py",
+            "bin/kura_recovery_launch.py",
+        })
         with self.assertRaises(cohort.Refused):
             cohort.managed_unit(unit.replace(b"kura_watchdog_maintenance.py pulse",
                                             b"kura_watchdog_maintenance.py disarm"))
