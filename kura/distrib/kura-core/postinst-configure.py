@@ -224,6 +224,9 @@ class Configure:
                 self.restore_published_launchers(original, secret)
             if step == 'layout' and recovery['mode'] in ('reinstall', 'install') and os.path.lexists(policy.state / 'generation-current.json'):
                 self.restore_removed_generation(original, purged=recovery['mode'] == 'install')
+                # PID 1 can still cache a failed unit after its vendor file was
+                # restored. Refresh it before issuing the non-replayable step.
+                policy.command(['daemon-reload'])
             if step != 'layout':
                 self.paired_home()
             if step == 'brokers' and prepare_brokers is not None:

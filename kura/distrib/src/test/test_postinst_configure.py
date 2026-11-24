@@ -325,6 +325,53 @@ class ConfigureTest(unittest.TestCase):
             controller.run_step('layout', lambda: self.assertEqual(binding(old), binding(physical)))
             self.assertTrue((self.stage / 'setup-layout-returned.json').is_file())
 
+    def test_retained_layout_syncs_pid_one_before_issuing_intent(self):
+        controller = self.configure
+        controller.copies['reinstall'].mkdir(mode=0o700)
+        self.policy.create(self.policy.state / 'generation-current.json', b'paired generation')
+        controller.apply('begin')
+        intent = self.stage / 'setup-layout-intent.json'
+        unit = 'kura-key-recovery.service'
+        vendor = self.policy.path('/lib/systemd/system/' + unit)
+        vendor.unlink()
+        load_state = 'error'
+        fail_reload = True
+        command = self.policy.command
+
+        def restore(original, *, purged):
+            self.assertEqual(self.fence['id'], original)
+            self.assertFalse(purged)
+            self.assertFalse(intent.exists())
+            vendor.write_bytes(b'paired vendor unit')
+
+        def manager(arguments):
+            nonlocal load_state
+            if arguments == ['daemon-reload']:
+                self.assertEqual(b'paired vendor unit', vendor.read_bytes())
+                self.assertFalse(intent.exists())
+                if fail_reload:
+                    raise lifecycle.Refused('PID 1 reload failed')
+                load_state = 'loaded'
+                return ''
+            if arguments == ['show', unit, '--property=LoadState']:
+                return f'LoadState={load_state}\n'
+            return command(arguments)
+
+        def invoke():
+            self.assertTrue(intent.is_file())
+            self.assertEqual(self.fence, self.policy.enter('install'))
+
+        with patch.object(controller, 'restore_removed_generation', side_effect=restore), \
+                patch.object(self.policy, 'check_extended_journal'), \
+                patch.object(self.policy, 'command', side_effect=manager):
+            with self.assertRaisesRegex(lifecycle.Refused, 'PID 1 reload failed'):
+                controller.run_step('layout', lambda: self.fail('Dispatched after failed reload'))
+            self.assertFalse(intent.exists())
+            self.assertEqual(self.fence, self.policy.fence())
+            fail_reload = False
+            controller.run_step('layout', invoke)
+        self.assertTrue((self.stage / 'setup-layout-returned.json').is_file())
+
     def test_broker_quiescence_precedes_the_original_upgrade_dispatch(self):
         self.configure.copies['upgrade'].mkdir(mode=0o700)
         self.configure.apply('begin')
