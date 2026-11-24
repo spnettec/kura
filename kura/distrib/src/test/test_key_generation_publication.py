@@ -132,6 +132,34 @@ class GenerationPublicationTest(unittest.TestCase):
             verify.side_effect = scope['Refused']('unmatched LXC adapter')
             self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=False))
 
+    def test_unit_accepts_only_the_reviewed_loaded_networking_dependencies(self):
+        scope = self.component.unit.__func__.__globals__
+        generation, networking = scope['DROPIN'], scope['NETWORKING_DROPIN']
+        vendor = self.root / networking.lstrip('/')
+        vendor.parent.mkdir(parents=True)
+        dependencies = (b'[Unit]\nWants=NetworkManager.service ModemManager.service\n'
+                        b'After=NetworkManager.service ModemManager.service\n')
+        vendor.write_bytes(dependencies)
+        loaded = networking
+
+        def with_networking(command, **options):
+            result = self.run_command(command, **options)
+            result.stdout = result.stdout.replace('DropInPaths=\n', f'DropInPaths={loaded}\n')
+            return result
+
+        self.component.runner = with_networking
+        self.assertEqual('', self.component.unit(generation_mode=False)['DropInPaths'])
+        loaded = f'{generation} {networking}'
+        self.assertEqual(generation, self.component.unit(generation_mode=True)['DropInPaths'])
+        self.assertEqual(generation, self.component.unit(generation_mode=False, recovery=True)['DropInPaths'])
+        vendor.write_bytes(dependencies + b'[Service]\nAmbientCapabilities=cap_net_raw\n')
+        self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
+        vendor.write_bytes(dependencies)
+        loaded += f' {networking.removeprefix("/usr")}'
+        self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
+        loaded = f'{generation} /etc/systemd/system/kura.service.d/kura-networking.conf'
+        self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
+
     def count_stops(self):
         return sum(command[-2:] == ('stop', 'kura.service') for command in self.commands)
 

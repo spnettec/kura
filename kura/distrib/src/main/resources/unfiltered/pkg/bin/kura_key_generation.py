@@ -18,7 +18,8 @@ import time
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode, rename_no_replace,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
-from kura_key_store import GENERATION_CREDENTIALS_DIRECTORY, Refused as CredentialRefused, credential_reader_acl
+from kura_key_store import (GENERATION_CREDENTIALS_DIRECTORY, NETWORKING_DROPIN, Refused as CredentialRefused,
+                            credential_reader_acl)
 from kura_key_service_lifecycle import (CONTAINER_ADAPTER_DROPIN, Lifecycle, Refused, validate_generation_metadata,
     validate_publication, published_cohort_matches,
     handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
@@ -70,8 +71,18 @@ class Generations:
             except (OSError, Refused) as error:
                 raise Failure('UNMANAGED_CORE') from error
             dropins.remove(CONTAINER_ADAPTER_DROPIN)
+        networking = [path for path in dropins if path in (NETWORKING_DROPIN, NETWORKING_DROPIN.removeprefix('/usr'))]
+        require(len(networking) <= 1, 'UNMANAGED_CORE')
+        if networking:
+            path = networking[0]
+            try:
+                self.manager.store.check_networking_dropin(self.manager.store.path(path))
+            except (OSError, CredentialRefused) as error:
+                raise Failure('UNMANAGED_CORE') from error
+            dropins.remove(path)
         # Recovery uses this value to decide whether the generation drop-in
-        # still needs to be loaded. The paired platform adapter is independent.
+        # still needs to be loaded. The paired dependency and platform drop-ins
+        # are independent of the generation mode.
         result['DropInPaths'] = ' '.join(dropins)
         allowed = ('', DROPIN) if recovery else (DROPIN if generation_mode else '',)
         require(result['DropInPaths'] in allowed, 'UNMANAGED_CORE')

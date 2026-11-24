@@ -391,13 +391,22 @@ os.close(descriptor)
         line = child.stdout.readline()
         if line != 'READY\n':
             self.fail('Fresh writer did not acquire its original lease: ' + child.stderr.read()[-1000:])
+        networking = self.component.unit.__func__.__globals__['NETWORKING_DROPIN']
+        vendor = self.root / networking.lstrip('/')
+        vendor.parent.mkdir(parents=True)
+        vendor.write_bytes(b'[Unit]\nWants=NetworkManager.service ModemManager.service\n'
+                           b'After=NetworkManager.service ModemManager.service\n')
         run = self.run_command
         def command(arguments, **options):
             if arguments[4:] == ['--job-mode=fail', 'stop', 'kura.service']:
                 stop_child()
             result = run(arguments, **options)
-            if arguments[4:6] == ['show', 'kura.service'] and self.phase == 'active':
-                result.stdout = result.stdout.replace('MainPID=' + str(os.getpid()) + '\n', 'MainPID=' + str(child.pid) + '\n')
+            if arguments[4:6] == ['show', 'kura.service']:
+                result.stdout = '\n'.join(
+                    f'{line} {networking}' if line.startswith('DropInPaths=') else line
+                    for line in result.stdout.splitlines()) + '\n'
+                if self.phase == 'active':
+                    result.stdout = result.stdout.replace('MainPID=' + str(os.getpid()) + '\n', 'MainPID=' + str(child.pid) + '\n')
             return result
         self.component.runner = command
         self.phase = 'active'; self.set_group(True)
