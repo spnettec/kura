@@ -10,16 +10,22 @@
 package org.eclipse.kura.core.keystore;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.bouncycastle.jcajce.provider.keystore.pkcs12.PKCS12KeyStoreSpi;
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.core.keystore.crl.CRLManagerOptions;
@@ -98,7 +104,95 @@ class PKCS11KeystoreServiceImplTest {
                         new char[] {'1', '2', '3', '4'}));
     }
 
-    private static void assertCode(KuraErrorCode code, RecordingService service) {
+    @Test
+    void rejectsAProviderNameAlreadyOwnedByAnotherService() throws Exception {
+        String name = "KuraTest-OccupiedPKCS11";
+        Provider peer = testProvider(name);
+        Provider candidate = testProvider(name);
+        PKCS11KeystoreServiceImpl service = serviceWithProvider(candidate);
+        assertTrue(Security.addProvider(peer) > 0);
+        try {
+            assertCode(KuraErrorCode.SERVICE_UNAVAILABLE, service);
+            service.deactivate();
+            assertSame(peer, Security.getProvider(name));
+        } finally {
+            Security.removeProvider(name);
+        }
+    }
+
+    @Test
+    void releasesItsOwnProviderWhenDeactivated() throws Exception {
+        String name = "KuraTest-OwnedPKCS11";
+        Provider candidate = testProvider(name);
+        PKCS11KeystoreServiceImpl service = serviceWithProvider(candidate);
+        try {
+            assertSame(candidate, service.getKeyStore().getProvider());
+            assertSame(candidate, Security.getProvider(name));
+            service.deactivate();
+            assertNull(Security.getProvider(name));
+        } finally {
+            Security.removeProvider(name);
+        }
+    }
+
+    @Test
+    void refusesCachedAccessWhenTheRegistrationHasBeenReplaced() throws Exception {
+        String name = "KuraTest-StalePKCS11";
+        Provider candidate = testProvider(name);
+        Provider peer = testProvider(name);
+        PKCS11KeystoreServiceImpl service = serviceWithProvider(candidate);
+        try {
+            assertSame(candidate, service.getKeyStore().getProvider());
+            Security.removeProvider(name);
+            assertTrue(Security.addProvider(peer) > 0);
+            assertCode(KuraErrorCode.SERVICE_UNAVAILABLE, service);
+            assertCode(KuraErrorCode.SERVICE_UNAVAILABLE, service);
+            assertSame(peer, Security.getProvider(name));
+        } finally {
+            service.deactivate();
+            Security.removeProvider(name);
+        }
+    }
+
+    @Test
+    void leavesASameNamedReplacementRegisteredWhenDeactivated() throws Exception {
+        String name = "KuraTest-ReplacementPKCS11";
+        Provider candidate = testProvider(name);
+        Provider peer = testProvider(name);
+        PKCS11KeystoreServiceImpl service = serviceWithProvider(candidate);
+        try {
+            assertSame(candidate, service.getKeyStore().getProvider());
+            Security.removeProvider(name);
+            assertTrue(Security.addProvider(peer) > 0);
+            service.deactivate();
+            assertSame(peer, Security.getProvider(name));
+        } finally {
+            Security.removeProvider(name);
+        }
+    }
+
+    private static Provider testProvider(String name) {
+        return new Provider(name, "1", "Test PKCS11 registry entry") {
+            private static final long serialVersionUID = 1;
+            {
+                put("KeyStore.PKCS11", PKCS12KeyStoreSpi.BCPKCS12KeyStore.class.getName());
+            }
+        };
+    }
+
+    private static PKCS11KeystoreServiceImpl serviceWithProvider(Provider candidate) {
+        PKCS11KeystoreServiceImpl service = new PKCS11KeystoreServiceImpl() {
+            @Override
+            Provider configureProvider(String config) {
+                return candidate;
+            }
+        };
+        service.activate(null, Map.of("kura.service.pid", "TestToken", "library.path", "/test/pkcs11.so",
+                "crl.management.enabled", false));
+        return service;
+    }
+
+    private static void assertCode(KuraErrorCode code, PKCS11KeystoreServiceImpl service) {
         assertEquals(code, assertThrows(KuraException.class, service::getKeyStore).getCode());
     }
 

@@ -47,7 +47,7 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
 
     private static final Logger logger = LoggerFactory.getLogger(PKCS11KeystoreServiceImpl.class);
 
-    Optional<Provider> provider = Optional.empty();
+    private Optional<Provider> provider = Optional.empty();
     private PKCS11KeystoreServiceOptions options;
     private PKCS11PinCheck.Result pinCheck;
 
@@ -198,8 +198,14 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
     }
 
     private synchronized Provider getOrRegisterProvider() throws KuraException {
-        if (provider.isPresent()) {
-            return provider.get();
+        if (this.provider.isPresent()) {
+            final Provider registered = this.provider.get();
+            if (Security.getProvider(registered.getName()) == registered) {
+                return registered;
+            }
+            this.provider = Optional.empty();
+            logger.warn("PKCS11 provider {} is no longer registered by this service", registered.getName());
+            throw new KuraException(KuraErrorCode.SERVICE_UNAVAILABLE);
         }
 
         logger.info("Registering provider...");
@@ -208,14 +214,15 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
 
         logger.debug("PKCS11 config: {}", config);
 
-        final String javaVersion = System.getProperty("java.version");
-
-        final Provider newProvider;
-
-        if (javaVersion.startsWith("1.")) {
-            newProvider = registerProviderJava8(config);
-        } else {
-            newProvider = registerProviderJava9(config);
+        final Provider newProvider = configureProvider(config);
+        try {
+            if (Security.addProvider(newProvider) < 0) {
+                logger.warn("PKCS11 provider name {} is already registered", newProvider.getName());
+                throw new KuraException(KuraErrorCode.SERVICE_UNAVAILABLE);
+            }
+        } catch (SecurityException e) {
+            logger.warn("Failed to register PKCS11 provider {}", newProvider.getName(), e);
+            throw new KuraException(KuraErrorCode.SERVICE_UNAVAILABLE);
         }
 
         this.provider = Optional.of(newProvider);
@@ -230,17 +237,20 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
                 .orElseThrow(() -> new KuraException(KuraErrorCode.CONFIGURATION_ATTRIBUTE_UNDEFINED, "library.path"));
     }
 
-    private Provider registerProviderJava8(final String config) throws KuraException {
+    Provider configureProvider(String config) throws KuraException {
+        if (System.getProperty("java.version").startsWith("1.")) {
+            return configureProviderJava8(config);
+        }
+        return configureProviderJava9(config);
+    }
+
+    private Provider configureProviderJava8(final String config) throws KuraException {
         try {
             final Class<?> providerClass = Class.forName("sun.security.pkcs11.SunPKCS11");
 
             final Constructor<?> ctor = providerClass.getConstructor(InputStream.class);
 
-            final Provider newProvider = (Provider) ctor.newInstance(new ByteArrayInputStream(config.getBytes()));
-
-            Security.addProvider(newProvider);
-
-            return newProvider;
+            return (Provider) ctor.newInstance(new ByteArrayInputStream(config.getBytes()));
 
         } catch (final Exception e) {
             logger.warn("failed to load PKCS11 provider", e);
@@ -248,10 +258,10 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
         }
     }
 
-    private Provider registerProviderJava9(final String config) throws KuraException {
+    private Provider configureProviderJava9(final String config) throws KuraException {
 
         try {
-            Provider newProvider = Security.getProvider("SunPKCS11");
+            final Provider prototype = Security.getProvider("SunPKCS11");
 
             final Method configure = Provider.class.getMethod("configure", String.class);
 
@@ -262,9 +272,7 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
                     out.write(config.getBytes());
                 }
 
-                newProvider = (Provider) configure.invoke(newProvider, configFile.getAbsolutePath());
-                Security.addProvider(newProvider);
-                return newProvider;
+                return (Provider) configure.invoke(prototype, configFile.getAbsolutePath());
             } finally {
                 Files.deleteIfExists(configFile.toPath());
             }
@@ -276,15 +284,18 @@ public class PKCS11KeystoreServiceImpl extends BaseKeystoreService {
     }
 
     private synchronized void removeProvider() {
-        if (!provider.isPresent()) {
+        if (this.provider.isEmpty()) {
             return;
         }
-
-        logger.info("Removing provider...");
-        Security.removeProvider(provider.get().getName());
-
-        provider = Optional.empty();
-        logger.info("Removing provider...done");
+        final Provider registered = this.provider.get();
+        final String name = registered.getName();
+        // JCA's process-wide insert and remove operations use this monitor.
+        synchronized (Security.class) {
+            if (Security.getProvider(name) == registered) {
+                Security.removeProvider(name);
+            }
+        }
+        this.provider = Optional.empty();
     }
 
     private class KeystoreInstanceImpl implements KeystoreInstance {
