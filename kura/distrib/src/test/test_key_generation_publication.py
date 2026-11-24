@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Real storage, crypto, JAR pairing and flock; systemd/process boundaries are explicit fakes."""
 import argparse
+import hashlib
 import io
 import os
 from pathlib import Path
@@ -159,6 +160,38 @@ class GenerationPublicationTest(unittest.TestCase):
         self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
         loaded = f'{generation} /etc/systemd/system/kura.service.d/kura-networking.conf'
         self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
+
+    def test_only_the_unprovisioned_and_disabled_legacy_agent_vendor_copy_is_allowed(self):
+        scope = self.component.unit.__func__.__globals__
+        unit = scope['LEGACY_AGENT']
+        fragment = self.root / scope['LEGACY_AGENT_VENDOR'].lstrip('/')
+        fragment.parent.mkdir(parents=True)
+        reviewed = b'legacy unit with the original startup condition'
+        fragment.write_bytes(reviewed)
+        loaded = dict(scope['LEGACY_AGENT_PROPERTIES'], DropInPaths='')
+
+        def command(arguments, **_):
+            if arguments[5] == unit:
+                if arguments[-1] == '--property=LoadState':
+                    return subprocess.CompletedProcess(arguments, 0, 'LoadState=loaded\n')
+                return subprocess.CompletedProcess(arguments, 0, ''.join(f'{key}={value}\n' for key, value in loaded.items()))
+            self.assertEqual(arguments[5], 'kura-management-agent.socket')
+            return subprocess.CompletedProcess(arguments, 0, 'LoadState=not-found\n')
+
+        self.component.runner = command
+        with patch.dict(scope, LEGACY_AGENT_SHA=hashlib.sha256(reviewed).hexdigest()):
+            self.component.check_legacy_agent()
+            for key, foreign in (('UnitFileState', 'enabled'), ('Job', '43'),
+                                 ('ActiveState', 'active'), ('DropInPaths', '/etc/systemd/system/site.conf')):
+                with patch.dict(loaded, {key: foreign}):
+                    self.refused('AGENT_GENERATION_UNAVAILABLE', self.component.check_legacy_agent)
+            env = self.root / 'etc/kura-management-agent/agent.env'
+            env.parent.mkdir()
+            env.symlink_to('missing')
+            self.refused('AGENT_GENERATION_UNAVAILABLE', self.component.check_legacy_agent)
+            env.unlink()
+            fragment.write_bytes(reviewed + b'\n')
+            self.refused('AGENT_GENERATION_UNAVAILABLE', self.component.check_legacy_agent)
 
     def count_stops(self):
         return sum(command[-2:] == ('stop', 'kura.service') for command in self.commands)

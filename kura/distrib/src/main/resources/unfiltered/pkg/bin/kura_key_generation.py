@@ -37,6 +37,12 @@ PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'SubState', 'MainPID', 'ControlP
 SYSTEMCTL = ('/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager')
 START = ('/usr/bin/busctl', '--system', '--timeout=15s', 'call', 'org.freedesktop.systemd1',
          '/org/freedesktop/systemd1', 'org.freedesktop.systemd1.Manager', 'StartUnit', 'ss', 'kura.service', 'fail')
+LEGACY_AGENT = 'kura-management-agent.service'
+LEGACY_AGENT_VENDOR = '/usr/lib/systemd/system/' + LEGACY_AGENT
+LEGACY_AGENT_SHA = 'f6dadc58e2dec0297aa2a0649e240cea42aafa80e8b31030f55c1c0e38befa85'
+LEGACY_AGENT_PROPERTIES = dict(Id=LEGACY_AGENT, Names=LEGACY_AGENT, LoadState='loaded',
+    FragmentPath=LEGACY_AGENT_VENDOR, SourcePath='', Transient='no', NeedDaemonReload='no',
+    UnitFileState='disabled', ActiveState='inactive', SubState='dead', Job='', MainPID='0', ControlPID='0')
 
 
 class Generations:
@@ -149,13 +155,43 @@ class Generations:
         require(len(values) == len(entries) and values.get('populated') in ('0', '1'), 'UNSUPPORTED_CGROUP')
         return values['populated'] == '0' and not processes.strip()
 
-    def no_optional_agent(self):
-        # Its existing single-key validation path is not a generation delegation.
-        for name in ('kura-management-agent.service', 'kura-management-agent.socket'):
-            raw = self.command((*SYSTEMCTL, 'show', name, '--property=LoadState'))
-            require(raw.strip() == 'LoadState=not-found', 'AGENT_GENERATION_UNAVAILABLE')
-            for base in ('/etc/systemd/system', '/run/systemd/system', '/lib/systemd/system', '/usr/lib/systemd/system'):
-                require(not os.path.lexists(self.manager.store.path(base + '/' + name)), 'AGENT_GENERATION_UNAVAILABLE')
+    def check_legacy_agent(self):
+        manager = self.manager
+        unavailable = 'AGENT_GENERATION_UNAVAILABLE'
+        roots = ('/etc/systemd/system', '/run/systemd/system', '/lib/systemd/system', '/usr/lib/systemd/system')
+        socket_unit = 'kura-management-agent.socket'
+        require(self.command((*SYSTEMCTL, 'show', socket_unit, '--property=LoadState')).strip()
+                == 'LoadState=not-found'
+                and not any(os.path.lexists(manager.store.path(root + '/' + socket_unit)) for root in roots), unavailable)
+        raw = self.command((*SYSTEMCTL, 'show', LEGACY_AGENT, '--property=LoadState')).strip()
+        paths = [manager.store.path(root + '/' + LEGACY_AGENT) for root in roots]
+        if raw == 'LoadState=not-found':
+            require(not any(os.path.lexists(path) for path in paths), unavailable)
+            return
+        require(raw == 'LoadState=loaded' and not any(os.path.lexists(path) for path in paths[:2]), unavailable)
+        # The modern package also ships the old unit. Only its disabled,
+        # unprovisioned vendor copy is eligible, never a legacy runtime.
+        vendor = manager.store.path(LEGACY_AGENT_VENDOR)
+        try:
+            require(vendor.resolve(strict=True) == vendor
+                    and all(not os.path.lexists(path) or path.resolve(strict=True) == vendor for path in paths[2:])
+                    and not any(os.path.lexists(manager.store.path(path)) for path in (
+                        '/etc/kura-management-agent/agent.env', '/var/lib/kura-management-agent', '/run/kura-management-agent')),
+                    unavailable)
+            lifecycle = Lifecycle(manager.root, manager.owner)
+            require(hashlib.sha256(lifecycle.read(vendor, limit=4096, private=False)).hexdigest()
+                    == LEGACY_AGENT_SHA, unavailable)
+            output = self.command((*SYSTEMCTL, 'show', LEGACY_AGENT, '--all',
+                                   '--property=' + ','.join((*LEGACY_AGENT_PROPERTIES, 'DropInPaths'))))
+            rows = output.splitlines()
+            require(len(rows) == len(LEGACY_AGENT_PROPERTIES) + 1 and all('=' in row for row in rows), unavailable)
+            properties = dict(row.split('=', 1) for row in rows)
+            dropins = properties.pop('DropInPaths', None)
+            require(properties == LEGACY_AGENT_PROPERTIES and dropins in ('', CONTAINER_ADAPTER_DROPIN), unavailable)
+            if dropins:
+                lifecycle.check_container_adapter()
+        except (OSError, Refused) as error:
+            raise Failure(unavailable) from error
 
     def current(self):
         manager = self.manager
@@ -216,7 +252,7 @@ class Generations:
                 and history['sourceGenerationReceipt'] == metadata, 'CONFLICT')
         cohort = manager.require_generation_cohort()
         template = self.dropin(generation_mode=source['ringSha256'] is not None)
-        self.no_optional_agent()
+        self.check_legacy_agent()
         return raw, history, prepared, source, cohort, template
 
     def active_core(self, source, cohort):
@@ -406,6 +442,7 @@ class Generations:
 
     def finish_publication(self, value, raw, history, cohort, template, record, source_files, uid, *, recovering=False):
         manager = self.manager
+        self.check_legacy_agent()
         targets = self.publication_targets(value, raw, history, template)
         paths, expected, done = self.publication_progress(value, targets, source_files)
         for name in ('ring', 'activeKey', 'provisioned', 'generationReceipt', 'dropin'):
@@ -494,7 +531,7 @@ class Generations:
                                                            **history['sourceGenerationReceipt']), 'CONFLICT')
                 cohort = manager.require_generation_cohort()
                 require(cohort['cohortSha256'] == value['cohortSha256'], 'COHORT_CHANGED')
-                self.no_optional_agent()
+                self.check_legacy_agent()
                 template = self.dropin(generation_mode=os.path.lexists(manager.store.path(DROPIN)))
                 require(value['stoppedWriter']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
                         'UNSAFE_WRITER_STATE')
@@ -612,7 +649,7 @@ class Generations:
         _, metadata, _ = manager.generations()
         cohort = manager.require_generation_cohort()
         require(metadata == current['generation'] and request['expectedCohortSha256'] == cohort['cohortSha256'] == current['cohortSha256'], 'COHORT_CHANGED')
-        self.no_optional_agent(); self.dropin(generation_mode=True)
+        self.check_legacy_agent(); self.dropin(generation_mode=True)
         self.stopped(generation_mode=True, uid=pwd.getpwnam('kurad').pw_uid)
         for path in manager.operations.iterdir():
             prior = manager.record(path.name[:-5])
@@ -978,7 +1015,7 @@ class Handoffs:
         _, metadata, _ = manager.generations(); cohort = manager.require_generation_cohort()
         require(metadata == publication['generation'] and cohort['cohortSha256'] == publication['cohortSha256']
             == request['expectedCohortSha256'], 'COHORT_CHANGED')
-        component.no_optional_agent(); component.dropin(generation_mode=True)
+        component.check_legacy_agent(); component.dropin(generation_mode=True)
         uid = pwd.getpwnam('kurad').pw_uid
         require(value['owner']['uid'] == uid, 'OWNER_CHANGED')
         component.stopped(generation_mode=True, uid=uid)
@@ -1353,7 +1390,7 @@ class SnapshotRewrap(ProviderStoreRewrap):
     def check_profile(self, policy, core):
         # An agent or guarded boot can bind an exact snapshot digest to a
         # restore intent. Rewrap is admitted only for standalone package history.
-        core.no_optional_agent()
+        core.check_legacy_agent()
         require(core.command((*SYSTEMCTL, 'show', 'kura-management-agent-v2.service', '--property=LoadState')).strip()
                 == 'LoadState=not-found', 'AGENT_GENERATION_UNAVAILABLE')
         protected = ('/etc/kura/ordinary-boot-policy.json', '/var/lib/kura-management-agent',
