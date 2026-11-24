@@ -353,9 +353,13 @@ def chrony_target(unit):
     value = systemd_properties(fields, unit)
     if (value['Id'] != unit or value['LoadState'] != 'loaded' or value['ActiveState'] not in CHRONY_ACTIVE_STATES
             or value['FragmentPath'] not in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
-            or value['SourcePath'] != '' or value['DropInPaths'] != ''
+            or value['SourcePath'] != ''
             or value['NeedDaemonReload'] != 'no' or value['Transient'] != 'no'):
         raise OSError(errno.ESTALE, 'Unpaired loaded Chrony unit')
+    try:
+        check_loaded_dropins(unit, value['DropInPaths'], 'UNPAIRED_CHRONY_UNIT')
+    except Refused as error:
+        raise OSError(errno.ESTALE, 'Unpaired loaded Chrony unit') from error
     fragment = public_file(Path(value['FragmentPath']))
     state = value.pop('ActiveState')
     return digest(dict(unit=value, fragmentSha256=hashlib.sha256(fragment).hexdigest())), state

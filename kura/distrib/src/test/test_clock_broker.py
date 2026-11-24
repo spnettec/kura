@@ -847,6 +847,20 @@ class ChronyControlTest(unittest.TestCase):
                     with self.assertRaises(OSError):
                         broker.chrony_binding('chrony.service')
 
+    def test_chrony_target_pairs_only_the_reviewed_container_adapter(self):
+        props = dict(Id='chrony.service', LoadState='loaded', FragmentPath='/usr/lib/systemd/system/chrony.service',
+                     SourcePath='', DropInPaths=str(broker.CONTAINER_ADAPTER), NeedDaemonReload='no',
+                     Transient='no', ActiveState='inactive')
+        with mock.patch.object(broker, 'systemd_properties', side_effect=lambda *_: props.copy()), \
+                mock.patch.object(broker, 'public_file', side_effect=(broker.CHRONY_RULE, b'vendor unit', broker.CHRONY_RULE)), \
+                mock.patch.object(broker, 'check_container_adapter') as adapter:
+            self.assertEqual(broker.chrony_target('chrony.service')[1], 'inactive')
+            adapter.assert_called_once_with(broker.CONTAINER_ADAPTER, 'UNPAIRED_CHRONY_UNIT')
+            adapter.side_effect = journal.Refused('UNPAIRED_CHRONY_UNIT')
+            with self.assertRaises(OSError) as error:
+                broker.chrony_target('chrony.service')
+            self.assertEqual(errno.ESTALE, error.exception.errno)
+
     def test_only_a_bus_process_descriptor_for_system_manager_is_accepted(self):
         credentials = dict(ProcessID=dict(type='u', data=1), UnixUserID=dict(type='u', data=0),
                            ProcessFD=dict(type='h', data=3))
