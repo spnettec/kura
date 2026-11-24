@@ -1,0 +1,11 @@
+[Unit]
+Description=Kura Main credential declaration verification socket
+PartOf=kura.service
+
+[Socket]
+ListenStream=/run/kura-main-generation-proof.sock
+SocketUser=root
+SocketGroup=root
+SocketMode=0600
+RemoveOnStop=yes
+Backlog=32

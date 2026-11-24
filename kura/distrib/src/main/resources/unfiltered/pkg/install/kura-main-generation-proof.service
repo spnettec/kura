@@ -1,0 +1,32 @@
+[Unit]
+Description=Verify Kura Main's credential declaration for paired workers
+Requires=kura-main-generation-proof.socket
+Requisite=kura.service
+After=kura-main-generation-proof.socket kura.service
+PartOf=kura.service
+
+[Service]
+Type=exec
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B /usr/libexec/kura-journal-export/kura_main_generation_proof.py
+Sockets=kura-main-generation-proof.socket
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+InaccessiblePaths=-/opt/eclipse -/etc/kura -/run/credentials -/var/lib/kura-key-service -/var/lib/kura-key-recovery -/run/kura-key-service
+TasksMax=36
+MemoryMax=96M
+TimeoutStopSec=5s

@@ -2,6 +2,8 @@
 Description=Kura read-only journal export
 PartOf=kura.service
 Requisite=kura.service
+Wants=kura-main-generation-proof.socket
+After=kura-main-generation-proof.socket
 CollectMode=inactive-or-failed
 
 [Service]
@@ -11,7 +13,8 @@ Group=kura-journal-export
 SupplementaryGroups=systemd-journal
 UMask=0077
 ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B /usr/libexec/kura-journal-export/kura_journal_export.py serve %n
-StandardInput=socket
+StandardInput=null
+OpenFile=/run/kura-main-generation-proof.sock:generation-proof:graceful
 StandardOutput=null
 StandardError=journal
 NoNewPrivileges=yes

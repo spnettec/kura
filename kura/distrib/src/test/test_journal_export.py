@@ -9,11 +9,13 @@ import subprocess
 import sys
 from threading import Thread
 from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_journal_export as export
+import kura_main_generation_proof as proof
 import kura_clock_broker as clock
 
 
@@ -142,6 +144,50 @@ class JournalExportTest(unittest.TestCase):
             loaded['DropInPaths'] += ' /etc/systemd/system/service.d/site.conf'
             with self.assertRaisesRegex(export.Refused, '^UNPAIRED_EXPORT$'):
                 export.paired_unit(unit, unit, expected)
+
+    def test_generation_proof_binds_the_live_invocation_and_paired_worker(self):
+        unit = 'kura-journal-export@1-10-11.service'
+        invocation = '1' * 32
+        request = f'{invocation} {unit}\n'.encode('ascii')
+        peer = (10, 0, 0, 3)
+        main = {'ActiveState': 'active', 'User': 'kurad', 'Group': 'kurad', 'MainPID': '6',
+                'ControlGroup': '/system.slice/kura.service', 'InvocationID': invocation,
+                'DropInPaths': str(export.GENERATION_DROPIN)}
+        with patch.object(proof, 'verify_worker') as worker, patch.object(proof, 'verify_alive'), \
+                patch.object(proof, 'paired_unit', return_value=main):
+            self.assertEqual(proof.answer(peer, request, 'main-pin'), invocation.encode() + b'\n')
+            worker.assert_called_once_with(peer, unit, 'main-pin')
+            main['InvocationID'] = '2' * 32
+            with self.assertRaisesRegex(export.Refused, 'UNPAIRED_EXPORT'):
+                proof.answer(peer, request, 'main-pin')
+            with self.assertRaisesRegex(export.Refused, 'INVALID_PROOF_REQUEST'):
+                proof.answer(peer, request.rstrip(), 'main-pin')
+
+    def test_root_handshake_does_not_replace_the_worker_pid_and_cgroup_checks(self):
+        unit = 'kura-journal-export@1-10-11.service'
+        group = '/system.slice/system-kura\x2djournal\x2dexport.slice/' + unit
+        account = SimpleNamespace(pw_uid=21, pw_gid=22)
+        status = {'Uid': '21 21 21 21', 'Gid': '22 22 22 22', 'NoNewPrivs': '1',
+                  **{name: '0' for name in ('CapInh','CapPrm','CapEff','CapBnd','CapAmb')}}
+        pin = export.file_hash(b'paired unit')
+        manifest = export.encode({'mainUnitSha256': 'main-pin', 'files': {export.ACTOR_UNIT: pin}})
+        actor = {'ActiveState': 'active', 'MainPID': '10', 'User': export.ACTOR,
+                 'Group': export.ACTOR, 'ControlGroup': group}
+        with patch.object(proof.pwd, 'getpwnam', return_value=account), \
+                patch.object(proof, 'proc_status', return_value=status), patch.object(proof, 'verify_alive'), \
+                patch.object(proof, 'paired_unit', return_value=actor), \
+                patch.object(proof, 'proc_file', return_value=('0::' + group + '\n').encode()) as read, \
+                patch.object(proof, 'public_file') as file:
+            file.side_effect = [manifest, b'paired unit']
+            proof.verify_worker((10,0,0,3), unit, 'main-pin')
+            file.side_effect = [manifest, b'paired unit']
+            read.return_value = b'0::/user.slice/session-2.scope\n'
+            with self.assertRaisesRegex(export.Refused, 'UNAUTHORIZED'):
+                proof.verify_worker((10,0,0,3), unit, 'main-pin')
+            with self.assertRaisesRegex(export.Refused, 'UNAUTHORIZED'):
+                proof.verify_worker((10,21,22,3), unit, 'main-pin')
+            with self.assertRaisesRegex(export.Refused, 'UNAUTHORIZED'):
+                proof.verify_worker((10,0,0,3), 'incorrect@worker.service', 'main-pin')
 
     def test_typed_scope_and_fields(self):
         self.assertEqual(export.request('kura', 'MESSAGE,_BOOT_ID'),
