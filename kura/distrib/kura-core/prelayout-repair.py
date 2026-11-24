@@ -73,16 +73,13 @@ def admit_prelayout_repair(old_version, new_version):
                 'Original layout or another configure phase is already issued')
         dpkg = subprocess.check_output(['/usr/bin/dpkg-query','-W','-f=${Status}\n${Version}', 'kura-core'],
                                        text=True, timeout=10).splitlines()
-        # dpkg marks the installed source half-installed before invoking the
-        # incoming preinst, and may restore unpacked after a refused preinst.
-        states = ('install ok half-configured', 'install ok unpacked', 'install reinstreq half-installed')
+        interrupted_unpack = 'install reinstreq half-installed'
+        states = ('install ok half-configured', 'install ok unpacked', interrupted_unpack)
         require(len(dpkg) == 2 and dpkg[0] in states
                 and (dpkg[1] == predecessor['packageVersion'] or dpkg[1] == new_version and LAYOUT_REPAIR in names),
                 'Retained layout package is outside the repair stop')
-        continued = dpkg[1] == new_version
         control = policy.read(policy.path('/var/lib/dpkg/info/kura-core.postinst'), limit=512 * 1024, private=False)
-        require(hashlib.sha256(control).hexdigest() ==
-                (target if continued else predecessor)['postinstSha256'], 'Unpaired installed Core postinst')
+        control_sha = hashlib.sha256(control).hexdigest()
 
         state = policy.main_unit_properties('MainPID', 'ControlPID', 'ActiveState')
         require(state['MainPID'] == state['ControlPID'] == '0' and state['LoadState'] == 'not-found'
@@ -105,12 +102,21 @@ def admit_prelayout_repair(old_version, new_version):
         recovery = dict(mode='reinstall', device=saved.st_dev, inode=saved.st_ino)
         raw = policy.read(directory/'intent.json', limit=4096)
         checked_repair_source(api, raw, original, predecessor, recovery, secret)
-        require(prepare_retained_generation(unpacked_layout=True) == 0, 'Original retained credentials are unpaired')
         receipt = layout_repair_receipt(api, policy, original, raw, recovery, predecessor, target, secret)
         path = directory / LAYOUT_REPAIR
-        if LAYOUT_REPAIR in names:
+        retry = LAYOUT_REPAIR in names
+        if retry:
             require(policy.read(path, limit=4096) == receipt, 'Original layout repair authorization changed')
-        else:
+
+        # dpkg may publish the new postinst before journaling its new Version.
+        expected_control = target if dpkg[1] == new_version else predecessor
+        published_control = (retry and old_version == predecessor['packageVersion']
+                             and dpkg == [interrupted_unpack, old_version]
+                             and control_sha == target['postinstSha256'])
+        require(control_sha == expected_control['postinstSha256'] or published_control,
+                'Unpaired installed Core postinst')
+        require(prepare_retained_generation(unpacked_layout=True) == 0, 'Original retained credentials are unpaired')
+        if not retry:
             # A crash during staging leaves the original configure directory unchanged.
             with tempfile.TemporaryDirectory(prefix=f'.{original}-repair-', dir=directory.parent) as pending:
                 staged = Path(pending) / LAYOUT_REPAIR
@@ -121,4 +127,4 @@ def admit_prelayout_repair(old_version, new_version):
                 if rename(-100, os.fsencode(staged), -100, os.fsencode(path), 1):
                     error = ctypes.get_errno()
                     raise OSError(error, os.strerror(error), str(path))
-                policy.sync(directory)
+        policy.sync(directory)

@@ -93,6 +93,71 @@ class ConfigureTest(unittest.TestCase):
         with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired retained layout repair receipt'):
             other.read_intent(self.stage, original)
 
+    def test_prelayout_retry_allows_postinst_published_ahead_of_dpkg_version(self):
+        self.configure.copies['reinstall'].mkdir(mode=0o700)
+        intent = self.stage / 'intent.json'
+        receipt = self.stage / configure.LAYOUT_REPAIR
+        old_version, new_version = '6.0.0-1', '6.0.0-2'
+        old_control, new_control = b'predecessor postinst', b'successor postinst'
+        predecessor = dict(packageVersion=old_version, manifestSha256=self.manifest_sha,
+                           postinstSha256=hashlib.sha256(old_control).hexdigest())
+        source = configure.Configure(lifecycle, self.policy, self.fixture.physical.resolve(), old_version,
+                                     self.manifest_sha, predecessor['postinstSha256'])
+        source.apply('begin')
+        original_intent = intent.read_bytes()
+        fields = dict(_KURA_LAYOUT_REPAIR_PREDECESSOR=predecessor,
+                      _KURA_LAYOUT_REPAIR_HOME=self.fixture.physical.name,
+                      _KURA_INCOMING_KEY_MANIFEST_SHA256=self.manifest_sha,
+                      _KURA_LAYOUT_REPAIR_POSTINST_SHA256=hashlib.sha256(new_control).hexdigest(),
+                      require=lifecycle.require, paired_lifecycle=lambda: lifecycle,
+                      prepare_retained_generation=lambda *, unpacked_layout: (0 if unpacked_layout else 1))
+        environment = dict(DPKG_MAINTSCRIPT_PACKAGE='kura-core', DPKG_MAINTSCRIPT_NAME='preinst',
+                           DPKG_ROOT='', DPKG_ADMINDIR='/var/lib/dpkg')
+        control = self.policy.path('/var/lib/dpkg/info/kura-core.postinst')
+        self.policy.path('/opt/eclipse/kura').unlink()
+        for unit in lifecycle.UNITS:
+            self.policy.path('/lib/systemd/system/' + unit).unlink()
+        interrupted = 'install reinstreq half-installed'
+        active_fence = dict(self.fence, firstAction='remove')
+        parked_main = dict(MainPID='0', ControlPID='0', LoadState='not-found', ActiveState='inactive')
+        with patch.dict(configure.__dict__, fields), patch.dict(os.environ, environment), \
+                patch.object(lifecycle, 'Lifecycle', return_value=self.policy), \
+                patch.object(self.policy, 'fence', return_value=active_fence), \
+                patch.object(self.policy, 'main_unit_properties', return_value=parked_main), \
+                patch.object(configure.subprocess, 'check_output') as dpkg_query:
+            dpkg_query.return_value = f'{interrupted}\n{old_version}'
+            self.fixture.write(control, new_control, 0o755)
+            with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired installed Core postinst'):
+                configure.admit_prelayout_repair(old_version, new_version)
+            self.assertFalse(receipt.exists())
+
+            self.fixture.write(control, old_control, 0o755)
+            configure.admit_prelayout_repair(old_version, new_version)
+            signed = receipt.read_bytes()
+            identity = receipt.stat().st_ino
+            self.fixture.write(control, new_control, 0o755)
+            configure.admit_prelayout_repair(old_version, new_version)
+            self.assertEqual((signed, identity), (receipt.read_bytes(), receipt.stat().st_ino))
+
+            for state, version, raw in (
+                ('install ok unpacked', old_version, new_control),
+                (interrupted, old_version, b'unpaired postinst'),
+                (interrupted, new_version, old_control),
+            ):
+                with self.subTest(state=state, version=version, control=raw):
+                    dpkg_query.return_value = f'{state}\n{version}'
+                    self.fixture.write(control, raw, 0o755)
+                    with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired installed Core postinst'):
+                        configure.admit_prelayout_repair(version, new_version)
+                    self.assertEqual((signed, identity), (receipt.read_bytes(), receipt.stat().st_ino))
+
+            dpkg_query.return_value = f'{interrupted}\n{old_version}'
+            self.fixture.write(control, new_control, 0o755)
+            receipt.write_bytes(signed.replace(new_version.encode(), b'6.0.0-3'))
+            with self.assertRaisesRegex(lifecycle.Refused, 'Original layout repair authorization changed'):
+                configure.admit_prelayout_repair(old_version, new_version)
+            self.assertEqual(original_intent, intent.read_bytes())
+
     def install_steps(self):
         for name in configure.INSTALLER_STEPS:
             self.configure.run_step(name, lambda: None)
