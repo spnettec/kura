@@ -8,6 +8,7 @@ from pathlib import Path
 import pwd
 import select
 import shutil
+import signal
 import socket
 import stat
 import struct
@@ -314,6 +315,28 @@ def serve_socket(stream, protocol):
         pass
 
 
+def serve_connections(listener, protocol):
+    """Stop accepting new requests on SIGTERM and finish the current journal write."""
+    stopping = False
+
+    def stop(_signum, _frame):
+        nonlocal stopping
+        stopping = True
+
+    previous = signal.signal(signal.SIGTERM, stop)
+    try:
+        while not stopping:
+            ready, _, _ = select.select((listener,), (), (), 1)
+            if not ready or stopping:
+                continue
+            connection, _ = listener.accept()
+            with connection:
+                if not stopping:
+                    serve_socket(connection, protocol)
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+
 def serve():
     require(os.getuid() == os.geteuid() == os.getgid() == os.getegid() == 0, 'UNSAFE_ACTOR')
     status = proc_status(os.getpid())
@@ -339,10 +362,7 @@ def serve():
         require(listener.family == socket.AF_UNIX and listener.type == socket.SOCK_STREAM
                 and listener.getsockname() == str(SOCKET)
                 and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN), 'INVALID_LISTENER')
-        while True:
-            connection, _ = listener.accept()
-            with connection:
-                serve_socket(connection, protocol)
+        serve_connections(listener, protocol)
 
 
 def verify_socket(gid):

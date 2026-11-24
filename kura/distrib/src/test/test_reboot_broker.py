@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 import os
 from pathlib import Path
+import signal
 import socket
 import struct
 import subprocess
@@ -117,6 +118,7 @@ class PackagePairingTest(unittest.TestCase):
         self.assertIn('ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B '
                       '/opt/eclipse/kura/bin/kura_reboot_broker.py serve', actor)
         self.assertIn('CapabilityBoundingSet=', actor)
+        self.assertIn('KillMode=mixed', actor)
         marker = dict(schema=1, namespace='0101db50-edc1-4ea5-a461-28dcb898e596', callerUid=997, callerGid=991)
         def loaded(unit, _):
             return dict(Id=unit, Names=unit, LoadState='loaded', FragmentPath=str(vendor / unit),
@@ -257,6 +259,27 @@ class SocketFrameTest(unittest.TestCase):
             broker.serve_socket(peer, protocol)
             self.assertEqual({'ok': False, 'reason': 'UNAUTHORIZED'}, broker.receive(connection))
             protocol.handle.assert_not_called()
+
+    def test_sigterm_finishes_active_request_before_accepting_any_more(self):
+        with tempfile.TemporaryDirectory() as tmp, socket.socket(socket.AF_UNIX) as listener, \
+                socket.socket(socket.AF_UNIX) as first, socket.socket(socket.AF_UNIX) as queued:
+            path = str(Path(tmp) / 'control.sock')
+            listener.bind(path)
+            listener.listen()
+            first.connect(path)
+            queued.connect(path)
+            outcome = Path(tmp) / 'result'
+            previous = signal.getsignal(signal.SIGTERM)
+
+            def finish(connection, protocol):
+                signal.raise_signal(signal.SIGTERM)
+                outcome.write_bytes(b'current request finished')
+
+            with patch.object(broker, 'serve_socket', side_effect=finish) as serve:
+                broker.serve_connections(listener, Mock())
+            serve.assert_called_once()
+            self.assertEqual(b'current request finished', outcome.read_bytes())
+            self.assertEqual(previous, signal.getsignal(signal.SIGTERM))
 
 
 if __name__ == '__main__':
