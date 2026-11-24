@@ -32,6 +32,9 @@ HELPER = HOME / 'bin/kura_reboot_broker.py'
 COHORT = Path('libexec/reboot-broker/cohort.json')
 MAIN_UNIT = 'kura.service'
 EMPTY_KEY_DROPINS = Path('/etc/systemd/system/kura.service.d')
+NETWORKING_DROPIN = Path('/usr/lib/systemd/system/kura.service.d/kura-networking.conf')
+NETWORKING_TEMPLATE = HOME / 'libexec/addons/networking/kura-networking.conf'
+NETWORKING_SHA256 = '06589b8dede5926f63d760ec0a94a51aa6ef6ce6ddffee1c78dfcf978ec30473'
 UNITS = ('kura-reboot-broker.service', 'kura-reboot-broker.socket', MAIN_UNIT)
 UNIT_PROPERTIES = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
                    'NeedDaemonReload', 'Transient')
@@ -90,6 +93,22 @@ def manager_properties(unit, names):
     return values
 
 
+def check_networking_dropin(path):
+    require(path == NETWORKING_DROPIN, 'UNPAIRED_UNIT')
+    for args, expected in (
+            (('-W', '-f=${db:Status-Status}', 'kura-networking'), 'installed'),
+            (('-S', str(NETWORKING_TEMPLATE)), f'kura-networking: {NETWORKING_TEMPLATE}')):
+        result = subprocess.run(('/usr/bin/dpkg-query', *args), env=ENVIRONMENT,
+                                capture_output=True, text=True, timeout=4)
+        require(result.returncode == 0 and result.stdout.strip() == expected, 'UNPAIRED_UNIT')
+    try:
+        template = public_file(NETWORKING_TEMPLATE, 4096)
+        installed = public_file(path, 4096)
+    except (OSError, Refused) as error:
+        raise Refused('UNPAIRED_UNIT') from error
+    require(file_hash(template) == NETWORKING_SHA256 and installed == template, 'UNPAIRED_UNIT')
+
+
 def verify_unit_sources(units=UNITS):
     for root in unit_load_paths():
         if not unit_directory_present(root):
@@ -108,6 +127,12 @@ def verify_unit_sources(units=UNITS):
                 require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == metadata.st_gid == 0
                         and stat.S_IMODE(metadata.st_mode) == 0o700 and not any(path.iterdir())
                         and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
+                continue
+            if name == NETWORKING_DROPIN.parent.name and root in VENDOR_UNIT_ROOTS:
+                require(unit_directory_present(path) and path.resolve() == NETWORKING_DROPIN.parent
+                        and [candidate.name for candidate in path.iterdir() if candidate.name.endswith('.conf')]
+                        == [NETWORKING_DROPIN.name], 'UNPAIRED_UNIT')
+                check_networking_dropin(NETWORKING_DROPIN)
                 continue
             check_unit_adapter_directory(path, 'UNPAIRED_UNIT')
 
@@ -150,7 +175,12 @@ class Policy:
                     and loaded['FragmentPath'] in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
                     and loaded['SourcePath'] == ''
                     and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_UNIT')
-            check_loaded_dropins(unit, loaded['DropInPaths'], 'UNPAIRED_UNIT')
+            dropins = loaded['DropInPaths'].split()
+            networking = str(NETWORKING_DROPIN)
+            if unit == MAIN_UNIT and networking in dropins:
+                check_networking_dropin(NETWORKING_DROPIN)
+                dropins.remove(networking)
+            check_loaded_dropins(unit, ' '.join(dropins), 'UNPAIRED_UNIT')
             packaged_unit = (COHORT.parent / unit).as_posix()
             require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files'][packaged_unit],
                     'UNPAIRED_UNIT')

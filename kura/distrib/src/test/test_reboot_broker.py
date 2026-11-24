@@ -113,6 +113,10 @@ class PackagePairingTest(unittest.TestCase):
             (vendor / unit).write_bytes((self.home / 'install' / unit).read_bytes())
             (self.home / 'install' / unit).unlink()
         (self.home / 'install').rmdir()
+        actor = (vendor / broker.UNITS[0]).read_text().splitlines()
+        self.assertIn('ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B '
+                      '/opt/eclipse/kura/bin/kura_reboot_broker.py serve', actor)
+        self.assertIn('CapabilityBoundingSet=', actor)
         marker = dict(schema=1, namespace='0101db50-edc1-4ea5-a461-28dcb898e596', callerUid=997, callerGid=991)
         def loaded(unit, _):
             return dict(Id=unit, Names=unit, LoadState='loaded', FragmentPath=str(vendor / unit),
@@ -151,6 +155,33 @@ class PackagePairingTest(unittest.TestCase):
                                 unit_directory_present=Mock(return_value=True)):
                 with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
                     broker.verify_unit_sources()
+
+    def test_only_the_configured_networking_package_and_reviewed_vendor_copy_are_paired(self):
+        vendor = self.home / 'vendor'
+        target = vendor / 'kura.service.d/kura-networking.conf'
+        target.parent.mkdir(parents=True)
+        raw = b'[Unit]\nWants=NetworkManager.service ModemManager.service\nAfter=NetworkManager.service ModemManager.service\n'
+        target.write_bytes(raw)
+        template = self.home / 'libexec/kura-networking.conf'
+        template.write_bytes(raw)
+        installed = SimpleNamespace(returncode=0, stdout='installed\n')
+        owner = SimpleNamespace(returncode=0, stdout=f'kura-networking: {template}\n')
+        with patch.multiple(broker, NETWORKING_DROPIN=target, NETWORKING_TEMPLATE=template,
+                            VENDOR_UNIT_ROOTS=(vendor,), public_file=lambda path, limit: path.read_bytes(),
+                            unit_directory_present=Mock(return_value=True), unit_load_paths=Mock(return_value=(vendor,))), \
+                patch.object(broker.subprocess, 'run', side_effect=[installed, owner] * 4):
+            broker.verify_unit_sources()
+            target.write_bytes(raw + b'PartOf=site.service\n')
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.verify_unit_sources()
+            target.write_bytes(raw)
+            installed.stdout = 'unpacked\n'
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.verify_unit_sources()
+            installed.stdout = 'installed\n'
+            (target.parent / 'site.conf').write_bytes(b'[Unit]\n')
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.verify_unit_sources()
 
     def test_authority_marker_pins_original_account_ids(self):
         marker = dict(schema=1, namespace='0101db50-edc1-4ea5-a461-28dcb898e596', callerUid=997, callerGid=991)
