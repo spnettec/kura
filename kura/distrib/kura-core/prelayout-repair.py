@@ -73,9 +73,13 @@ def admit_prelayout_repair(old_version, new_version):
                 'Original layout or another configure phase is already issued')
         dpkg = subprocess.check_output(['/usr/bin/dpkg-query','-W','-f=${Status}\n${Version}', 'kura-core'],
                                        text=True, timeout=10).splitlines()
-        installed = ['install ok half-configured', predecessor['packageVersion']]
-        continued = dpkg in (['install ok unpacked', new_version], ['install ok half-configured', new_version])
-        require(dpkg == installed or continued and LAYOUT_REPAIR in names, 'Retained layout package is outside the repair stop')
+        # dpkg marks the installed source half-installed before invoking the
+        # incoming preinst, and may restore unpacked after a refused preinst.
+        states = ('install ok half-configured', 'install ok unpacked', 'install ok half-installed')
+        require(len(dpkg) == 2 and dpkg[0] in states
+                and (dpkg[1] == predecessor['packageVersion'] or dpkg[1] == new_version and LAYOUT_REPAIR in names),
+                'Retained layout package is outside the repair stop')
+        continued = dpkg[1] == new_version
         control = policy.read(policy.path('/var/lib/dpkg/info/kura-core.postinst'), limit=512 * 1024, private=False)
         require(hashlib.sha256(control).hexdigest() ==
                 (target if continued else predecessor)['postinstSha256'], 'Unpaired installed Core postinst')
