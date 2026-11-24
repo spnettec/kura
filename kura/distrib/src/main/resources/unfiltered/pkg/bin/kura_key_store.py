@@ -443,9 +443,12 @@ class Store:
                         require(source == self.path(GENERATION_DROPIN),
                                 "Unexpected Main drop-in alongside published generation credentials")
                         continue  # The publication validator checks this file under the provisioning lock.
-                    # Container runtime adapters (LXC/OrbStack global drop-ins) neutralize
-                    # hardening for every unit on the host; they are not per-service grants.
-                    if source.name == "zzz-lxc-service.conf":
+                    if source == self.path("/run/systemd/system/service.d/zzz-lxc-service.conf"):
+                        api = paired_lifecycle()
+                        try:
+                            api.Lifecycle(self.root, self.owner).check_container_adapter()
+                        except api.Refused as error:
+                            raise Refused(str(error)) from error
                         continue
                     text = self.read(source).decode("utf-8")
                     for line in text.splitlines():
