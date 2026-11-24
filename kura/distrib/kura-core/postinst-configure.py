@@ -314,10 +314,9 @@ class Configure:
         exec(compile(CORE_REMOVAL_HOME_SOURCE, '<removal-home>', 'exec'), removal)
         saved = (removal['purged_generation'](original) if purged else
                  removal['retained_generation'](retained, original))
-        require(saved and saved['manifestSha256'] == self.binding['manifestSha256'],
-                'Retained generation requires the original reader release')
+        require(saved, 'Original removed credential cohort is absent')
         manifest_raw = policy.read(self.physical / 'libexec/key-backup/manifest.json', private=False)
-        require(digest(manifest_raw) == saved['manifestSha256'])
+        require(digest(manifest_raw) == self.binding['manifestSha256'], 'Unpaired incoming Core manifest')
         manifest = self.api.decode(manifest_raw)
         generation = manifest['generation']
         def incoming(name, limit=65536):
@@ -335,7 +334,8 @@ class Configure:
         key_policy = dict(__name__='retained_package_policy', _KURA_REMOVAL_HOME_SOURCE=CORE_REMOVAL_HOME_SOURCE,
                           _KURA_EMBEDDED_LIFECYCLE_SOURCE=reader('kura_key_service_lifecycle'),
                           _KURA_EMBEDDED_JOURNAL_SOURCE=reader('kura_key_journal'),
-                          _KURA_INCOMING_KEY_MANIFEST_SHA256=saved['manifestSha256'])
+                          _KURA_INCOMING_KEY_MANIFEST_SHA256=self.binding['manifestSha256'],
+                          _KURA_INCOMING_KEY_PREDECESSORS=generation.get('publishedPredecessorManifestSha256s', ()))
         exec(compile(reader('kura_key_store'), '<incoming-key-store>', 'exec'), key_policy)
         exec(compile(CORE_RETAINED_PREFLIGHT_SOURCE, '<retained-preflight>', 'exec'), key_policy)
         require(key_policy['prepare_retained_generation'](unpacked_layout=True) == 0,

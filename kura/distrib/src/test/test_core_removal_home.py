@@ -171,7 +171,7 @@ class CoreRemovalHomeTest(unittest.TestCase):
         self.home.GENERATION_DROPIN.chmod(0o400)
         manifest = self.target / 'libexec/key-backup/manifest.json'
         manifest.parent.mkdir(parents=True)
-        self.home.write_new(manifest, b'fixture manifest')
+        self.home.write_new(manifest, b'{"generation":{}}')
         scripts = self.target / 'bin'
         scripts.mkdir()
         for name in self.home.GENERATION_LAUNCHERS:

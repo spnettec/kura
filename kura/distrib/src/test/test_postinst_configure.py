@@ -10,6 +10,7 @@ import subprocess
 import sys
 import unittest
 from unittest.mock import patch
+import uuid
 
 import test_key_service_lifecycle as fixtures
 
@@ -65,6 +66,43 @@ class ConfigureTest(unittest.TestCase):
         manifest['units'] = {name: '1' * 64 for name in lifecycle.NATIVE_VALIDATION_UNITS}
         with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired retained key-service unit profile'):
             configure.retained_vendor_profile(lifecycle, manifest, tuple(units))
+
+    def test_purge_successor_requires_both_manifest_pins_and_original_start(self):
+        installed, origin, incoming = '1' * 64, '2' * 64, '3' * 64
+        release = dict(manifestSha256=installed, publicationManifestSha256=origin)
+        publication = dict(operationId=str(uuid.uuid4()))
+        scope = dict(require=lifecycle.require, _KURA_INCOMING_KEY_MANIFEST_SHA256=incoming)
+        source = MODULE.with_name('retained-generation-preflight.py')
+        exec(compile(source.read_bytes(), str(source), 'exec'), scope)
+        secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
+
+        def admit(pins, *, purged=True):
+            scope['_KURA_INCOMING_KEY_PREDECESSORS'] = pins
+            scope['check_removed_generation_release'](lifecycle, self.policy, release, publication, secret, purged=purged)
+
+        for pins, purged in (((installed,), True), ((origin,), True), ((installed, origin), False)):
+            with self.subTest(pins=pins, purged=purged):
+                with self.assertRaisesRegex(lifecycle.Refused, 'differs from the retained generation cohort'):
+                    admit(pins, purged=purged)
+
+        pins = (installed, origin)
+        with self.assertRaisesRegex(lifecycle.Refused, 'original completed generation startup'):
+            admit(pins)
+        operation = str(uuid.uuid4())
+        record = dict(schema=1, operationId=operation, action='generation-core-start', requestTag='4' * 64,
+                      state='SUCCEEDED')
+        response = dict(schema=1, operationId=operation, action=record['action'], state=record['state'],
+                        publicationId=publication['operationId'], scope='SYSTEMD_JOB_ACCEPTED',
+                        jobPath='/org/freedesktop/systemd1/job/42', ringSha256='5' * 64, activeKeySha256='6' * 64,
+                        cohortSha256='7' * 64)
+        self.policy.create(self.policy.state / 'operations' / f'{operation}.json',
+                           lifecycle.encoded(dict(record, response=response)))
+        with patch.object(lifecycle, 'archive_entry', side_effect=lifecycle.Refused('Invalid original startup proof')):
+            with self.assertRaisesRegex(lifecycle.Refused, 'Invalid original startup proof'):
+                admit(pins)
+        with patch.object(lifecycle, 'archive_entry') as verify:
+            admit(pins)
+            verify.assert_called_once_with(self.policy, dict(directory='operations', operationId=operation), secret)
 
     def test_retained_repair_requires_the_exact_signed_source_and_successor(self):
         source = self.configure
