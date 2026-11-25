@@ -97,6 +97,10 @@ def initialize_domain(manager, policy):
         cohort = verify_sources()
         require(hashlib.sha256(public_file(CORE_HOME / 'bin/kura_firewall_publish.py')).hexdigest()
                 == cohort['files']['kura_firewall_publish.py'], 'UNPAIRED_FIREWALL_INITIALIZER')
+        main = paired_unit('kura.service', 'kura.service', cohort['mainUnitSha256'],
+                           ('MainPID', 'ControlPID', 'ActiveState'), main=True)
+        require(main['MainPID'] == main['ControlPID'] == '0' and main['ActiveState'] == 'inactive',
+                'CORE_MAIN_NOT_IDLE')
         writers = manager.writer_lock(create=True)
         try:
             try:

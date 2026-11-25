@@ -14,9 +14,9 @@ sequence. Before the first Main/provider publication, run as Root:
 
 The command accepts no Root, operation ID, Scope or kernel identity arguments.
 It holds the real dpkg backend lock, Core admission lock and Core's exclusive
-writer lease, checks package/cohort files, and passes the original writer FD as
+writer lease, checks package/cohort files and the loaded, idle Main unit, and passes the original writer FD as
 FD3 to the pinned native worker. The worker runs with no capabilities and NNP1.
-A running Main's shared lease, active package change or Core maintenance refuses
+A running/starting Main, its shared lease, active package change or Core maintenance refuses
 the command. It neither stops Main nor starts an Agent or sends Netlink work.
 
 Initialization requires an empty publication directory and no retained rules or

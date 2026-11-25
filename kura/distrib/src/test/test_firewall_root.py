@@ -56,7 +56,10 @@ class FirewallRootTest(unittest.TestCase):
         stack.enter_context(patch.object(broker, 'WORKER', self.worker))
         stack.enter_context(patch.object(broker, 'public_file', side_effect=lambda p: p.read_bytes()))
         self.sources = stack.enter_context(patch.object(broker, 'verify_sources', return_value={
+            'mainUnitSha256': '0' * 64,
             'files': {'kura_firewall_publish.py': hashlib.sha256(self.source.read_bytes()).hexdigest()}}))
+        self.main = stack.enter_context(patch.object(broker, 'paired_unit', return_value={
+            'MainPID': '0', 'ControlPID': '0', 'ActiveState': 'inactive'}))
         self.assets = stack.enter_context(patch.object(self.policy, 'assets', return_value={}))
 
     def invoke(self):
@@ -84,6 +87,21 @@ class FirewallRootTest(unittest.TestCase):
             self.assertFalse(self.pub.exists())
         finally:
             os.close(fd)
+
+    def test_active_or_starting_main_cannot_acquire_a_replacement_missing_writer_lock(self):
+        for status in [{'MainPID': '123', 'ControlPID': '0', 'ActiveState': 'active'},
+                       {'MainPID': '0', 'ControlPID': '124', 'ActiveState': 'activating'}]:
+            with self.subTest(status=status):
+                self.main.return_value = status
+                self.refused('CORE_MAIN_NOT_IDLE')
+                self.assertFalse(self.writers.exists())
+                self.assertFalse(self.pub.exists())
+
+    def test_loaded_main_pairing_failure_refuses_before_writer_or_publication_creation(self):
+        self.main.side_effect = broker.Refused('UNPAIRED_EXPORT')
+        self.refused('UNPAIRED_EXPORT')
+        self.assertFalse(self.writers.exists())
+        self.assertFalse(self.pub.exists())
 
     def test_separate_dpkg_process_excludes_initializer_before_core_checks(self):
         command = ('import fcntl,sys; f=open(sys.argv[1],"r+"); '
