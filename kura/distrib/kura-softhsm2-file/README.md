@@ -26,7 +26,7 @@ upstream test suite during the build.
 
 Install the native package and point the Kura PKCS#11 keystore's `library.path`
 at `/usr/lib/kura-pkcs11/softhsm2/libsofthsm2.so`. The module reads the site
-configuration from `/etc/kura/softhsm2-file.conf` by default. Use the existing file
+configuration from `/etc/kura-pkcs11/softhsm2-file.conf` by default. Use the existing file
 store directory and the same slot binding and credentials. Give the Kura service
 account access to the site configuration and token store using the site's
 existing ownership policy. The package owns the module and its documentation.

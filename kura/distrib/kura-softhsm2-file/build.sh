@@ -29,7 +29,7 @@ trap 'rm -rf -- "$work"' EXIT
 tar -xzf "$source" -C "$work"
 cmake -S "$work/SoftHSMv2-2.6.1" -B "$work/build" -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_GOST=OFF -DENABLE_P11_KIT=OFF -DENABLE_EDDSA=ON -DBUILD_TESTS=ON -DENABLE_STRICT=OFF \
-    -DDEFAULT_SOFTHSM2_CONF=/etc/kura/softhsm2-file.conf \
+    -DDEFAULT_SOFTHSM2_CONF=/etc/kura-pkcs11/softhsm2-file.conf \
     "-DCMAKE_CXX_FLAGS=-ffile-prefix-map=$work=/usr/src/$package" \
     "-DCMAKE_C_FLAGS=-ffile-prefix-map=$work=/usr/src/$package"
 cmake --build "$work/build" --parallel 2
