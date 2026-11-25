@@ -16,24 +16,13 @@ esac
 
 package=kura-softhsm2-file
 version="2.6.1+gitb6388cf372-$revision"
-source=src/SoftHSMv2-2.6.1.tar.gz
-source_commit=670e97dfc0d7233e841544b8462a32aabcbfbec3
 export SOURCE_DATE_EPOCH=1795566474
 cd "$here"
-sha256sum -c source.sha256
-test "$(gzip -dc "$source" | git get-tar-commit-id)" = "$source_commit"
 mkdir -p "$target"
 work=$(mktemp -d "$target/.softhsm2-build.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT
 
-tar -xzf "$source" -C "$work"
-cmake -S "$work/SoftHSMv2-2.6.1" -B "$work/build" -DCMAKE_BUILD_TYPE=Release \
-    -DENABLE_GOST=OFF -DENABLE_P11_KIT=OFF -DENABLE_EDDSA=ON -DBUILD_TESTS=ON -DENABLE_STRICT=OFF \
-    -DDEFAULT_SOFTHSM2_CONF=/etc/kura-pkcs11/softhsm2-file.conf \
-    "-DCMAKE_CXX_FLAGS=-ffile-prefix-map=$work=/usr/src/$package" \
-    "-DCMAKE_C_FLAGS=-ffile-prefix-map=$work=/usr/src/$package"
-cmake --build "$work/build" --parallel 2
-OPENSSL_CONF="$here/ctest-openssl.conf" ctest --test-dir "$work/build" --output-on-failure --timeout 100
+sh "$here/build-native.sh" "$work"
 
 binary="$work/build/src/lib/libsofthsm2.so"
 root="$work/debian/$package"
@@ -68,12 +57,7 @@ Description: Optional Kura SoftHSM file-token module
 EOF
 install -m 0644 "$work/SoftHSMv2-2.6.1/LICENSE" "$root$docdir/copyright"
 install -m 0644 "$here/README.md" "$root$docdir/README.md"
-{
-    printf 'SoftHSM-Source-Commit: %s\n' "$source_commit"
-    printf 'SoftHSM-Native-Revision: b6388cf372faa376c9c9056b80c70455fb06e54f\n'
-    printf 'Source-Archive-SHA256: %s\n' "$(cut -d ' ' -f 1 "$here/source.sha256")"
-    printf 'Module-SHA256: %s\n' "$(sha256sum "$binary" | cut -d ' ' -f 1)"
-} > "$root$docdir/build-origin"
+install -m 0644 "$work/build-origin" "$root$docdir/build-origin"
 (cd "$root" && find usr -type f -print0 | LC_ALL=C sort -z | xargs -0 md5sum > DEBIAN/md5sums)
 
 output="$target/${package}_${version}_${arch}.deb"
