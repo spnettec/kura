@@ -13,10 +13,11 @@ OpenSSL and CppUnit development headers, and dpkg-dev. Use JDK 21 and the projec
 Maven version. Run from the Kura repository root.
 
 ```sh
-mvn -f kura/distrib/pom.xml -Psofthsm-file-package -pl kura-softhsm2-file package
+mvn -f kura/distrib/kura-softhsm2-file/pom.xml package
 ```
 
-The Debian package is written to this module's `target` directory. Compilation
+The `softhsm-file-package` profile also includes the module in the distribution
+reactor. The Debian package is written to this module's `target` directory. Compilation
 uses the build host's Debian architecture and dpkg derives library dependencies
 from the executable. The OpenSSL legacy provider configuration applies to the
 upstream test suite during the build.

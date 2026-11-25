@@ -36,7 +36,7 @@ cmake --build "$work/build" --parallel 2
 OPENSSL_CONF="$here/ctest-openssl.conf" ctest --test-dir "$work/build" --output-on-failure --timeout 100
 
 binary="$work/build/src/lib/libsofthsm2.so"
-root="$work/root"
+root="$work/debian/$package"
 libdir=/usr/lib/kura-pkcs11/softhsm2
 docdir="/usr/share/doc/$package"
 install -d -m 0755 "$work/debian" "$root/DEBIAN" "$root$libdir" "$root$docdir"
@@ -50,7 +50,8 @@ Package: $package
 Architecture: any
 Description: Optional Kura SoftHSM file-token module
 EOF
-depends=$(cd "$work" && dpkg-shlibdeps -O -e "$binary")
+install -m 0644 "$binary" "$root$libdir/libsofthsm2.so"
+depends=$(cd "$work" && dpkg-shlibdeps -O -e "debian/$package$libdir/libsofthsm2.so")
 depends=${depends#shlibs:Depends=}
 test -n "$depends"
 cat > "$root/DEBIAN/control" <<EOF
@@ -65,7 +66,6 @@ Description: Optional Kura SoftHSM file-token module
  Linux file-token module with original file identity and recovery.
  Select this module explicitly in a Kura PKCS#11 keystore configuration.
 EOF
-install -m 0644 "$binary" "$root$libdir/libsofthsm2.so"
 install -m 0644 "$work/SoftHSMv2-2.6.1/LICENSE" "$root$docdir/copyright"
 install -m 0644 "$here/README.md" "$root$docdir/README.md"
 {
