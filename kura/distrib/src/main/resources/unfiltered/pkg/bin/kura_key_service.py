@@ -1248,7 +1248,9 @@ class Manager:
 
     @contextlib.contextmanager
     def exclusive_writers(self):
-        fd = self.writer_lock()
+        # /run is empty on a cold boot. A pending transaction must be able to
+        # fence writers before an ordinary Main is eligible to acquire a lease.
+        fd = self.writer_lock(create=True)
         try:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
