@@ -38,6 +38,7 @@
     </modules>
     <properties>
         <jdeb-version>1.14</jdeb-version>
+        <package.abi.suffix></package.abi.suffix>
         <yofc.dp.version>0.0.1-SNAPSHOT</yofc.dp.version>
         <!-- Modules that build the dist-linux variant (full networking) override this to false. -->
         <dist.linux.bundles.skip>true</dist.linux.bundles.skip>
@@ -3367,7 +3368,7 @@
             <properties>
                 <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
                 <package.snapshot>git${maven.build.timestamp}.${git.commit.id.abbrev}</package.snapshot>
-                <package.version>${release.version}~${package.snapshot}</package.version>
+                <package.version>${release.version}${package.abi.suffix}~${package.snapshot}</package.version>
                 <package.revision>1</package.revision>
             </properties>
         </profile>
@@ -3380,7 +3381,7 @@
                 </property>
             </activation>
             <properties>
-                <package.version>${release.version}</package.version>
+                <package.version>${release.version}${package.abi.suffix}</package.version>
                 <package.revision>1</package.revision>
             </properties>
             <build>
