@@ -88,9 +88,22 @@ def bind_published_predecessors(manifest, paths):
         return
     field = 'publishedPredecessorManifestSha256s'
     administrative = {'bin/kura_key_service_lifecycle.py', 'bin/kura_key_store.py', 'bin/kura_key_generation.py'}
+    service = 'bin/kura_key_service.py'
+    incoming_service = manifest['files'].get(service)
+    # a047e63 -> d016e78 changes only exclusive_writers() to initialize its
+    # volatile lock. Keep every other service edit byte-bound, including the
+    # reverse transition. A caller must still supply the exact old manifest.
+    reviewed_services = {
+        '75c499643ffc7d85f6e7658895fe0b0a5e9417b9a5ce0d47d875b13fff984cdd': {
+            '9b2f1f00e89faf169a16d918a26697b6691f4904f98c1737f762e988215623f2',
+        },
+    }.get(incoming_service, ())
 
     def stable_assets(files):
-        return dict.fromkeys(files) | {k: v for k, v in files.items() if k not in administrative}
+        result = dict.fromkeys(files) | {k: v for k, v in files.items() if k not in administrative}
+        if result.get(service) in reviewed_services:
+            result[service] = incoming_service
+        return result
 
     def boot_contract(value):
         generation = value['generation']

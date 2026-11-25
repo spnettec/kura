@@ -63,3 +63,17 @@ the retained configuration through a legal Main, stop services normally and cold
 read the same Root again. Tests cover cold-boot lock initialization, actual shared
 and exclusive Linux locks, preservation of pending journals, and refusal of
 untrusted existing coordinators.
+
+## Install the corrected package after completion
+
+A normal published-generation upgrade still needs the original installed manifest
+as a `KURA_PUBLISHED_GENERATION_PREDECESSORS` build input. The package builder
+accepts the reviewed service-source transition from a047e63 to d016e78 by its two
+exact SHA-256 values. The only service change is volatile exclusive-lock
+initialization. Other service edits and the reverse transition stay byte-bound;
+reader, unit, writer-protocol and all other stable-asset checks remain in force.
+The generated package records the complete original manifest digest, not a
+general permission to accept arbitrary service or cohort changes. Retain both
+package archives, the supplied predecessor manifest and its source digest before
+the native upgrade. The original rewrap must already be terminal; never install
+through a pending fence or retry an issued rewrap to obtain a new upgrade scene.

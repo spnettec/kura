@@ -311,6 +311,63 @@ class GenerationPackageTest(unittest.TestCase):
         with self.assertRaises(cohort.Refused):
             cohort.headers(b"Manifest-Version: 1.0\nmanifest-version: 1.0\n")
 
+    def test_reviewed_writer_bootstrap_service_accepts_only_the_exact_supplied_manifest(self):
+        service_path = 'bin/kura_key_service.py'
+        self.assertEqual('75c499643ffc7d85f6e7658895fe0b0a5e9417b9a5ce0d47d875b13fff984cdd',
+                         self.manifest['files'][service_path])
+        prior = json.loads(json.dumps(self.manifest))
+        prior['files'][service_path] = '9b2f1f00e89faf169a16d918a26697b6691f4904f98c1737f762e988215623f2'
+        path = self.root / 'published-predecessor.json'
+        original = service.encode(prior)
+        path.write_bytes(original)
+        self.builder.bind_published_predecessors(self.manifest, (path,))
+        self.assertEqual([hashlib.sha256(original).hexdigest()],
+                         self.generation['publishedPredecessorManifestSha256s'])
+        self.assertEqual(original, path.read_bytes())
+        self.save_manifest()
+        binding = self.policy.generation_assets()
+        self.assertEqual(self.generation['publishedPredecessorManifestSha256s'],
+                         binding['publishedPredecessorManifestSha256s'])
+
+    def test_unknown_service_sources_and_reverse_bootstrap_transition_are_refused(self):
+        service_path = 'bin/kura_key_service.py'
+        old = '9b2f1f00e89faf169a16d918a26697b6691f4904f98c1737f762e988215623f2'
+        new = self.manifest['files'][service_path]
+        for incoming, previous in ((new, '0' * 64), ('1' * 64, old), (old, new)):
+            with self.subTest(incoming=incoming, previous=previous):
+                candidate = json.loads(json.dumps(self.manifest))
+                candidate['files'][service_path] = incoming
+                prior = json.loads(json.dumps(candidate))
+                prior['files'][service_path] = previous
+                path = self.root / 'unreviewed-predecessor.json'
+                original = service.encode(prior)
+                path.write_bytes(original)
+                with self.assertRaises(RuntimeError):
+                    self.builder.bind_published_predecessors(candidate, (path,))
+                self.assertNotIn('publishedPredecessorManifestSha256s', candidate['generation'])
+                self.assertEqual(original, path.read_bytes())
+
+    def test_reviewed_service_does_not_admit_changed_readers_units_or_protocol(self):
+        for kind in ('reader', 'unit', 'protocol'):
+            with self.subTest(kind=kind):
+                prior = json.loads(json.dumps(self.manifest))
+                prior['files']['bin/kura_key_service.py'] = '9b2f1f00e89faf169a16d918a26697b6691f4904f98c1737f762e988215623f2'
+                if kind == 'reader':
+                    relative = prior['generation']['readers']['crypto']
+                    prior['generation']['files'][relative] = '0' * 64
+                elif kind == 'unit':
+                    prior['generation']['unitSha256'] = '0' * 64
+                else:
+                    prior['protocol'] = 1
+                path = self.root / 'changed-boot-contract.json'
+                original = service.encode(prior)
+                path.write_bytes(original)
+                candidate = json.loads(json.dumps(self.manifest))
+                with self.assertRaises(RuntimeError):
+                    self.builder.bind_published_predecessors(candidate, (path,))
+                self.assertNotIn('publishedPredecessorManifestSha256s', candidate['generation'])
+                self.assertEqual(original, path.read_bytes())
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
