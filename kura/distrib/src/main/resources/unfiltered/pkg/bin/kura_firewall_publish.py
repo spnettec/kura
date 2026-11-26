@@ -13,7 +13,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import public_file
-from kura_clock_journal import decode, encode, require
+from kura_clock_journal import Refused, decode, encode, require
 from kura_journal_export import package_cohort as build_cohort, paired_unit
 from kura_ownership_markers import SOURCES as MARKER_SOURCES, verify_main
 from kura_reboot_broker import ENVIRONMENT, proc_status, socket_peer, verify_identity
@@ -129,7 +129,21 @@ def serve(stream, unit):
                     worker.kill()
 
 
+def main():
+    try:
+        require(len(sys.argv) == 2, 'UNPAIRED_FIREWALL_ACTOR')
+        with socket.socket(fileno=0) as stream:
+            serve(stream, sys.argv[1])
+    # An incomplete response still requires original-ID reconciliation. Close
+    # the connection and keep routine refusals inside the service memory limit.
+    except Refused as error:
+        print(f'Kura firewall publication refused: {error.reason}', file=sys.stderr)
+        return 1
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError):
+        print('Kura firewall publication failed: transport or invalid reply', file=sys.stderr)
+        return 1
+    return 0
+
+
 if __name__ == '__main__':
-    require(len(sys.argv) == 2, 'UNPAIRED_FIREWALL_ACTOR')
-    with socket.socket(fileno=0) as stream:
-        serve(stream, sys.argv[1])
+    raise SystemExit(main())

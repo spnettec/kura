@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """PID1 pairing and maintenance-failure contracts; never change a clock."""
 import fcntl
+import hashlib
 import os
 from pathlib import Path
 import stat
@@ -66,6 +67,20 @@ class ClockUnitPairingTest(unittest.TestCase):
                     with self.assertRaisesRegex(broker.Refused, 'UNPAIRED_CODE'):
                         broker.effective_units()
 
+    def test_clock_workers_keep_no_new_privileges_with_the_lxc_adapter(self):
+        packaged = Path(broker.__file__).resolve().parent.parent / 'install'
+        entrypoints = {'kura-clock-broker.service': 'serve',
+                       'kura-clock-rtc-devices.service': 'serve-rtc',
+                       'kura-clock-chrony-step.service': 'serve-chrony-step',
+                       'kura-clock-chrony-config.service': 'serve-chrony-config'}
+        self.assertEqual(set(entrypoints), {name for name in broker.UNITS if name.endswith('.service')})
+        for name, action in entrypoints.items():
+            with self.subTest(name=name):
+                settings = (packaged / name).read_text().splitlines()
+                self.assertIn('NoNewPrivileges=true', settings)
+                self.assertIn('ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B '
+                              '/usr/libexec/kura-clock-broker/bin/kura_clock_broker.py ' + action, settings)
+
     def test_load_path_comes_from_pid1_including_attached_and_control_roots(self):
         raw = '/etc/systemd/system.control /run/systemd/system.attached /usr/lib/systemd/system'
         with mock.patch.object(broker, 'systemd_properties', return_value={'UnitPath': raw}):
@@ -94,6 +109,65 @@ class ClockUnitPairingTest(unittest.TestCase):
         self.assertIn('service.d', broker.unit_input_names(broker.UNITS[1]))
         self.assertIn('kura-clock-.service.d', broker.unit_input_names(broker.UNITS[1]))
         self.assertIn('kura-.service.d', broker.unit_input_names(broker.UNITS[1]))
+
+    def test_orbstack_adapter_requires_the_exact_content_and_runtime(self):
+        adapter = broker.CONTAINER_ADAPTER
+        approved = b'[Service]\nProtectSystem=no\n'
+        sha = hashlib.sha256(approved).hexdigest()
+        with mock.patch.object(broker, 'CONTAINER_ADAPTER_SHA256', sha), \
+                mock.patch.object(broker, 'public_file', return_value=approved) as read, \
+                mock.patch.object(broker.subprocess, 'run', return_value=SimpleNamespace(
+                    returncode=0, stdout=b'lxc\n')) as probe:
+            broker.check_loaded_dropins(broker.UNITS[1], str(adapter))
+            read.assert_called_once_with(adapter, 4096)
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[0], str(adapter))
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[1], str(Path('/usr/lib') / adapter.name))
+            probe.return_value.stdout = b'docker\n'
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[1], str(adapter))
+            probe.return_value.stdout = b'lxc\n'
+            read.return_value = approved + b'User=root\n'
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.UNITS[1], str(adapter))
+
+    def test_clock_privileges_dropin_is_paired_only_for_its_own_unit(self):
+        dropin = Path('/usr/lib/systemd/system') / broker.CLOCK_PRIVILEGES_DROPIN
+        source = Path(__file__).resolve().parents[2] / 'kura-core/src/main/resources/deb-config' / dropin.name
+        data = source.read_bytes()
+        self.assertEqual(data, broker.CLOCK_PRIVILEGES_SETTINGS)
+        with mock.patch.object(broker, 'unit_directory_present', return_value=True), \
+                mock.patch.object(broker, 'public_file', return_value=data) as read, \
+                mock.patch.object(broker, 'check_container_adapter') as container:
+            broker.check_loaded_dropins(broker.CLOCK_SERVICE, str(dropin))
+            broker.check_loaded_dropins(broker.CLOCK_SERVICE, f'{broker.CONTAINER_ADAPTER} {dropin}')
+            read.assert_called_with(dropin, 4096)
+            container.assert_called_once_with(broker.CONTAINER_ADAPTER, 'UNPAIRED_CODE')
+            for value in (f'{dropin} {broker.CONTAINER_ADAPTER}', f'{dropin} /etc/systemd/system/other.conf',
+                          str(dropin).replace('/usr/lib', '/run'), str(dropin).replace('/usr/lib', '/usr//lib')):
+                with self.subTest(value=value), self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                    broker.check_loaded_dropins(broker.CLOCK_SERVICE, value)
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins('named.service', str(dropin))
+            read.return_value = data + b'User=root\n'
+            with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                broker.check_loaded_dropins(broker.CLOCK_SERVICE, str(dropin))
+
+    def test_unit_load_path_accepts_only_the_fixed_clock_privileges_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            dropin = root / broker.CLOCK_PRIVILEGES_DROPIN
+            dropin.parent.mkdir()
+            dropin.write_bytes(broker.CLOCK_PRIVILEGES_SETTINGS)
+            with mock.patch.object(broker, 'unit_load_paths', return_value=(root,)), \
+                    mock.patch.object(broker, 'VENDOR_UNIT_ROOTS', (root,)), \
+                    mock.patch.object(broker, 'unit_directory_present', return_value=True), \
+                    mock.patch.object(broker, 'public_file', side_effect=lambda path, _: path.read_bytes()):
+                broker.unit_sources()
+                dropin.with_name('extra.conf').write_bytes(broker.CLOCK_PRIVILEGES_SETTINGS)
+                with self.assertRaisesRegex(broker.Refused, '^UNPAIRED_CODE$'):
+                    broker.unit_sources()
 
     def test_unreadable_lookup_does_not_become_absence(self):
         with mock.patch.object(broker, 'unit_load_paths', return_value=(Path('/etc/systemd/system.control'),)), \

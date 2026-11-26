@@ -50,7 +50,7 @@ class IcmpProbeTest(unittest.TestCase):
                                               capabilities=executor.CAP_NET_RAW)
                     self.assertEqual(main.call_count, 2)
                     main.assert_called_with(identity, 'main-unit-hash', executor.ICMP_CLIENT,
-                                            2, executor.icmp_request)
+                                            2, executor.icmp_request, generation_proof=None)
                     protected.assert_called_with(executor.ICMP_BINARY)
                     run.assert_called_with(['/usr/bin/ping', '-6', '-n', '-c', '5', '-W', '1', '--', '::1'],
                                            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,

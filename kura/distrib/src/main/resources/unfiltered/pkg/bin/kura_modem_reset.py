@@ -16,7 +16,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kura_bind_outcomes as outcomes
 from kura_bind_service import checked_package_asset
-from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, public_file, unit_directory_present
+from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, check_loaded_dropins, public_file, unit_directory_present
 from kura_clock_journal import MAX_OPERATIONS, Refused, create, decode, digest, directory, encode, identifier, require
 from kura_journal_export import main_peer, paired_unit, unit_properties
 from kura_modem_cohort import active_provider, check_modem_location_provider, check_modem_reset_provider
@@ -125,10 +125,11 @@ def service(bus, name, unit, package, binary):
             and props['ExecStart'].startswith('{ path=' + str(binary) + ' ; argv[]=' + str(binary))
             and props['ActiveState'] == 'active' and props['ControlGroup'] == group
             and props['FragmentPath'] in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
-            and props['SourcePath'] == props['DropInPaths'] == ''
+            and props['SourcePath'] == ''
             and props['Transient'] == props['NeedDaemonReload'] == 'no'
             and re.fullmatch('[0-9a-f]{32}', props['InvocationID']) and int(props['MainPID']) > 1,
             'UNPAIRED_MODEM_DAEMON')
+    check_loaded_dropins(unit, props['DropInPaths'], 'UNPAIRED_MODEM_DAEMON')
     version = subprocess.check_output(['/usr/bin/dpkg-query', '-W', '-f=${db:Status-Status} ${Version}', package],
                                       env=ENVIRONMENT, timeout=3).decode('ascii')
     require(re.fullmatch(r'installed [0-9A-Za-z:.+~\-]+', version), 'UNPAIRED_MODEM_DAEMON')
@@ -143,6 +144,7 @@ def service(bus, name, unit, package, binary):
             and proc_file(pid, 'cmdline').split(b'\0', 1)[0] == os.fsencode(binary)
             and proc_file(pid, 'cgroup') == f'0::{group}\n'.encode()
             and unit_properties(unit, fields) == props, 'UNPAIRED_MODEM_DAEMON')
+    check_loaded_dropins(unit, props['DropInPaths'], 'UNPAIRED_MODEM_DAEMON')
     return owner, version, fragment, executable, props['InvocationID'], pid
 
 

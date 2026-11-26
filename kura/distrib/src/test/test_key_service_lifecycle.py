@@ -12,11 +12,13 @@ import sys
 import tempfile
 import types
 import unittest
+from unittest.mock import patch
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "main/resources/unfiltered/pkg/bin"))
 import kura_key_service as service
 import kura_key_service_lifecycle as lifecycle
+import kura_key_store as key_store
 
 
 class LifecycleTest(unittest.TestCase):
@@ -366,6 +368,61 @@ class LifecycleTest(unittest.TestCase):
             with self.assertRaises(lifecycle.Refused):self.policy.enter("install")
             self.assertFalse(self.policy.state.exists())
             (directory / "override.conf").unlink()
+
+    def test_agent_presence_does_not_authorize_key_service_overlays(self):
+        (self.root / 'var/lib/kura-management-agent').mkdir(parents=True)
+        self.write(self.root / 'etc/systemd/system/kura.service.d/agent-authorization.conf',
+                   b'[Service]\nSupplementaryGroups=kura-management\n', 0o644)
+        self.policy.no_overrides()
+        for path in (
+            'etc/systemd/system/kura-key-service.service.d/local.conf',
+            'run/systemd/system.control/kura-key-service.socket.d/local.conf',
+            'run/systemd/generator.early/kura-key-recovery.service',
+        ):
+            with self.subTest(path=path):
+                source = self.root / path
+                self.write(source, b'# Unreviewed unit configuration\n', 0o644)
+                with self.assertRaisesRegex(lifecycle.Refused, 'requires reviewed migration'):
+                    self.policy.enter('install')
+                self.assertFalse(self.policy.state.exists())
+                self.assertEqual([], self.calls)
+                source.unlink()
+
+    def test_known_container_adapter_requires_exact_runtime_path_content_and_lxc(self):
+        adapter = self.root / lifecycle.CONTAINER_ADAPTER_DROPIN.lstrip('/')
+        profile = (b'[Service]\nProcSubset=all\nProtectProc=default\nProtectControlGroups=no\n'
+                   b'ProtectKernelTunables=no\nNoNewPrivileges=no\nLoadCredential=\nPrivateNetwork=no\n'
+                   b'ImportCredential=\nProtectHome=no\nProtectSystem=no\nPrivateDevices=no\nPrivateTmp=no\n'
+                   b'ProtectKernelLogs=no\nProtectKernelModules=no\nReadWritePaths=\nReadOnlyPaths=\n')
+        self.write(adapter, profile, 0o644)
+
+        def detect(virtualization):
+            def runner(args, **kwargs):
+                if args == ['/usr/bin/systemd-detect-virt', '--container']:
+                    return types.SimpleNamespace(returncode=0, stdout=virtualization + '\n')
+                return self.runner(args, **kwargs)
+            return runner
+
+        self.policy.runner = detect('lxc')
+        self.policy.no_overrides()
+        store = key_store.Store(self.root)
+        with patch.object(key_store, 'paired_lifecycle', return_value=types.SimpleNamespace(Lifecycle=lambda *_: self.policy)):
+            store.dropins_safe()
+        self.policy.runner = detect('docker')
+        with self.assertRaisesRegex(lifecycle.Refused, 'requires its LXC runtime'):
+            self.policy.no_overrides()
+        self.policy.runner = detect('lxc')
+        self.write(adapter, profile + b'# Changed\n', 0o644)
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unrecognized container systemd adapter'):
+            self.policy.no_overrides()
+        adapter.unlink()
+        substitute = self.root / 'etc/systemd/system/service.d' / adapter.name
+        self.write(substitute, profile, 0o644)
+        with self.assertRaisesRegex(lifecycle.Refused, 'requires reviewed migration'):
+            self.policy.no_overrides()
+        with self.assertRaisesRegex(key_store.Refused, 'requires a reviewed migration'):
+            store.dropins_safe()
+        self.assertFalse(self.policy.state.exists())
 
     def test_writable_empty_dropin_directory_is_not_trusted(self):
         directory=self.root / "etc/systemd/system/kura-key-service.service.d"

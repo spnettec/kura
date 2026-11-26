@@ -10,6 +10,7 @@ from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'main/resources/unfiltered/pkg/bin'))
 import kura_modem_reset as service
+import kura_clock_broker as clock
 from kura_clock_journal import Refused, digest
 
 DEVICE = '/org/freedesktop/NetworkManager/Devices/12'
@@ -27,6 +28,34 @@ class ModemResetRequestTest(unittest.TestCase):
                             f'enable:{scope}:{DEVICE}', f'gps-raw:{scope}:{DEVICE}:{DEVICE_ID}'):
             with self.subTest(action=unsupported), self.assertRaises(Refused):
                 service.request(unsupported, operation)
+
+
+class ModemDaemonTest(unittest.TestCase):
+    def test_reviewed_adapter_does_not_replace_daemon_identity_checks(self):
+        unit = 'NetworkManager.service'
+        binary = Path('/usr/sbin/NetworkManager')
+        group = '/system.slice/' + unit
+        fields = dict(Id=unit, Names=unit, LoadState='loaded',
+                      ExecStart=f'{{ path={binary} ; argv[]={binary} --no-daemon }}',
+                      ActiveState='active', ControlGroup=group, FragmentPath='/usr/lib/systemd/system/' + unit,
+                      SourcePath='', DropInPaths=str(clock.CONTAINER_ADAPTER), Transient='no',
+                      NeedDaemonReload='no', InvocationID='a' * 32, MainPID='200')
+        with patch.object(service, 'unit_properties', return_value=fields), \
+                patch.object(clock, 'check_container_adapter') as adapter, \
+                patch.object(service.subprocess, 'check_output', return_value=b'installed 1.52.1-1'), \
+                patch.object(service, 'public_file', return_value=b'manifest'), \
+                patch.object(service, 'checked_package_asset', return_value='b' * 64), \
+                patch.object(service, 'proc_file', side_effect=[os.fsencode(binary) + b'\0', f'0::{group}\n'.encode()]), \
+                patch.object(service, 'bus_call', side_effect=[':1.3', 200, 0, ':1.3', 201, 0]) as bus_call:
+            self.assertEqual(service.service(Mock(), service.NM, unit, 'network-manager', binary)[-1], 200)
+            self.assertEqual(adapter.call_args_list, [call(clock.CONTAINER_ADAPTER, 'UNPAIRED_MODEM_DAEMON')] * 2)
+            fields['DropInPaths'] += ' /etc/systemd/system/service.d/override.conf'
+            with self.assertRaisesRegex(Refused, 'UNPAIRED_MODEM_DAEMON'):
+                service.service(Mock(), service.NM, unit, 'network-manager', binary)
+            self.assertEqual(bus_call.call_count, 3)
+            fields['DropInPaths'] = str(clock.CONTAINER_ADAPTER)
+            with self.assertRaisesRegex(Refused, 'UNPAIRED_MODEM_DAEMON'):
+                service.service(Mock(), service.NM, unit, 'network-manager', binary)
 
 
 @unittest.skipUnless(os.geteuid() == 0, 'Requires a root-owned temporary state directory on Linux')

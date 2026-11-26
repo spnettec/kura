@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Real storage, crypto, JAR pairing and flock; systemd/process boundaries are explicit fakes."""
 import argparse
+import hashlib
 import io
 import os
 from pathlib import Path
@@ -35,7 +36,7 @@ class GenerationPublicationTest(unittest.TestCase):
         self.component.no_foreign_processes = Mock()
         self.component.process_group = lambda _: '/system.slice/kura.service'
         accounts = patch.object(self.component.__class__.__init__.__globals__['pwd'], 'getpwnam',
-                                return_value=types.SimpleNamespace(pw_uid=os.geteuid()))
+                                return_value=types.SimpleNamespace(pw_uid=os.geteuid(), pw_gid=os.getegid()))
         accounts.start(); self.addCleanup(accounts.stop)
         self.group = self.root / 'sys/fs/cgroup/system.slice/kura.service'
         self.group.mkdir(parents=True)
@@ -106,6 +107,92 @@ class GenerationPublicationTest(unittest.TestCase):
     def publish(self, request=None):
         return self.component.request(self.publish_request if request is None else request)
 
+    def test_unit_accepts_only_the_paired_platform_and_generation_dropins(self):
+        scope = self.component.unit.__func__.__globals__
+        adapter = scope['CONTAINER_ADAPTER_DROPIN']
+        generation = scope['DROPIN']
+        loaded = adapter
+
+        def with_dropins(command, **options):
+            result = self.run_command(command, **options)
+            result.stdout = result.stdout.replace('DropInPaths=\n', f'DropInPaths={loaded}\n')
+            return result
+
+        self.component.runner = with_dropins
+        with patch.object(scope['Lifecycle'], 'check_container_adapter') as verify:
+            unit = self.component.unit(generation_mode=False)
+            verify.assert_called_once_with()
+            self.assertEqual('', unit['DropInPaths'])
+            loaded = f'{generation} {adapter}'
+            unit = self.component.unit(generation_mode=True, recovery=True)
+            self.assertEqual(generation, unit['DropInPaths'])
+            self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=False))
+            loaded = f'{adapter} /etc/systemd/system/kura.service.d/unreviewed.conf'
+            self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=False))
+            loaded = adapter
+            verify.side_effect = scope['Refused']('unmatched LXC adapter')
+            self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=False))
+
+    def test_unit_accepts_only_the_reviewed_loaded_networking_dependencies(self):
+        scope = self.component.unit.__func__.__globals__
+        generation, networking = scope['DROPIN'], scope['NETWORKING_DROPIN']
+        vendor = self.root / networking.lstrip('/')
+        vendor.parent.mkdir(parents=True)
+        dependencies = (b'[Unit]\nWants=NetworkManager.service ModemManager.service\n'
+                        b'After=NetworkManager.service ModemManager.service\n')
+        vendor.write_bytes(dependencies)
+        loaded = networking
+
+        def with_networking(command, **options):
+            result = self.run_command(command, **options)
+            result.stdout = result.stdout.replace('DropInPaths=\n', f'DropInPaths={loaded}\n')
+            return result
+
+        self.component.runner = with_networking
+        self.assertEqual('', self.component.unit(generation_mode=False)['DropInPaths'])
+        loaded = f'{generation} {networking}'
+        self.assertEqual(generation, self.component.unit(generation_mode=True)['DropInPaths'])
+        self.assertEqual(generation, self.component.unit(generation_mode=False, recovery=True)['DropInPaths'])
+        vendor.write_bytes(dependencies + b'[Service]\nAmbientCapabilities=cap_net_raw\n')
+        self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
+        vendor.write_bytes(dependencies)
+        loaded += f' {networking.removeprefix("/usr")}'
+        self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
+        loaded = f'{generation} /etc/systemd/system/kura.service.d/kura-networking.conf'
+        self.refused('UNMANAGED_CORE', lambda: self.component.unit(generation_mode=True))
+
+    def test_only_the_unprovisioned_and_disabled_legacy_agent_vendor_copy_is_allowed(self):
+        scope = self.component.unit.__func__.__globals__
+        unit = scope['LEGACY_AGENT']
+        fragment = self.root / scope['LEGACY_AGENT_VENDOR'].lstrip('/')
+        fragment.parent.mkdir(parents=True)
+        reviewed = b'legacy unit with the original startup condition'
+        fragment.write_bytes(reviewed)
+        loaded = dict(scope['LEGACY_AGENT_PROPERTIES'], DropInPaths='')
+
+        def command(arguments, **_):
+            if arguments[5] == unit:
+                if arguments[-1] == '--property=LoadState':
+                    return subprocess.CompletedProcess(arguments, 0, 'LoadState=loaded\n')
+                return subprocess.CompletedProcess(arguments, 0, ''.join(f'{key}={value}\n' for key, value in loaded.items()))
+            self.assertEqual(arguments[5], 'kura-management-agent.socket')
+            return subprocess.CompletedProcess(arguments, 0, 'LoadState=not-found\n')
+
+        self.component.runner = command
+        with patch.dict(scope, LEGACY_AGENT_SHA=hashlib.sha256(reviewed).hexdigest()):
+            self.component.check_legacy_agent()
+            for key, foreign in (('UnitFileState', 'enabled'), ('Job', '43'),
+                                 ('ActiveState', 'active'), ('DropInPaths', '/etc/systemd/system/site.conf')):
+                with patch.dict(loaded, {key: foreign}):
+                    self.refused('AGENT_GENERATION_UNAVAILABLE', self.component.check_legacy_agent)
+            env = self.root / 'etc/kura-management-agent/agent.env'
+            env.parent.mkdir()
+            env.symlink_to('missing')
+            self.refused('AGENT_GENERATION_UNAVAILABLE', self.component.check_legacy_agent)
+            env.unlink()
+            fragment.write_bytes(reviewed + b'\n')
+            self.refused('AGENT_GENERATION_UNAVAILABLE', self.component.check_legacy_agent)
+
     def count_stops(self):
         return sum(command[-2:] == ('stop', 'kura.service') for command in self.commands)
 
@@ -155,6 +242,55 @@ class GenerationPublicationTest(unittest.TestCase):
         self.assertEqual(commands, self.commands)
         self.refused('START_ALREADY_AUTHORIZED', lambda: self.component.request(self.start_request(), start=True))
 
+    def test_container_projection_continues_the_original_publication(self):
+        scope = self.component.unit.__func__.__globals__
+        adapter = scope['CONTAINER_ADAPTER_DROPIN']
+
+        def with_adapter(command, **options):
+            result = self.run_command(command, **options)
+            result.stdout = '\n'.join(
+                f'{line} {adapter}'.replace('= ', '=') if line.startswith('DropInPaths=') else line
+                for line in result.stdout.split('\n'))
+            return result
+
+        self.component.runner = with_adapter
+        directory = self.manager.store.path(scope['GENERATION_CREDENTIALS_DIRECTORY'])
+        projection = self.component.project_credentials
+        replace = os.replace
+
+        def interrupt_ring_copy(source, destination, **options):
+            if destination == directory / 'kura_encryption_keyring':
+                raise OSError('fixture interrupted the projected ring rename')
+            return replace(source, destination, **options)
+
+        uid = 65534
+        identity = self.publish_request['operationId']
+        read = dict(schema=1, action='generation-publication-read', operationId=identity)
+        with patch.object(scope['Lifecycle'], 'check_container_adapter'):
+            # The systemd stand-in uses the test worker UID. Exercise the disk
+            # projection with the distinct reader used by this fixture.
+            with patch.object(self.component, 'project_credentials',
+                              side_effect=lambda targets, history, _: projection(targets, history, uid)):
+                with patch.object(os, 'replace', side_effect=interrupt_ring_copy):
+                    self.refused('UNKNOWN', self.publish)
+                receipt = self.component.publication_read(read)
+                self.assertEqual('UNKNOWN', receipt['state'])
+                self.assertEqual(0o700, directory.stat().st_mode & 0o777)
+                self.assertFalse((self.state / 'generation-current.json').exists())
+                active_inode = (directory / 'kura_encryption_key').stat().st_ino
+                result = self.component.recover_publication(dict(read, action='generation-publication-recover',
+                        expectedRecoveryReceiptSha256=receipt['recoveryReceiptSha256']))
+        self.assertEqual(identity, result['operationId'])
+        self.assertEqual('SUCCEEDED', result['state'])
+        self.assertEqual(1, self.count_stops())
+        self.assertEqual(0o710, directory.stat().st_mode & 0o777)
+        self.assertEqual(active_inode, (directory / 'kura_encryption_key').stat().st_ino)
+        for name in ('kura_encryption_key', 'kura_encryption_keyring', 'key-generations.json'):
+            self.assertEqual((self.directory / name).read_bytes(),
+                             self.manager.store.read(directory / name, private=True, loaded_for_uid=uid))
+            with self.assertRaises(writer.policy.Refused):
+                self.manager.store.read(directory / name, private=True, loaded_for_uid=uid - 1)
+
     def test_package_admits_only_original_published_credentials_and_paired_incoming_manifest(self):
         self.publish()
         fence = dict(schema=1, id=str(uuid.uuid4()), state='MAINTENANCE', firstAction='upgrade')
@@ -183,6 +319,45 @@ class GenerationPublicationTest(unittest.TestCase):
         current.rename(current.with_suffix('.held'))
         with self.assertRaisesRegex(policy.Refused, 'Incomplete published'):
             store.prepare('upgrade')
+
+    def test_published_predecessor_requires_original_start_and_successor_package_history(self):
+        result = self.publish()
+        fence = dict(schema=1, id=str(uuid.uuid4()), state='MAINTENANCE', firstAction='upgrade')
+        marker = self.state / 'maintenance.json'
+        policy = writer.policy
+        store = policy.Store(self.root)
+        manifest = self.home / 'libexec/key-backup/manifest.json'
+        previous = manifest.read_bytes()
+        successor = service.decode(previous)
+        prior_hash = self.cohort['manifestSha256']
+        successor['generation']['publishedPredecessorManifestSha256s'] = [prior_hash]
+        encoded = service.encode(successor)
+        incoming_hash = __import__('hashlib').sha256(encoded).hexdigest()
+        source = package.SOURCE / 'unfiltered/pkg/bin'
+        readers = dict(_KURA_EMBEDDED_LIFECYCLE_SOURCE=(source / 'kura_key_service_lifecycle.py').read_bytes(),
+                       _KURA_EMBEDDED_JOURNAL_SOURCE=(source / 'kura_key_journal.py').read_bytes(),
+                       _KURA_INCOMING_KEY_MANIFEST_SHA256=incoming_hash,
+                       _KURA_INCOMING_KEY_PREDECESSORS=(prior_hash,))
+        self.put(marker, service.encode(fence))
+        with patch.dict(vars(policy), readers):
+            with self.assertRaisesRegex(policy.Refused, 'original completed generation startup'):
+                store.prepare('upgrade')
+        marker.unlink()
+        start = self.start_request()
+        self.component.request(start, start=True)
+        self.put(marker, service.encode(fence))
+        with patch.dict(vars(policy), readers):
+            self.assertTrue(store.prepare('upgrade')['keyReady'])
+        manifest.write_bytes(encoded)
+        self.assertTrue(store.prepare('package')['keyReady'])
+        marker.unlink()
+        self.refused('COHORT_CHANGED', self.admission)
+        self.put(marker, service.encode(fence))
+        self.policy.leave()
+        self.assertEqual('CREDENTIAL_READY', self.admission()['state'])
+        self.assertEqual(result, self.manager.record(result['operationId'])['response'])
+        self.assertEqual(self.cohort['cohortSha256'],
+                         self.manager.record(start['operationId'])['response']['cohortSha256'])
 
     def test_preparation_history_published_round_allows_new_staging_without_discarding_original_material(self):
         result = self.publish()

@@ -92,6 +92,11 @@ LEGACY_HELPERS = ('bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/
 HELPERS = (*LEGACY_HELPERS, 'bin/kura_chrony_config.py')
 SYS_TIME = 1 << 25
 VENDOR_UNIT_ROOTS = (Path('/lib/systemd/system'), Path('/usr/lib/systemd/system'))
+CONTAINER_ADAPTER = Path('/run/systemd/system/service.d/zzz-lxc-service.conf')
+CONTAINER_ADAPTER_SHA256 = '95efa48563a96a16697137c70e6f80af7c85acf231d29461624b54a589afbfbd'
+CLOCK_SERVICE = 'kura-clock-broker.service'
+CLOCK_PRIVILEGES_DROPIN = Path(CLOCK_SERVICE + '.d/zzzz-kura-clock-no-new-privileges.conf')
+CLOCK_PRIVILEGES_SETTINGS = b'[Service]\nNoNewPrivileges=yes\n'
 WRITE_ACTIONS = {phase + '-' + suffix: (phase, name)
                  for name, (suffix, _, _) in OPERATIONS.items() for phase in ('prepare', 'commit')}
 # _IOW('p', 0x0a, struct rtc_time) on the release architectures.
@@ -236,54 +241,82 @@ def unit_input_names(name):
     return names
 
 
+def check_container_adapter(path, reason='UNPAIRED_CODE'):
+    require(path == CONTAINER_ADAPTER, reason)
+    try:
+        raw = public_file(path, 4096)
+    except (OSError, Refused) as error:
+        raise Refused(reason) from error
+    require(hashlib.sha256(raw).hexdigest() == CONTAINER_ADAPTER_SHA256, reason)
+    try:
+        result = subprocess.run(['/usr/bin/systemd-detect-virt', '--container'],
+                                env={'PATH': '/usr/bin:/bin', 'LANG': 'C'},
+                                capture_output=True, timeout=5)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise Refused(reason) from error
+    require(result.returncode == 0 and result.stdout.strip() == b'lxc', reason)
+
+
+def check_clock_privileges_dropin(path, reason):
+    require(path in {root / CLOCK_PRIVILEGES_DROPIN for root in VENDOR_UNIT_ROOTS}, reason)
+    try:
+        require(unit_directory_present(path.parent), reason)
+        require(public_file(path, 4096) == CLOCK_PRIVILEGES_SETTINGS, reason)
+    except (OSError, Refused) as error:
+        raise Refused(reason) from error
+
+
+def check_loaded_dropins(unit, raw, reason='UNPAIRED_CODE'):
+    paths = raw.split()
+    privileges_paths = {str(root / CLOCK_PRIVILEGES_DROPIN) for root in VENDOR_UNIT_ROOTS}
+    if unit == CLOCK_SERVICE and paths and paths[-1] in privileges_paths:
+        check_clock_privileges_dropin(Path(paths.pop()), reason)
+    if paths:
+        require(unit.endswith('.service') and paths == [str(CONTAINER_ADAPTER)], reason)
+        check_container_adapter(CONTAINER_ADAPTER, reason)
+
+
+def check_unit_adapter_directory(path, reason='UNPAIRED_CODE'):
+    require(path == CONTAINER_ADAPTER.parent and unit_directory_present(path), reason)
+    require([source for source in path.iterdir() if source.name.endswith('.conf')] == [CONTAINER_ADAPTER], reason)
+    check_container_adapter(CONTAINER_ADAPTER, reason)
+
+
 def unit_sources():
     """Reject overrides in the manager's complete current system load path."""
-    # Container runtime adapters (LXC/OrbStack) install a global service.d
-    # drop-in that neutralizes hardening for every unit on the host. The bare
-    # "<kind>.d" entry generated for every unit name matches that directory on
-    # such hosts even though it carries no clock-specific override. Require the
-    # adapter drop-in to be exactly the known runtime adapter, not other content.
-    generic_dropins = {'service.d', 'socket.d', 'timer.d'}
     try:
         for root in unit_load_paths():
             if not unit_directory_present(root):
                 continue
-            for name in UNITS:
-                inputs = [i for i in unit_input_names(name) if i not in generic_dropins]
-                if root not in VENDOR_UNIT_ROOTS:
-                    inputs.append(name)
-                for entry in inputs:
-                    try:
-                        (root / entry).lstat()
-                    except FileNotFoundError:
-                        continue
-                    raise Refused('UNPAIRED_CODE')
+            inputs = {entry for name in UNITS for entry in unit_input_names(name)}
             if root not in VENDOR_UNIT_ROOTS:
-                for kind in generic_dropins:
-                    directory = root / kind
-                    if not directory.is_dir():
-                        continue
-                    for source in sorted(directory.glob('*.conf')):
-                        require(source.name == 'zzz-lxc-service.conf',
-                                'UNPAIRED_CODE: unreviewed global drop-in')
+                inputs.update(UNITS)
+            for entry in sorted(inputs):
+                path = root / entry
+                try:
+                    path.lstat()
+                except FileNotFoundError:
+                    continue
+                if root in VENDOR_UNIT_ROOTS and entry == CLOCK_PRIVILEGES_DROPIN.parent.name:
+                    dropin = root / CLOCK_PRIVILEGES_DROPIN
+                    check_clock_privileges_dropin(dropin, 'UNPAIRED_CODE')
+                    require(list(path.iterdir()) == [dropin], 'UNPAIRED_CODE')
+                else:
+                    check_unit_adapter_directory(path)
     except OSError as error:
         raise Refused('UNPAIRED_CODE') from error
 
 
 def effective_units(units=UNITS):
-    # Container runtime adapters (LXC/OrbStack) add a global service.d drop-in
-    # to every unit on the host. It carries no clock-specific override, so that
-    # exact adapter path may appear alongside an otherwise clean unit.
-    adapter = '/run/systemd/system/service.d/zzz-lxc-service.conf'
     properties = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
                   'NeedDaemonReload', 'Transient')
     for name in units:
         value = systemd_properties(properties, name)
-        dropins = [p for p in value['DropInPaths'].split() if p != adapter]
         require(value['Id'] == name and value['Names'].split() == [name] and value['LoadState'] == 'loaded'
                 and value['FragmentPath'] in {str(root / name) for root in VENDOR_UNIT_ROOTS}
-                and value['SourcePath'] == '' and not dropins
+                and value['SourcePath'] == ''
                 and value['NeedDaemonReload'] == value['Transient'] == 'no', 'UNPAIRED_CODE')
+        check_loaded_dropins(name, value['DropInPaths'])
 
 
 def chrony_status():
@@ -340,15 +373,27 @@ def chrony_target(unit):
     value = systemd_properties(fields, unit)
     if (value['Id'] != unit or value['LoadState'] != 'loaded' or value['ActiveState'] not in CHRONY_ACTIVE_STATES
             or value['FragmentPath'] not in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
-            or value['SourcePath'] != '' or value['DropInPaths'] != ''
+            or value['SourcePath'] != ''
             or value['NeedDaemonReload'] != 'no' or value['Transient'] != 'no'):
         raise OSError(errno.ESTALE, 'Unpaired loaded Chrony unit')
+    try:
+        check_loaded_dropins(unit, value['DropInPaths'], 'UNPAIRED_CHRONY_UNIT')
+    except Refused as error:
+        raise OSError(errno.ESTALE, 'Unpaired loaded Chrony unit') from error
     fragment = public_file(Path(value['FragmentPath']))
     state = value.pop('ActiveState')
     return digest(dict(unit=value, fragmentSha256=hashlib.sha256(fragment).hexdigest())), state
 
 
 def require_chrony_bus_identity():
+    # Polkit reads the effective systemd property, which is distinct from the
+    # kernel NoNewPrivs flag already checked on the broker process.
+    try:
+        settings = systemd_properties(('NoNewPrivileges',), CLOCK_SERVICE)
+    except Refused as error:
+        raise OSError(errno.EOPNOTSUPP, 'Cannot verify the Chrony service-job subject') from error
+    if settings['NoNewPrivileges'] != 'yes':
+        raise OSError(errno.EOPNOTSUPP, 'Systemd did not enable NoNewPrivileges for the clock broker')
     # Polkit only reports the caller's unit for a PID file descriptor supplied
     # by the system bus. An older bus must fail before a service job is sent.
     try:

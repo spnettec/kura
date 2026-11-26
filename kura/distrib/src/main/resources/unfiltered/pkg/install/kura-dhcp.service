@@ -6,8 +6,8 @@ After=network.target
 Type=forking
 PIDFile=/run/kura-dhcp/dnsmasq.pid
 User=dnsmasq
-LoadCredential=dnsmasq.conf:/etc/kura/dhcp-service/dnsmasq.conf
-ExecStart=/usr/sbin/dnsmasq --conf-file=%d/dnsmasq.conf --dhcp-leasefile=/var/lib/kura-dhcp-leases/dnsmasq.leases --pid-file=/run/kura-dhcp/dnsmasq.pid
+BindReadOnlyPaths=/etc/kura/dhcp-service/dnsmasq.conf:/run/kura-dhcp-config.conf
+ExecStart=/usr/bin/setpriv --no-new-privs /usr/sbin/dnsmasq --conf-file=/run/kura-dhcp-config.conf --dhcp-leasefile=/var/lib/kura-dhcp-leases/dnsmasq.leases --pid-file=/run/kura-dhcp/dnsmasq.pid
 StateDirectory=kura-dhcp-leases
 StateDirectoryMode=0755
 RuntimeDirectory=kura-dhcp

@@ -10,6 +10,7 @@ import subprocess
 import sys
 import unittest
 from unittest.mock import patch
+import uuid
 
 import test_key_service_lifecycle as fixtures
 
@@ -17,6 +18,8 @@ MODULE = Path(__file__).resolve().parents[2] / 'kura-core/postinst-configure.py'
 spec = importlib.util.spec_from_file_location('postinst_configure', MODULE)
 configure = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(configure)
+for name in ('prelayout-repair.py', 'issued-layout-repair.py'):
+    exec(compile(MODULE.with_name(name).read_bytes(), name, 'exec'), vars(configure))
 lifecycle = fixtures.lifecycle
 
 
@@ -53,6 +56,278 @@ class ConfigureTest(unittest.TestCase):
             with self.assertRaisesRegex(lifecycle.Refused, 'Core-owned'):
                 self.configure.unpacked_main_directory(logical)
         self.assertTrue(logical.is_dir())
+
+    def test_current_retained_profile_requires_the_exact_manifest_unit_set(self):
+        units = {name: '1' * 64 for name in lifecycle.NATIVE_MAIN_UNITS}
+        manifest = dict(schema=2, protocol=2,
+                        files={name: '2' * 64 for name in lifecycle.SNAPSHOT_PUBLICATION_ASSETS},
+                        units=units, generation={})
+        self.assertEqual(units, configure.retained_vendor_profile(lifecycle, manifest, tuple(units)))
+        manifest['units'] = {name: '1' * 64 for name in lifecycle.NATIVE_VALIDATION_UNITS}
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired retained key-service unit profile'):
+            configure.retained_vendor_profile(lifecycle, manifest, tuple(units))
+
+    def test_removed_generation_successor_requires_both_manifest_pins_and_original_start(self):
+        installed, origin, incoming = '1' * 64, '2' * 64, '3' * 64
+        release = dict(manifestSha256=installed, publicationManifestSha256=origin)
+        publication = dict(operationId=str(uuid.uuid4()))
+        scope = dict(require=lifecycle.require, _KURA_INCOMING_KEY_MANIFEST_SHA256=incoming)
+        source = MODULE.with_name('retained-generation-preflight.py')
+        exec(compile(source.read_bytes(), str(source), 'exec'), scope)
+        secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
+
+        def admit(pins):
+            scope['_KURA_INCOMING_KEY_PREDECESSORS'] = pins
+            scope['check_removed_generation_release'](lifecycle, self.policy, release, publication, secret)
+
+        scope['_KURA_INCOMING_KEY_MANIFEST_SHA256'] = installed
+        admit(())
+        scope['_KURA_INCOMING_KEY_MANIFEST_SHA256'] = incoming
+        for pins in ((installed,), (origin,)):
+            with self.subTest(pins=pins):
+                with self.assertRaisesRegex(lifecycle.Refused, 'differs from the retained generation cohort'):
+                    admit(pins)
+
+        pins = (installed, origin)
+        with self.assertRaisesRegex(lifecycle.Refused, 'original completed generation startup'):
+            admit(pins)
+        operation = str(uuid.uuid4())
+        record = dict(schema=1, operationId=operation, action='generation-core-start', requestTag='4' * 64,
+                      state='SUCCEEDED')
+        response = dict(schema=1, operationId=operation, action=record['action'], state=record['state'],
+                        publicationId=publication['operationId'], scope='SYSTEMD_JOB_ACCEPTED',
+                        jobPath='/org/freedesktop/systemd1/job/42', ringSha256='5' * 64, activeKeySha256='6' * 64,
+                        cohortSha256='7' * 64)
+        self.policy.create(self.policy.state / 'operations' / f'{operation}.json',
+                           lifecycle.encoded(dict(record, response=response)))
+        with patch.object(lifecycle, 'archive_entry', side_effect=lifecycle.Refused('Invalid original startup proof')):
+            with self.assertRaisesRegex(lifecycle.Refused, 'Invalid original startup proof'):
+                admit(pins)
+        with patch.object(lifecycle, 'archive_entry') as verify:
+            admit(pins)
+            verify.assert_called_once_with(self.policy, dict(directory='operations', operationId=operation), secret)
+
+    def test_retained_repair_requires_the_exact_signed_source_and_successor(self):
+        source = self.configure
+        retained = source.copies['reinstall']
+        retained.mkdir(mode=0o700)
+        source.apply('begin')
+        original = self.fence['id']
+        raw = (self.stage / 'intent.json').read_bytes()
+        recovery, secret = source.read_intent(self.stage, original)
+        predecessor = {key: value for key, value in source.binding.items() if key != 'schema'}
+        successor = configure.Configure(lifecycle, self.policy, source.physical, '6.0.0-2',
+                                         self.manifest_sha, '2' * 64, predecessor)
+        with self.assertRaisesRegex(lifecycle.Refused, 'another package or Root'):
+            successor.read_intent(self.stage, original)
+        target = {key: value for key, value in successor.binding.items() if key != 'schema'}
+        receipt = configure.layout_repair_receipt(lifecycle, self.policy, original, raw, recovery,
+                                                  predecessor, target, secret)
+        marker = self.stage / configure.LAYOUT_REPAIR
+        self.policy.create(marker, receipt)
+        self.assertEqual((recovery, secret), successor.read_intent(self.stage, original))
+        self.assertEqual(raw, (self.stage / 'intent.json').read_bytes())
+        with self.assertRaisesRegex(lifecycle.Refused, 'handed off'):
+            source.read_intent(self.stage, original)
+        other = configure.Configure(lifecycle, self.policy, source.physical, '6.0.0-2',
+                                     self.manifest_sha, '3' * 64, predecessor)
+        with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired retained layout repair receipt'):
+            other.read_intent(self.stage, original)
+
+    def test_prelayout_retry_allows_postinst_published_ahead_of_dpkg_version(self):
+        self.configure.copies['reinstall'].mkdir(mode=0o700)
+        intent = self.stage / 'intent.json'
+        receipt = self.stage / configure.LAYOUT_REPAIR
+        old_version, new_version = '6.0.0-1', '6.0.0-2'
+        old_control, new_control = b'predecessor postinst', b'successor postinst'
+        predecessor = dict(packageVersion=old_version, manifestSha256=self.manifest_sha,
+                           postinstSha256=hashlib.sha256(old_control).hexdigest())
+        source = configure.Configure(lifecycle, self.policy, self.fixture.physical.resolve(), old_version,
+                                     self.manifest_sha, predecessor['postinstSha256'])
+        source.apply('begin')
+        original_intent = intent.read_bytes()
+        fields = dict(_KURA_LAYOUT_REPAIR_PREDECESSOR=predecessor,
+                      _KURA_LAYOUT_REPAIR_HOME=self.fixture.physical.name,
+                      _KURA_INCOMING_KEY_MANIFEST_SHA256=self.manifest_sha,
+                      _KURA_LAYOUT_REPAIR_POSTINST_SHA256=hashlib.sha256(new_control).hexdigest(),
+                      require=lifecycle.require, paired_lifecycle=lambda: lifecycle,
+                      prepare_retained_generation=lambda *, unpacked_layout: (0 if unpacked_layout else 1))
+        environment = dict(DPKG_MAINTSCRIPT_PACKAGE='kura-core', DPKG_MAINTSCRIPT_NAME='preinst',
+                           DPKG_ROOT='', DPKG_ADMINDIR='/var/lib/dpkg')
+        control = self.policy.path('/var/lib/dpkg/info/kura-core.postinst')
+        self.policy.path('/opt/eclipse/kura').unlink()
+        for unit in lifecycle.UNITS:
+            self.policy.path('/lib/systemd/system/' + unit).unlink()
+        interrupted = 'install reinstreq half-installed'
+        active_fence = dict(self.fence, firstAction='remove')
+        parked_main = dict(MainPID='0', ControlPID='0', LoadState='not-found', ActiveState='inactive')
+        with patch.dict(configure.__dict__, fields), patch.dict(os.environ, environment), \
+                patch.object(lifecycle, 'Lifecycle', return_value=self.policy), \
+                patch.object(self.policy, 'fence', return_value=active_fence), \
+                patch.object(self.policy, 'main_unit_properties', return_value=parked_main), \
+                patch.object(configure.subprocess, 'check_output') as dpkg_query:
+            dpkg_query.return_value = f'{interrupted}\n{old_version}'
+            self.fixture.write(control, new_control, 0o755)
+            with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired installed Core postinst'):
+                configure.admit_prelayout_repair(old_version, new_version)
+            self.assertFalse(receipt.exists())
+
+            self.fixture.write(control, old_control, 0o755)
+            configure.admit_prelayout_repair(old_version, new_version)
+            signed = receipt.read_bytes()
+            identity = receipt.stat().st_ino
+            self.fixture.write(control, new_control, 0o755)
+            configure.admit_prelayout_repair(old_version, new_version)
+            self.assertEqual((signed, identity), (receipt.read_bytes(), receipt.stat().st_ino))
+
+            for state, version, raw in (
+                ('install ok unpacked', old_version, new_control),
+                (interrupted, old_version, b'unpaired postinst'),
+                (interrupted, new_version, old_control),
+            ):
+                with self.subTest(state=state, version=version, control=raw):
+                    dpkg_query.return_value = f'{state}\n{version}'
+                    self.fixture.write(control, raw, 0o755)
+                    with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired installed Core postinst'):
+                        configure.admit_prelayout_repair(version, new_version)
+                    self.assertEqual((signed, identity), (receipt.read_bytes(), receipt.stat().st_ino))
+
+            dpkg_query.return_value = f'{interrupted}\n{old_version}'
+            self.fixture.write(control, new_control, 0o755)
+            receipt.write_bytes(signed.replace(new_version.encode(), b'6.0.0-3'))
+            with self.assertRaisesRegex(lifecycle.Refused, 'Original layout repair authorization changed'):
+                configure.admit_prelayout_repair(old_version, new_version)
+            self.assertEqual(original_intent, intent.read_bytes())
+
+    def issued_layout_fixture(self):
+        self.configure.copies['reinstall'].mkdir(mode=0o700)
+        self.configure.apply('begin')
+        original = self.fence['id']
+        raw = (self.stage / 'intent.json').read_bytes()
+        recovery, secret = self.configure.read_intent(self.stage, original)
+        earlier = self.configure.package_binding()
+        middle = self.controller('6.0.0-2')
+        issued = middle.package_binding()
+        repair = configure.layout_repair_receipt(lifecycle, self.policy, original, raw, recovery,
+                                                  earlier, issued, secret)
+        self.policy.create(self.stage / 'layout-repair.json', repair)
+        middle.publish(self.stage, original, 'setup-layout-intent', recovery, secret)
+        machine = b'a' * 32 + b'\n'
+        self.fixture.write(self.policy.path('/etc/machine-id'), machine, 0o444)
+        records = {}
+        for name in configure.ISSUED_LAYOUT_SOURCES:
+            path = self.stage / name
+            m = path.lstat()
+            records[name] = [m.st_dev, m.st_ino, hashlib.sha256(path.read_bytes()).hexdigest()]
+        root = self.policy.root.lstat()
+        plan = dict(maintenanceId=original, root=[root.st_dev, root.st_ino],
+                    machineSha256=hashlib.sha256(machine).hexdigest(), recovery=recovery,
+                    earlier=earlier, issued=issued, records=records, scripts={}, templates={})
+        target = configure.Configure(lifecycle, self.policy, self.configure.physical, '6.0.0-3',
+                                     self.manifest_sha, '3' * 64, issued_layout=plan)
+        return target, secret
+
+    def test_issued_layout_authenticates_exact_original_sources_before_handoff(self):
+        target, secret = self.issued_layout_fixture()
+        plan = target.issued_layout
+        previous = plan['issued']
+        args = (lifecycle, self.policy, self.stage, self.fence['id'], target.physical, target.package_binding())
+        conflict = self.stage / 'setup-layout-returned.json'
+        handoff = self.stage / configure.ISSUED_LAYOUT_HANDOFF
+        old_status = ['install ok half-configured', previous['packageVersion']]
+        new_status = ['install reinstreq half-installed', previous['packageVersion']]
+        with patch.object(configure, 'issued_layout_stop'), patch.object(configure, 'check_issued_scripts'), \
+                patch.object(configure, 'prepare_retained_generation', create=True, return_value=0):
+            self.pairing.return_value = {'manifestSha256': self.manifest_sha}
+            with self.assertRaisesRegex(lifecycle.Refused, 'Unpaired issued layout postinst'):
+                configure.admit_issued_layout(*args, target.binding['postinstSha256'], old_status, plan)
+            self.policy.create(conflict, b'unexpected old success')
+            with self.assertRaisesRegex(lifecycle.Refused, 'advanced beyond'):
+                configure.admit_issued_layout(*args, previous['postinstSha256'], old_status, plan)
+            conflict.unlink()
+            with self.assertRaisesRegex(lifecycle.Refused, 'another Root or maintenance ID'):
+                configure.admit_issued_layout(*args, previous['postinstSha256'], old_status,
+                                              dict(plan, root=[1, 2]))
+            self.assertFalse(handoff.exists())
+            configure.admit_issued_layout(*args, previous['postinstSha256'], old_status, plan)
+            before = handoff.stat().st_ino, handoff.read_bytes()
+            configure.admit_issued_layout(*args, target.binding['postinstSha256'], new_status, plan)
+            self.assertEqual(before, (handoff.stat().st_ino, handoff.read_bytes()))
+            self.assertEqual(target.read_intent(self.stage, self.fence['id']), (plan['recovery'], secret))
+            original = self.stage / 'setup-layout-intent.json'
+            raw = original.read_bytes()
+            original.write_bytes(raw.replace(b'setup-layout-intent', b'setup-layout-returned'))
+            plan['records'][original.name][2] = hashlib.sha256(original.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(lifecycle.Refused, 'does not match the original intent'):
+                target.read_intent(self.stage, self.fence['id'])
+            self.assertEqual(before, (handoff.stat().st_ino, handoff.read_bytes()))
+
+    def test_issued_layout_repairs_only_missing_effects_and_never_dispatches_layout(self):
+        target, secret = self.issued_layout_fixture()
+        plan = target.issued_layout
+        original = self.fence['id']
+        retained = target.copies['reinstall'] / 'published-generation'
+        retained.mkdir(mode=0o700)
+        executable = target.physical / 'bin/start_kura.sh'
+        template = b'package launcher'
+        published = b'original published launcher'
+        self.fixture.write(executable, template, 0o644)
+        self.fixture.write(retained / executable.name, published, 0o600)
+        plan['templates'][executable.name] = hashlib.sha256(template).hexdigest()
+        plan['scripts'][executable.name] = hashlib.sha256(published).hexdigest()
+        holder = self.policy.path('/opt/eclipse/parked')
+        (holder / 'data').mkdir(parents=True)
+        identity = target.package_identity(holder / 'data')
+        plan['data'] = list(identity.values())
+        self.policy.create(self.stage / configure.ISSUED_LAYOUT_HANDOFF,
+                           configure.issued_layout_record(lifecycle, plan, target.package_binding(),
+                                                          'AUTHORIZED_HANDOFF', secret))
+        before = {name: ((self.stage / name).stat().st_ino, (self.stage / name).read_bytes())
+                  for name in configure.ISSUED_LAYOUT_SOURCES}
+        fence = dict(self.fence, firstAction='remove')
+        publish = configure.publish_sibling
+
+        def interrupt(staged, destination):
+            if destination.name == 'data':
+                raise InterruptedError
+            publish(staged, destination)
+
+        def prove_stop(api, policy, physical, reviewed, *, retry):
+            self.assertIs(api, lifecycle)
+            self.assertIs(policy, self.policy)
+            self.assertEqual(physical, target.physical)
+            self.assertTrue(retry)
+
+        with patch.object(self.policy, 'fence', return_value=fence), \
+                patch.object(self.policy, 'retained_main_state', return_value={'unitFileState': 'disabled'}), \
+                patch.object(configure, 'issued_layout_stop', side_effect=prove_stop), \
+                patch.object(target, 'removed_trees', return_value=({'runtimeDataDirectory': identity}, holder, 'tag')), \
+                patch.object(target, 'retained_layout_inputs', return_value=({'cohortSha256': 'cohort'}, {}, {})), \
+                patch.object(lifecycle, 'published_cohort_matches', return_value=True):
+            with self.assertRaisesRegex(lifecycle.Refused, 'unresolved'):
+                target.run_step('layout', lambda: self.fail('Historical layout was redispatched'))
+            with patch.object(configure, 'publish_sibling', side_effect=interrupt), self.assertRaises(InterruptedError):
+                target.finish_issued_layout(lambda: None)
+            verified = self.stage / configure.ISSUED_LAYOUT_VERIFIED
+            self.assertFalse(verified.exists())
+            self.assertTrue((target.physical / '.data').is_dir())
+            self.assertFalse((target.physical / 'data').exists())
+            self.assertEqual(executable.read_bytes(), published)
+            self.assertEqual(executable.stat().st_mode & 0o777, 0o755)
+            prior = executable.stat().st_ino
+            target.finish_issued_layout(lambda: None)
+            self.assertEqual(prior, executable.stat().st_ino)
+            self.assertEqual(target.apply('resume'), ('INSTALLER', 'reinstall'))
+            target.run_step('layout', lambda: self.fail('Historical layout was redispatched'))
+            dispatched = []
+            target.run_step('brokers', lambda: dispatched.append('brokers'))
+            self.assertEqual(dispatched, ['brokers'])
+            self.assertTrue(verified.exists())
+            self.assertEqual(lifecycle.decode(verified.read_bytes())['originalOutcome'], 'UNRESOLVED')
+            self.assertFalse((self.stage / 'setup-layout-returned.json').exists())
+            self.assertFalse((self.stage / 'setup-layout-complete.json').exists())
+            self.assertEqual(before, {name: ((self.stage / name).stat().st_ino, (self.stage / name).read_bytes())
+                                      for name in before})
 
     def install_steps(self):
         for name in configure.INSTALLER_STEPS:
@@ -175,6 +450,9 @@ class ConfigureTest(unittest.TestCase):
         capture_dir = controller.copies['upgrade']
         old = capture_dir / '.old-home'
         (old / 'bin').mkdir(mode=0o700, parents=True)
+        saved_manifest = old / 'libexec/key-backup/manifest.json'
+        saved_manifest.parent.mkdir(parents=True)
+        saved_manifest.write_bytes((physical / 'libexec/key-backup/manifest.json').read_bytes())
         capture_dir.chmod(0o700)
         secret = self.policy.read(self.policy.state / 'journal.key', limit=32)
         original = self.fence['id']
@@ -217,6 +495,65 @@ class ConfigureTest(unittest.TestCase):
             self.assertEqual((templates / names[1]).read_bytes(), (physical / 'bin' / names[1]).read_bytes())
             controller.run_step('layout', lambda: self.assertEqual(binding(old), binding(physical)))
             self.assertTrue((self.stage / 'setup-layout-returned.json').is_file())
+
+    def test_retained_layout_syncs_pid_one_before_issuing_intent(self):
+        controller = self.configure
+        controller.copies['reinstall'].mkdir(mode=0o700)
+        self.policy.create(self.policy.state / 'generation-current.json', b'paired generation')
+        controller.apply('begin')
+        intent = self.stage / 'setup-layout-intent.json'
+        unit = 'kura-key-recovery.service'
+        vendor = self.policy.path('/lib/systemd/system/' + unit)
+        vendor.unlink()
+        load_state = 'error'
+        fail_reload = True
+        refresh_units = False
+        command = self.policy.command
+
+        def restore(original, *, purged):
+            self.assertEqual(self.fence['id'], original)
+            self.assertFalse(purged)
+            self.assertFalse(intent.exists())
+            vendor.write_bytes(b'paired vendor unit')
+            return lifecycle.UNITS
+
+        def manager(arguments):
+            nonlocal load_state
+            if arguments == ['daemon-reload']:
+                self.assertEqual(b'paired vendor unit', vendor.read_bytes())
+                self.assertFalse(intent.exists())
+                if fail_reload:
+                    raise lifecycle.Refused('PID 1 reload failed')
+                if refresh_units:
+                    load_state = 'loaded'
+                return ''
+            if arguments[0] == 'show' and arguments[2:] == ['--property=LoadState']:
+                if arguments[1] == unit:
+                    return f'LoadState={load_state}\n'
+                return command(arguments).splitlines()[0] + '\n'
+            return command(arguments)
+
+        def invoke():
+            self.assertTrue(intent.is_file())
+            self.assertEqual(self.fence, self.policy.enter('install'))
+
+        with patch.object(controller, 'restore_removed_generation', side_effect=restore), \
+                patch.object(self.policy, 'check_extended_journal'), \
+                patch.object(self.policy, 'command', side_effect=manager):
+            with self.assertRaisesRegex(lifecycle.Refused, 'PID 1 reload failed'):
+                controller.run_step('layout', lambda: self.fail('Dispatched after failed reload'))
+            self.assertFalse(intent.exists())
+            self.assertEqual(self.fence, self.policy.fence())
+            fail_reload = False
+            for load_state in ('error', 'not-found'):
+                with self.subTest(load_state=load_state):
+                    with self.assertRaisesRegex(lifecycle.Refused, 'PID 1 cannot load kura-key-recovery.service'):
+                        controller.run_step('layout', lambda: self.fail('Dispatched while the unit was unavailable'))
+                    self.assertFalse(intent.exists())
+                    self.assertEqual(self.fence, self.policy.fence())
+            refresh_units = True
+            controller.run_step('layout', invoke)
+        self.assertTrue((self.stage / 'setup-layout-returned.json').is_file())
 
     def test_broker_quiescence_precedes_the_original_upgrade_dispatch(self):
         self.configure.copies['upgrade'].mkdir(mode=0o700)

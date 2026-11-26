@@ -123,6 +123,21 @@ class RetainedMainStateTest(unittest.TestCase):
         self.assertEqual(original, path.read_bytes())
         self.assertEqual(self.fence, self.policy.fence())
 
+    def test_retained_static_restore_admits_only_the_exact_package_time_assertion(self):
+        self.retain_static()
+        assertion = self.root / lifecycle.DEPLOYMENT_ASSERTION.lstrip('/')
+        self.fixture.write(assertion, b'[Unit]\nAssertPathExists=!/\n', 0o644)
+        original = self.policy.main_unit_properties
+        with patch.object(self.policy, 'main_unit_properties',
+                          side_effect=lambda: dict(original(), DropInPaths=lifecycle.DEPLOYMENT_ASSERTION)):
+            result = self.policy.retained_main_state(restore=True)
+            self.assertEqual('static', result['unitFileState'])
+            with self.assertRaisesRegex(lifecycle.Refused, 'requires reviewed migration'):
+                self.policy.paired_main_unit(self.policy.assets(), 'static')
+            self.fixture.write(assertion, b'[Unit]\nAssertPathExists=!/\n[Service]\nUser=root\n', 0o644)
+            with self.assertRaisesRegex(lifecycle.Refused, 'Unexpected Deployment Main assertion'):
+                self.policy.retained_main_state(restore=True)
+
     def historical_static(self):
         path = self.retain_static()
         receipt = json.loads(path.read_bytes())

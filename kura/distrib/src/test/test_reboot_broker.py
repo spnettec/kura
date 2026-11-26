@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 import os
 from pathlib import Path
+import signal
 import socket
 import struct
 import subprocess
@@ -113,12 +114,17 @@ class PackagePairingTest(unittest.TestCase):
             (vendor / unit).write_bytes((self.home / 'install' / unit).read_bytes())
             (self.home / 'install' / unit).unlink()
         (self.home / 'install').rmdir()
+        actor = (vendor / broker.UNITS[0]).read_text().splitlines()
+        self.assertIn('ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B '
+                      '/opt/eclipse/kura/bin/kura_reboot_broker.py serve', actor)
+        self.assertIn('CapabilityBoundingSet=', actor)
+        self.assertIn('KillMode=mixed', actor)
         marker = dict(schema=1, namespace='0101db50-edc1-4ea5-a461-28dcb898e596', callerUid=997, callerGid=991)
         def loaded(unit, _):
             return dict(Id=unit, Names=unit, LoadState='loaded', FragmentPath=str(vendor / unit),
                         SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no')
         with patch.multiple(broker, HOME=self.home, VENDOR_UNIT_ROOTS=(vendor,), public_file=Path.read_bytes,
-                            verify_unit_sources=Mock(), manager_properties=Mock(side_effect=loaded),
+                            verify_unit_sources=Mock(return_value=False), manager_properties=Mock(side_effect=loaded),
                             account_binding=Mock(return_value=marker)):
             self.assertEqual((broker.digest(manifest), marker), broker.Policy().check(actor=True))
             broker.account_binding.assert_called_once_with()
@@ -152,6 +158,33 @@ class PackagePairingTest(unittest.TestCase):
                 with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
                     broker.verify_unit_sources()
 
+    def test_only_the_configured_networking_package_and_reviewed_vendor_copy_are_paired(self):
+        vendor = self.home / 'vendor'
+        target = vendor / 'kura.service.d/kura-networking.conf'
+        target.parent.mkdir(parents=True)
+        raw = b'[Unit]\nWants=NetworkManager.service ModemManager.service\nAfter=NetworkManager.service ModemManager.service\n'
+        target.write_bytes(raw)
+        template = self.home / 'libexec/kura-networking.conf'
+        template.write_bytes(raw)
+        installed = SimpleNamespace(returncode=0, stdout='installed\n')
+        owner = SimpleNamespace(returncode=0, stdout=f'kura-networking: {template}\n')
+        with patch.multiple(broker, NETWORKING_DROPIN=target, NETWORKING_TEMPLATE=template,
+                            VENDOR_UNIT_ROOTS=(vendor,), public_file=lambda path, limit: path.read_bytes(),
+                            unit_directory_present=Mock(return_value=True), unit_load_paths=Mock(return_value=(vendor,))), \
+                patch.object(broker.subprocess, 'run', side_effect=[installed, owner] * 4):
+            broker.verify_unit_sources()
+            target.write_bytes(raw + b'PartOf=site.service\n')
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.verify_unit_sources()
+            target.write_bytes(raw)
+            installed.stdout = 'unpacked\n'
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.verify_unit_sources()
+            installed.stdout = 'installed\n'
+            (target.parent / 'site.conf').write_bytes(b'[Unit]\n')
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.verify_unit_sources()
+
     def test_authority_marker_pins_original_account_ids(self):
         marker = dict(schema=1, namespace='0101db50-edc1-4ea5-a461-28dcb898e596', callerUid=997, callerGid=991)
         with patch.multiple(broker, public_file=Mock(return_value=encode(marker))), patch.object(
@@ -161,7 +194,7 @@ class PackagePairingTest(unittest.TestCase):
             with self.assertRaisesRegex(Refused, '^UNPAIRED_ACCOUNT$'):
                 broker.account_binding()
 
-    def test_only_the_reserved_empty_private_main_dropin_directory_is_accepted(self):
+    def test_private_main_dropin_directory_accepts_only_the_generation_declaration(self):
         root = self.home / 'system'
         root.mkdir()
         reserved = root / 'kura.service.d'
@@ -176,13 +209,50 @@ class PackagePairingTest(unittest.TestCase):
                 return SimpleNamespace(**values)
             return actual
 
-        with patch.multiple(broker, EMPTY_KEY_DROPINS=reserved, unit_load_paths=Mock(return_value=[root]),
-                            unit_directory_present=Mock(return_value=True)), patch.object(Path, 'lstat', root_owned):
-            broker.verify_unit_sources()
+        generation = reserved / broker.GENERATION_DROPIN.name
+        with patch.multiple(broker, KEY_DROPINS=reserved, GENERATION_DROPIN=generation,
+                            unit_load_paths=Mock(return_value=[root]),
+                            unit_directory_present=Mock(return_value=True),
+                            verify_generation_dropin=Mock()), patch.object(Path, 'lstat', root_owned):
+            self.assertFalse(broker.verify_unit_sources())
+            generation.write_text('reviewed fixture')
+            self.assertTrue(broker.verify_unit_sources())
+            broker.verify_generation_dropin.assert_called_once_with()
             unapproved = reserved / 'site.conf'
             unapproved.write_text('[Service]\n')
             with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
                 broker.verify_unit_sources()
+            self.assertFalse(broker.verify_unit_sources(broker.UNITS[:2]))
+
+    def test_generation_layout_is_verified_by_the_actor_and_must_match_the_manager(self):
+        manifest = broker.package_cohort(self.home)
+        vendor = self.home / 'install'
+        binding = {'callerUid': 991, 'callerGid': 992}
+        main_dropins = str(broker.GENERATION_DROPIN)
+
+        def properties(unit, _):
+            return dict(Id=unit, Names=unit, LoadState='loaded', FragmentPath=str(vendor / unit),
+                        SourcePath='', DropInPaths=main_dropins if unit == broker.MAIN_UNIT else '',
+                        NeedDaemonReload='no', Transient='no')
+
+        with patch.multiple(broker, HOME=self.home, VENDOR_UNIT_ROOTS=(vendor,), public_file=Path.read_bytes,
+                            verify_unit_sources=Mock(return_value=True), verify_generation_dropin=Mock(),
+                            manager_properties=Mock(side_effect=properties), account_binding=Mock(return_value=binding)), \
+                patch.object(broker.os, 'statvfs', return_value=SimpleNamespace(f_flag=os.ST_RDONLY)):
+            self.assertEqual((broker.digest(manifest), binding), broker.Policy().check(actor=False))
+            broker.verify_generation_dropin.assert_not_called()
+            self.assertEqual((broker.digest(manifest), binding), broker.Policy().check(actor=True))
+            broker.verify_generation_dropin.assert_called_once_with()
+            broker.verify_generation_dropin.side_effect = Refused('UNPAIRED_UNIT')
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.Policy().check(actor=True)
+            broker.verify_generation_dropin.side_effect = None
+            main_dropins = ''
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.Policy().check(actor=True)
+            main_dropins = str(broker.GENERATION_DROPIN) + ' /run/systemd/system/service.d/site.conf'
+            with self.assertRaisesRegex(Refused, '^UNPAIRED_UNIT$'):
+                broker.Policy().check(actor=False)
 
 
 class SocketFrameTest(unittest.TestCase):
@@ -226,6 +296,27 @@ class SocketFrameTest(unittest.TestCase):
             broker.serve_socket(peer, protocol)
             self.assertEqual({'ok': False, 'reason': 'UNAUTHORIZED'}, broker.receive(connection))
             protocol.handle.assert_not_called()
+
+    def test_sigterm_finishes_active_request_before_accepting_any_more(self):
+        with tempfile.TemporaryDirectory() as tmp, socket.socket(socket.AF_UNIX) as listener, \
+                socket.socket(socket.AF_UNIX) as first, socket.socket(socket.AF_UNIX) as queued:
+            path = str(Path(tmp) / 'control.sock')
+            listener.bind(path)
+            listener.listen()
+            first.connect(path)
+            queued.connect(path)
+            outcome = Path(tmp) / 'result'
+            previous = signal.getsignal(signal.SIGTERM)
+
+            def finish(connection, protocol):
+                signal.raise_signal(signal.SIGTERM)
+                outcome.write_bytes(b'current request finished')
+
+            with patch.object(broker, 'serve_socket', side_effect=finish) as serve:
+                broker.serve_connections(listener, Mock())
+            serve.assert_called_once()
+            self.assertEqual(b'current request finished', outcome.read_bytes())
+            self.assertEqual(previous, signal.getsignal(signal.SIGTERM))
 
 
 if __name__ == '__main__':

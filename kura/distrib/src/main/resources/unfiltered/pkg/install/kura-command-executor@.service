@@ -2,8 +2,9 @@
 Description=Kura ordinary command executor
 PartOf=kura.service
 Requisite=kura.service
+Wants=kura-main-generation-proof.socket
 # The manager stops accepted command cgroups before the Main stop hook.
-After=kura.service
+After=kura.service kura-main-generation-proof.socket
 CollectMode=inactive-or-failed
 
 [Service]
@@ -11,8 +12,9 @@ Type=exec
 User=kura
 Group=kura
 UMask=0077
-ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-command-executor/kura_command_executor.py serve %n
-StandardInput=socket
+ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B /usr/libexec/kura-command-executor/kura_command_executor.py serve %n
+StandardInput=null
+OpenFile=/run/kura-main-generation-proof.sock:generation-proof:graceful
 StandardOutput=null
 StandardError=journal
 NoNewPrivileges=yes

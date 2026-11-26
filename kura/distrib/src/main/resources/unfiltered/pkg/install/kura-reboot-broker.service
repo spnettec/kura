@@ -8,7 +8,7 @@ Type=simple
 User=root
 Group=root
 UMask=0077
-ExecStart=/usr/bin/python3 -I -B /opt/eclipse/kura/bin/kura_reboot_broker.py serve
+ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B /opt/eclipse/kura/bin/kura_reboot_broker.py serve
 NoNewPrivileges=true
 CapabilityBoundingSet=
 AmbientCapabilities=
@@ -29,5 +29,6 @@ InaccessiblePaths=-/etc/kura/credentials -/etc/kura/recovery-tls -/var/lib/kura-
 MemoryMax=64M
 TasksMax=8
 CPUQuota=10%
-KillMode=control-group
-TimeoutStopSec=10
+# Let the actor finish persisting the receipt before stopping its systemctl child.
+KillMode=mixed
+TimeoutStopSec=30

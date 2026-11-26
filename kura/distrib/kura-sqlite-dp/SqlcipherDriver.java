@@ -3,7 +3,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -18,6 +20,10 @@ class SqlcipherDriver {
             throw new IOException("Build the SQLCipher deployment package on GNU/Linux ARM64");
         }
         Path input = Path.of(args[0]).toAbsolutePath();
+        String qualifier = args[1];
+        if (!qualifier.matches("[A-Za-z0-9_-]+")) {
+            throw new IOException("Invalid SQLCipher build qualifier: " + qualifier);
+        }
         Path work = Files.createTempDirectory(input, "build-");
         try {
             Path driver = input.resolve("driver.jar");
@@ -31,15 +37,16 @@ class SqlcipherDriver {
             Path jdk = Path.of(System.getProperty("java.home"));
             run(work, jdk.resolve("bin/javac").toString(), "-proc:none", "-cp", driver.toString(), "-h", ".", "-d", ".", "NativeDB.java");
             Files.move(work.resolve("org_sqlite_core_NativeDB.h"), work.resolve("NativeDB.h"));
-            Path headers = Path.of(packageVariable("includedir"), "sqlcipher");
-            if (!Files.isRegularFile(headers.resolve("sqlite3.h"))) {
-                throw new IOException("Missing SQLCipher development headers under " + headers);
-            }
+            Path cflags = packageFlags(work, "--cflags");
+            Path libs = packageFlags(work, "--libs");
             run(work, "cc", "-O2", "-fPIC", "-shared", "-Wl,-z,defs", "-I" + jdk.resolve("include"),
-                    "-I" + jdk.resolve("include/linux"), "-I" + headers, "NativeDB.c",
-                    "-L" + packageVariable("libdir"), "-lsqlcipher", "-o", "libsqlitejdbc.so");
+                    "-I" + jdk.resolve("include/linux"), "@" + cflags, "NativeDB.c",
+                    "@" + libs, "-o", "libsqlitejdbc.so");
             Path output = work.resolve("sqlcipher-jdbc.jar");
-            writeJar(driver, work.resolve("libsqlitejdbc.so"), output);
+            Path nativeLibrary = work.resolve("libsqlitejdbc.so");
+            String nativeDigest = HexFormat.of()
+                    .formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(nativeLibrary)));
+            writeJar(driver, nativeLibrary, output, qualifier + "_" + nativeDigest);
             verifyEngine(output);
             Files.move(output, input.resolve("sqlcipher-jdbc.jar"), StandardCopyOption.ATOMIC_MOVE,
                     StandardCopyOption.REPLACE_EXISTING);
@@ -52,14 +59,16 @@ class SqlcipherDriver {
         }
     }
 
-    private static String packageVariable(String variable) throws Exception {
-        var process = new ProcessBuilder("pkg-config", "--variable=" + variable, "sqlcipher")
+    private static Path packageFlags(Path work, String option) throws Exception {
+        Path flags = work.resolve("sqlcipher" + option);
+        // Compiler response files preserve pkg-config's argument escaping.
+        var process = new ProcessBuilder("pkg-config", option, "sqlcipher")
+                .redirectOutput(flags.toFile())
                 .redirectError(ProcessBuilder.Redirect.INHERIT).start();
-        String value = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).strip();
-        if (process.waitFor() != 0 || !Path.of(value).isAbsolute()) {
-            throw new IOException("Missing SQLCipher pkg-config " + variable);
+        if (process.waitFor() != 0) {
+            throw new IOException("Cannot read SQLCipher compiler options using pkg-config " + option);
         }
-        return value;
+        return flags;
     }
 
     private static void run(Path directory, String... command) throws Exception {
@@ -88,12 +97,13 @@ class SqlcipherDriver {
         out.putNextEntry(entry);
     }
 
-    private static void writeJar(Path driver, Path nativeLibrary, Path output) throws IOException {
+    private static void writeJar(Path driver, Path nativeLibrary, Path output, String revision) throws IOException {
         try (var jar = new JarFile(driver.toFile()); var out = new JarOutputStream(Files.newOutputStream(output))) {
             var manifest = jar.getManifest();
             var headers = manifest.getMainAttributes();
             headers.putValue("Bundle-Name", "SQLite JDBC with system SQLCipher (Linux ARM64)");
-            headers.putValue("Bundle-Version", headers.getValue("Bundle-Version") + "_sqlcipher");
+            // Deployment Admin compares bundle versions before replacing an installed JNI.
+            headers.putValue("Bundle-Version", headers.getValue("Bundle-Version") + "_sqlcipher_" + revision);
             headers.putValue("Require-Capability", headers.getValue("Require-Capability")
                     + ",osgi.native;filter:=\"(&(osgi.native.osname=Linux)(|(osgi.native.processor=aarch64)(osgi.native.processor=arm64)))\"");
             entry(out, JarFile.MANIFEST_NAME);

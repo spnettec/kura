@@ -357,9 +357,9 @@ if [ "${ACTION}" != "upgrade" ] && { [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERV
     echo "Cannot install Kura: an upgrade recovery copy already exists at ${PRESERVE_DIR}." >&2
     exit 1
 fi
+RETAINED_REPAIR=0
 if [ "${ACTION}" = "upgrade" ] && { [ -e "${RETAINED_DIR}" ] || [ -L "${RETAINED_DIR}" ]; }; then
-    echo "Cannot upgrade Kura: a removal recovery copy already exists at ${RETAINED_DIR}." >&2
-    exit 1
+    RETAINED_REPAIR=1
 fi
 
 # The exact packaged Python helper is embedded here during prepare-package.
@@ -377,6 +377,34 @@ clockMaintenanceGuard() {
 raise RuntimeError("Kura clock maintenance guard was not embedded")
 KURA_CLOCK_MAINTENANCE_GUARD
 }
+provisionCryptoKey() {
+    python3 -IB -c '
+import sys
+policy = {"__name__": "incoming_package_policy"}
+exec(compile(sys.stdin.buffer.read(), "<packaged-key-policy>", "exec"), policy)
+if sys.argv[1:] == ["prepare-retained-generation"]:
+    sys.exit(policy["prepare_retained_generation"]())
+if len(sys.argv) == 3 and sys.argv[1] == "check-issued-layout-route":
+    if policy["_KURA_ISSUED_LAYOUT_PLAN"] is not None and sys.argv[2] != "1":
+        print("Core issued layout package requires the reviewed retained upgrade", file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+if len(sys.argv) == 4 and sys.argv[1] == "admit-retained-layout-repair":
+    try:
+        policy["admit_prelayout_repair"](*sys.argv[2:])
+    except (OSError, RuntimeError, ValueError, KeyError, TypeError) as error:
+        print(f"Core retained layout repair refused: {error}", file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+sys.exit(policy["main"](sys.argv[1:]))
+' "$@" <<'PYKURAKEY'
+raise RuntimeError("Kura retained layout repair was not embedded")
+raise RuntimeError("Kura retained generation preflight was not embedded")
+raise RuntimeError("Kura key-policy readers were not embedded")
+raise RuntimeError("Kura key provisioner was not embedded")
+PYKURAKEY
+}
+provisionCryptoKey check-issued-layout-route "${RETAINED_REPAIR}" || exit 1
 if [ "${ACTION}" = "--migrate-linked-main" ]; then
     [ "$#" -eq 1 ] || exit 1
     keyServicePackageAdmission --migrate-linked-main
@@ -384,7 +412,7 @@ if [ "${ACTION}" = "--migrate-linked-main" ]; then
 fi
 checkManagedNmPolicy || exit 1
 checkWpaPolicy || exit 1
-if [ "${ACTION}" = "upgrade" ] && { [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE_DIR}" ]; }; then
+if [ "${ACTION}" = "upgrade" ] && [ "${RETAINED_REPAIR}" = 0 ] && { [ -e "${PRESERVE_DIR}" ] || [ -L "${PRESERVE_DIR}" ]; }; then
     # Recover the exact stopped source before running the normal provider checks.
     keyServicePackageAdmission --restore-upgrade-source "$0" "${OLD_VERSION}" "${NEW_VERSION}" || exit 1
     PUBLISHED_UPGRADE=1
@@ -403,25 +431,15 @@ KURA_REBOOT_MAINTENANCE_GUARD
 if [ -e "${RETAINED_DIR}" ] || [ -L "${RETAINED_DIR}" ]; then
     keyServicePackageAdmission --check-retained-main-state || exit 1
 fi
+if [ "${RETAINED_REPAIR}" = 1 ]; then
+    provisionCryptoKey admit-retained-layout-repair "${OLD_VERSION}" "${NEW_VERSION}"
+    exit "$?"
+fi
 if [ "${ACTION}" = "upgrade" ]; then
     keyServicePackageAdmission --check-main-reboot-source || exit 1
 fi
 keyServicePackageAdmission --enter "${ACTION}" || exit 1
 
-provisionCryptoKey() {
-    python3 -IB -c '
-import sys
-policy = {"__name__": "incoming_package_policy"}
-exec(compile(sys.stdin.buffer.read(), "<packaged-key-policy>", "exec"), policy)
-if sys.argv[1:] == ["prepare-retained-generation"]:
-    sys.exit(policy["prepare_retained_generation"]())
-sys.exit(policy["main"](sys.argv[1:]))
-' "$@" <<'PYKURAKEY'
-raise RuntimeError("Kura retained generation preflight was not embedded")
-raise RuntimeError("Kura key-policy readers were not embedded")
-raise RuntimeError("Kura key provisioner was not embedded")
-PYKURAKEY
-}
 if [ "${ACTION}" = install ] && { [ -e /var/lib/kura-key-service/generation-current.json ] || [ -L /var/lib/kura-key-service/generation-current.json ]; }; then
     provisionCryptoKey prepare-retained-generation || exit 1
 else
@@ -485,6 +503,7 @@ raise RuntimeError("Kura addon-code policy was not embedded")
 KURA_ADDON_CODE_POLICY
 }
 
+# YOFC CORE RUNTIME DATA HANDOFF V1
 function preInstall {
     # On an in-place upgrade (apt install of a newer kura-core over an existing
     # one), preserve the user's runtime state across the wipe. The runtime trees

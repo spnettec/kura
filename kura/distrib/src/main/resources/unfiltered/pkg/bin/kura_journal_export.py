@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: EPL-2.0
 """Read only the local systemd journal for the authenticated Kura Main."""
 import grp
+from contextlib import ExitStack, contextmanager
 import os
 from pathlib import Path
 import pwd
@@ -16,11 +17,11 @@ import tempfile
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, protected, public_file
+from kura_clock_broker import HOME, VENDOR_UNIT_ROOTS, check_loaded_dropins, protected, public_file
 from kura_clock_journal import Refused, decode, encode, require
-from kura_reboot_broker import (ENVIRONMENT, MAIN_CGROUP, MAIN_PROPERTIES, MAIN_UNIT,
+from kura_reboot_broker import (ENVIRONMENT, GENERATION_DROPIN, MAIN_CGROUP, MAIN_PROPERTIES, MAIN_UNIT,
                                UNIT_PROPERTIES, file_hash, proc_file, proc_status,
-                               receive, send, socket_peer, verify_alive, verify_identity)
+                               receive, send, socket_peer, verify_alive, verify_generation_dropin, verify_identity)
 
 SOCKET = Path('/run/kura-journal-export.sock')
 SOCKET_UNIT = 'kura-journal-export.socket'
@@ -29,11 +30,16 @@ ACTOR = 'kura-journal-export'
 CALLER = 'kurad'
 HELPER = 'bin/kura_journal_export.py'
 ACTOR_HOME = Path('/usr/libexec/kura-journal-export')
+PROOF_SOCKET = Path('/run/kura-main-generation-proof.sock')
+PROOF_SOCKET_UNIT = 'kura-main-generation-proof.socket'
+PROOF_SERVICE = 'kura-main-generation-proof.service'
+PROOF_FILES = (PROOF_SOCKET_UNIT, PROOF_SERVICE)
 PAIR_DIRECTORY = Path('libexec/journal-export')
 COHORT = 'cohort.json'
-UNITS = (SOCKET_UNIT, ACTOR_UNIT)
+UNITS = (SOCKET_UNIT, ACTOR_UNIT, *PROOF_FILES)
 SOURCES = (HELPER, 'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py',
            'bin/kura_reboot_broker.py', 'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
+           'bin/kura_main_generation_proof.py',
            *(f'install/{name}' for name in UNITS))
 FILES = tuple(Path(name).name for name in SOURCES)
 CLIENT = ('/usr/bin/python3', '-I', '-B', str(HOME / HELPER), 'client')
@@ -84,16 +90,26 @@ def unit_properties(unit, names):
     return properties
 
 
-def paired_unit(unit, template, template_hash, names=(), main=False):
+def paired_unit(unit, template, template_hash, names=(), main=False, generation_proof=None):
     loaded = unit_properties(unit, UNIT_PROPERTIES + tuple(names))
-    allowed_dropins = ('', str(NETWORKING_DROPIN)) if main else ('',)
     require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
             and loaded['FragmentPath'] in {str(path / template) for path in VENDOR_UNIT_ROOTS}
-            and loaded['SourcePath'] == '' and loaded['DropInPaths'] in allowed_dropins
+            and loaded['SourcePath'] == ''
             and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_EXPORT')
     require(file_hash(public_file(Path(loaded['FragmentPath']))) == template_hash, 'UNPAIRED_EXPORT')
-    if loaded['DropInPaths']:
+    dropins = loaded['DropInPaths'].split()
+    networking = str(NETWORKING_DROPIN)
+    if main and networking in dropins:
         require(file_hash(public_file(NETWORKING_DROPIN)) in NETWORKING_SHAS, 'UNPAIRED_EXPORT')
+        dropins.remove(networking)
+    generation = str(GENERATION_DROPIN)
+    if main and unit == MAIN_UNIT and generation in dropins:
+        if generation_proof is None:
+            verify_generation_dropin('UNPAIRED_EXPORT')
+        else:
+            generation_proof(loaded['InvocationID'])
+        dropins.remove(generation)
+    check_loaded_dropins(unit, ' '.join(dropins), 'UNPAIRED_EXPORT')
     return loaded
 
 
@@ -122,20 +138,58 @@ def verify_actor(unit):
     return manifest['mainUnitSha256']
 
 
+@contextmanager
+def activation_streams():
+    names = os.environ.pop('LISTEN_FDNAMES', '').split(':')
+    pid = os.environ.pop('LISTEN_PID', None)
+    count = os.environ.pop('LISTEN_FDS', None)
+    require(pid == str(os.getpid()) and count == str(len(names))
+            and sorted(names) in (['connection'], ['connection', 'generation-proof']), 'UNPAIRED_EXPORT')
+    with ExitStack() as stack:
+        streams = {}
+        for fd, name in enumerate(names, 3):
+            os.set_inheritable(fd, False)
+            stream = stack.enter_context(socket.socket(fileno=fd))
+            require(stream.family == socket.AF_UNIX and stream.type == socket.SOCK_STREAM, 'UNPAIRED_EXPORT')
+            streams[name] = stream
+        yield streams['connection'], streams.get('generation-proof')
+
+
+def generation_verifier(stream, unit, home):
+    if stream is None:
+        return None
+
+    def verify(invocation):
+        mode = PROOF_SOCKET.lstat()
+        require(re.fullmatch(r'[0-9a-f]{32}', invocation) and stream.getpeername() == str(PROOF_SOCKET)
+                and stat.S_ISSOCK(mode.st_mode) and mode.st_uid == mode.st_gid == 0
+                and stat.S_IMODE(mode.st_mode) == 0o600
+                and struct.unpack('3i', stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)) == (1, 0, 0),
+                'UNPAIRED_EXPORT')
+        for name in PROOF_FILES:
+            paired_unit(name, name, file_hash(public_file(home / name)))
+        stream.settimeout(4)
+        stream.sendall(f'{invocation} {unit}\n'.encode('ascii'))
+        with stream.makefile('rb', buffering=0) as response:
+            require(response.readline(34) == invocation.encode('ascii') + b'\n', 'UNPAIRED_EXPORT')
+
+    return verify
+
+
 def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=request, *, networking=None,
-              command_line=None):
+              command_line=None, generation_proof=None):
     pid, uid, gid, pidfd = peer
     account = pwd.getpwnam(CALLER)
     require(uid == account.pw_uid > 0 and gid == account.pw_gid > 0, 'UNAUTHORIZED')
     verify_alive(pidfd)
     names = MAIN_PROPERTIES + ('User', 'Group')
-    main = paired_unit(MAIN_UNIT, MAIN_UNIT, unit_sha, names, main=True)
+    main = paired_unit(MAIN_UNIT, MAIN_UNIT, unit_sha, names, main=True, generation_proof=generation_proof)
     parent = int(main['MainPID'])
     require(main['ActiveState'] == 'active' and main['ControlGroup'] == '/system.slice/kura.service'
             and main['User'] == main['Group'] == CALLER and parent > 1 and pid != parent
             and re.fullmatch(r'[0-9a-f]{32}', main['InvocationID']), 'UNAUTHORIZED')
     if networking is not None:
-        require(main['DropInPaths'] == (str(NETWORKING_DROPIN) if networking else ''), 'UNAUTHORIZED')
+        require((str(NETWORKING_DROPIN) in main['DropInPaths'].split()) == networking, 'UNAUTHORIZED')
     status = proc_status(pid)
     verify_identity(status, uid, gid)
     require(status['PPid'].strip() == str(parent), 'UNAUTHORIZED')
@@ -150,7 +204,8 @@ def main_peer(peer, unit_sha, client_args=CLIENT, argument_count=2, decode_args=
                 and raw[:len(client_args)] == list(map(os.fsencode, client_args)), 'UNAUTHORIZED')
         expected = decode_args(*(arg.decode('ascii') if command_line is None else os.fsdecode(arg)
                                  for arg in raw[len(client_args):-1]))
-        require(paired_unit(MAIN_UNIT, MAIN_UNIT, unit_sha, names, main=True) == main, 'UNAUTHORIZED')
+        require(paired_unit(MAIN_UNIT, MAIN_UNIT, unit_sha, names, main=True,
+                            generation_proof=generation_proof) == main, 'UNAUTHORIZED')
         verify_alive(with_parent)
         verify_alive(pidfd)
         return expected
@@ -188,16 +243,17 @@ def read_journal(selection, output):
     return size
 
 
-def serve(stream, unit):
+def serve(stream, unit, proof=None):
     unit_sha = verify_actor(unit)
+    verify = generation_verifier(proof, unit, ACTOR_HOME)
     with socket_peer(stream) as peer:
-        expected = main_peer(peer, unit_sha)
+        expected = main_peer(peer, unit_sha, generation_proof=verify)
         actual = receive(stream)
         require(type(actual.get('schema')) is int and actual == expected, 'INVALID_EXPORT')
-        require(main_peer(peer, unit_sha) == expected, 'UNAUTHORIZED')
+        require(main_peer(peer, unit_sha, generation_proof=verify) == expected, 'UNAUTHORIZED')
         with tempfile.TemporaryFile() as contents:
             size = read_journal(expected, contents)
-            require(main_peer(peer, unit_sha) == expected, 'UNAUTHORIZED')
+            require(main_peer(peer, unit_sha, generation_proof=verify) == expected, 'UNAUTHORIZED')
             stream.settimeout(5)
             stream.sendall(struct.pack('>I', size))
             while block := contents.read(65536):
@@ -234,8 +290,8 @@ if __name__ == '__main__':
     try:
         args = sys.argv[1:]
         if len(args) == 2 and args[0] == 'serve':
-            with socket.socket(fileno=os.dup(0)) as connection:
-                serve(connection, args[1])
+            with activation_streams() as (connection, proof):
+                serve(connection, args[1], proof)
         elif len(args) == 3 and args[0] == 'client':
             client(request(*args[1:]), sys.stdout.buffer)
         else:

@@ -1267,6 +1267,14 @@ class Manager:
             digest(request['ringSha256'])
         process = self.writer_process(pid)
         require(process is not None and type(uid) is int and uid == process[0], 'INVALID_WRITER')
+        if uid != 0:
+            try:
+                status = (Path('/proc') / str(pid) / 'status').read_bytes()
+            except OSError:
+                raise Failure('INVALID_WRITER') from None
+            require(re.search(rb'(?m)^NoNewPrivs:[ \t]+1[ \t]*$', status) is not None,
+                    'WRITER_NO_NEW_PRIVS_REQUIRED')
+            require(self.writer_process(pid) == process, 'INVALID_WRITER')
         with self.lock(self.state / 'admission.lock', True):
             self.maintenance(); self.settled()
             cohort = self.require_generation_cohort()

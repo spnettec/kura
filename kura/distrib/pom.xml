@@ -3322,6 +3322,10 @@
             <id>netplan-package</id>
             <modules><module>kura-netplan-core</module></modules>
         </profile>
+        <profile>
+            <id>softhsm-file-package</id>
+            <modules><module>kura-softhsm2-file</module></modules>
+        </profile>
         <!-- Auto-activated by host CPU architecture; sets native.tag/kura.arch/deb.arch
              so a single source tree builds the right artifact on any Linux host. -->
         <profile>

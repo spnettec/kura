@@ -8,6 +8,7 @@ from pathlib import Path
 import pwd
 import select
 import shutil
+import signal
 import socket
 import stat
 import struct
@@ -16,8 +17,8 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kura_clock_broker import (HOME, VENDOR_UNIT_ROOTS, protected, public_file, unit_directory_present,
-                              unit_input_names, unit_load_paths)
+from kura_clock_broker import (HOME, VENDOR_UNIT_ROOTS, check_loaded_dropins, check_unit_adapter_directory,
+                              protected, public_file, unit_directory_present, unit_input_names, unit_load_paths)
 from kura_clock_journal import Refused, decode, digest, directory, encode, identifier, identity, read, require
 from kura_reboot_journal import RebootJournal
 from kura_reboot_protocol import RebootProtocol, RebootSender
@@ -31,7 +32,12 @@ SOCKET = Path('/run/kura-reboot-broker/control.sock')
 HELPER = HOME / 'bin/kura_reboot_broker.py'
 COHORT = Path('libexec/reboot-broker/cohort.json')
 MAIN_UNIT = 'kura.service'
-EMPTY_KEY_DROPINS = Path('/etc/systemd/system/kura.service.d')
+KEY_DROPINS = Path('/etc/systemd/system/kura.service.d')
+GENERATION_DROPIN = KEY_DROPINS / '40-kura-key-generations.conf'
+GENERATION_SHA = '1bd470f1d538623fb3c02201a52feb21f25b57e49bb7c2e7d45b8511802adb45'
+NETWORKING_DROPIN = Path('/usr/lib/systemd/system/kura.service.d/kura-networking.conf')
+NETWORKING_TEMPLATE = HOME / 'libexec/addons/networking/kura-networking.conf'
+NETWORKING_SHA256 = '06589b8dede5926f63d760ec0a94a51aa6ef6ce6ddffee1c78dfcf978ec30473'
 UNITS = ('kura-reboot-broker.service', 'kura-reboot-broker.socket', MAIN_UNIT)
 UNIT_PROPERTIES = ('Id', 'Names', 'LoadState', 'FragmentPath', 'SourcePath', 'DropInPaths',
                    'NeedDaemonReload', 'Transient')
@@ -90,40 +96,69 @@ def manager_properties(unit, names):
     return values
 
 
+def check_networking_dropin(path):
+    require(path == NETWORKING_DROPIN, 'UNPAIRED_UNIT')
+    for args, expected in (
+            (('-W', '-f=${db:Status-Status}', 'kura-networking'), 'installed'),
+            (('-S', str(NETWORKING_TEMPLATE)), f'kura-networking: {NETWORKING_TEMPLATE}')):
+        result = subprocess.run(('/usr/bin/dpkg-query', *args), env=ENVIRONMENT,
+                                capture_output=True, text=True, timeout=4)
+        require(result.returncode == 0 and result.stdout.strip() == expected, 'UNPAIRED_UNIT')
+    try:
+        template = public_file(NETWORKING_TEMPLATE, 4096)
+        installed = public_file(path, 4096)
+    except (OSError, Refused) as error:
+        raise Refused('UNPAIRED_UNIT') from error
+    require(file_hash(template) == NETWORKING_SHA256 and installed == template, 'UNPAIRED_UNIT')
+
+
+def verify_generation_dropin(reason='UNPAIRED_UNIT'):
+    try:
+        path = protected(GENERATION_DROPIN)
+        parent = path.parent.lstat()
+        source = path.lstat()
+        require(stat.S_ISDIR(parent.st_mode) and parent.st_uid == parent.st_gid == 0
+                and stat.S_IMODE(parent.st_mode) == 0o700 and source.st_gid == 0, reason)
+        contents = read(path, 0, 0o400, 4096)
+        require(identity(source) == identity(path.lstat())
+                and identity(parent) == identity(path.parent.lstat())
+                and file_hash(contents) == GENERATION_SHA, reason)
+    except (OSError, Refused) as error:
+        raise Refused(reason) from error
+
+
 def verify_unit_sources(units=UNITS):
-    # Container runtime adapters (LXC/OrbStack) install a global service.d
-    # drop-in that neutralizes hardening for every unit on the host. The bare
-    # "<kind>.d" entry generated for every unit name matches that directory on
-    # such hosts even though it carries no reboot-specific override. Require
-    # the adapter directory to contain only the known adapter drop-in.
-    generic_dropins = {'service.d', 'socket.d', 'timer.d'}
-    adapter_conf = Path('/run/systemd/system/service.d/zzz-lxc-service.conf')
+    generation = False
     for root in unit_load_paths():
         if not unit_directory_present(root):
             continue
-        for unit in units:
-            names = [i for i in unit_input_names(unit) if i not in generic_dropins]
-            if root not in VENDOR_UNIT_ROOTS:
-                names.append(unit)
-            for name in names:
-                path = root / name
-                try:
-                    metadata = path.lstat()
-                except FileNotFoundError:
-                    continue
-                if path == EMPTY_KEY_DROPINS:
-                    # The key service reserves this private directory even with no drop-in.
-                    require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == metadata.st_gid == 0
-                            and stat.S_IMODE(metadata.st_mode) == 0o700 and not any(path.iterdir())
-                            and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
-                    continue
-                raise Refused('UNPAIRED_UNIT')
-        for kind in generic_dropins:
-            directory = root / kind
-            if not directory.is_dir():
+        names = {name for unit in units for name in unit_input_names(unit)}
+        if root not in VENDOR_UNIT_ROOTS:
+            names.update(units)
+        for name in sorted(names):
+            path = root / name
+            try:
+                metadata = path.lstat()
+            except FileNotFoundError:
                 continue
-            for source in sorted(directory.glob('*.conf')):
-                require(source == adapter_conf, 'UNPAIRED_UNIT')
+            if path == KEY_DROPINS:
+                require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == metadata.st_gid == 0
+                        and stat.S_IMODE(metadata.st_mode) == 0o700, 'UNPAIRED_UNIT')
+                entries = list(path.iterdir())
+                require(entries in ([], [GENERATION_DROPIN])
+                        and identity(metadata) == identity(path.lstat()), 'UNPAIRED_UNIT')
+                generation = bool(entries)
+                if generation:
+                    verify_generation_dropin()
+                continue
+            if name == NETWORKING_DROPIN.parent.name and root in VENDOR_UNIT_ROOTS:
+                require(unit_directory_present(path) and path.resolve() == NETWORKING_DROPIN.parent
+                        and [candidate.name for candidate in path.iterdir() if candidate.name.endswith('.conf')]
+                        == [NETWORKING_DROPIN.name], 'UNPAIRED_UNIT')
+                check_networking_dropin(NETWORKING_DROPIN)
+                continue
+            check_unit_adapter_directory(path, 'UNPAIRED_UNIT')
+    return generation
 
 
 def account_binding(path=None):
@@ -154,20 +189,33 @@ class Policy:
         return manifest
 
     def check(self, *, actor, include_main=True):
-        # Container runtime adapters (LXC/OrbStack) add a global service.d
-        # drop-in to every unit on the host; exclude that exact adapter path.
-        adapter = '/run/systemd/system/service.d/zzz-lxc-service.conf'
         manifest = self.packaged()
         units = UNITS if include_main else UNITS[:2]
-        if actor:
-            verify_unit_sources(units)
+        generation_on_disk = verify_unit_sources(units) if actor else None
         for unit in units:
             loaded = manager_properties(unit, UNIT_PROPERTIES)
             require(loaded['Id'] == unit and loaded['Names'].split() == [unit] and loaded['LoadState'] == 'loaded'
                     and loaded['FragmentPath'] in {str(root / unit) for root in VENDOR_UNIT_ROOTS}
                     and loaded['SourcePath'] == ''
-                    and all(p == adapter for p in loaded['DropInPaths'].split())
                     and loaded['NeedDaemonReload'] == loaded['Transient'] == 'no', 'UNPAIRED_UNIT')
+            dropins = loaded['DropInPaths'].split()
+            networking = str(NETWORKING_DROPIN)
+            if unit == MAIN_UNIT:
+                if networking in dropins:
+                    check_networking_dropin(NETWORKING_DROPIN)
+                    dropins.remove(networking)
+                generation = str(GENERATION_DROPIN)
+                generation_loaded = generation in dropins
+                if actor:
+                    require(generation_loaded == generation_on_disk, 'UNPAIRED_UNIT')
+                if generation_loaded:
+                    # Main can see the manager's path but cannot read the private
+                    # declaration. The actor checks it before answering context,
+                    # which the sender needs before recording any new intent.
+                    if actor:
+                        verify_generation_dropin()
+                    dropins.remove(generation)
+            check_loaded_dropins(unit, ' '.join(dropins), 'UNPAIRED_UNIT')
             packaged_unit = (COHORT.parent / unit).as_posix()
             require(file_hash(public_file(Path(loaded['FragmentPath']))) == manifest['files'][packaged_unit],
                     'UNPAIRED_UNIT')
@@ -301,6 +349,28 @@ def serve_socket(stream, protocol):
         pass
 
 
+def serve_connections(listener, protocol):
+    """Stop accepting new requests on SIGTERM and finish the current journal write."""
+    stopping = False
+
+    def stop(_signum, _frame):
+        nonlocal stopping
+        stopping = True
+
+    previous = signal.signal(signal.SIGTERM, stop)
+    try:
+        while not stopping:
+            ready, _, _ = select.select((listener,), (), (), 1)
+            if not ready or stopping:
+                continue
+            connection, _ = listener.accept()
+            with connection:
+                if not stopping:
+                    serve_socket(connection, protocol)
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+
 def serve():
     require(os.getuid() == os.geteuid() == os.getgid() == os.getegid() == 0, 'UNSAFE_ACTOR')
     status = proc_status(os.getpid())
@@ -326,10 +396,7 @@ def serve():
         require(listener.family == socket.AF_UNIX and listener.type == socket.SOCK_STREAM
                 and listener.getsockname() == str(SOCKET)
                 and listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN), 'INVALID_LISTENER')
-        while True:
-            connection, _ = listener.accept()
-            with connection:
-                serve_socket(connection, protocol)
+        serve_connections(listener, protocol)
 
 
 def verify_socket(gid):

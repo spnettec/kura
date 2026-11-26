@@ -23,10 +23,17 @@ if __name__=='__main__':sys.modules['kura_key_service_lifecycle']=sys.modules[__
 FORMAT = "yofc-kura-gateway-master-key-v1"
 GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
 STATE = "/var/lib/kura-key-service"
-# Container runtime adapters (LXC/OrbStack) drop a global conf under /run that
-# appears in every unit's DropInPaths; it neutralizes hardening host-wide and
-# grants nothing to this service.
+# Reviewed OrbStack LXC compatibility profile. It disables service sandbox
+# options and is accepted only as the exact host-wide runtime adapter.
 CONTAINER_ADAPTER_DROPIN = '/run/systemd/system/service.d/zzz-lxc-service.conf'
+CONTAINER_ADAPTER_SHA256 = '95efa48563a96a16697137c70e6f80af7c85acf231d29461624b54a589afbfbd'
+SYSTEMD_OVERRIDE_PATHS = (
+    '/etc/systemd/system.control', '/run/systemd/system.control', '/run/systemd/transient',
+    '/run/systemd/generator.early', '/etc/systemd/system', '/etc/systemd/system.attached',
+    '/run/systemd/system', '/run/systemd/system.attached', '/run/systemd/generator',
+    '/usr/local/lib/systemd/system', '/run/systemd/generator.late',
+)
+DEPLOYMENT_ASSERTION = '/run/systemd/generator.early/kura.service.d/90-kura-deployment-maintenance.conf'
 MAIN_VENDOR_PATHS = ('/lib/systemd/system/kura.service', '/usr/lib/systemd/system/kura.service')
 MAIN_LINKS = {'linked': '/etc/systemd/system/kura.service',
               'linked-runtime': '/run/systemd/system/kura.service'}
@@ -107,6 +114,20 @@ def canonical_id(value):
 
 def is_digest(value):
     return isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
+
+
+def generation_cohort_reference(manifest_sha256, launchers):
+    return dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                manifestSha256=manifest_sha256, launcherSha256s=launchers)
+
+
+def published_cohort_matches(original, binding, predecessors=None):
+    if predecessors is None:
+        if original == binding['cohortSha256']:
+            return True
+        predecessors = binding.get('publishedPredecessorManifestSha256s', ())
+    return any(original == hashlib.sha256(encoded(
+        generation_cohort_reference(manifest, binding['launcherSha256s']))).hexdigest() for manifest in predecessors)
 
 
 GWT_BINDING_PURPOSE = 'yofc.kura.gwt-sender-namespace.v1'
@@ -1497,7 +1518,7 @@ class Lifecycle:
         require(properties.keys() == set(fields), 'Unexpected Main unit properties; preserve installation')
         return properties
 
-    def paired_main_unit(self, manifest, choice):
+    def paired_main_unit(self, manifest, choice, *, retained=False):
         expected = self.main_unit_digest(manifest)
         physical = self.main_vendor_path()
         unit = self.read(physical, private=False)
@@ -1505,10 +1526,18 @@ class Lifecycle:
                 'Main unit differs from its package; reviewed migration is required')
         properties = self.main_unit_properties()
         fragment = properties.pop('FragmentPath')
-        drop_ins = [path for path in properties.pop('DropInPaths').split()
-                    if path != CONTAINER_ADAPTER_DROPIN]
+        drop_ins = properties.pop('DropInPaths').split()
+        if CONTAINER_ADAPTER_DROPIN in drop_ins:
+            self.check_container_adapter()
+            drop_ins.remove(CONTAINER_ADAPTER_DROPIN)
+        if retained and drop_ins == [DEPLOYMENT_ASSERTION]:
+            # A package-time assertion may only prevent starting Main. All
+            # other effective unit changes still require reviewed migration.
+            require(self.read(self.path(DEPLOYMENT_ASSERTION), limit=128, private=False)
+                    == b'[Unit]\nAssertPathExists=!/\n', 'Unexpected Deployment Main assertion')
+            drop_ins.clear()
         fields = dict(Id='kura.service', Names='kura.service', LoadState='loaded', UnitFileState=choice,
-                      SourcePath='', DropInPaths='', NeedDaemonReload='no', Transient='no')
+                      SourcePath='', NeedDaemonReload='no', Transient='no')
         require(properties == fields and drop_ins == [] and fragment in MAIN_VENDOR_PATHS,
                 'Effective Main unit requires reviewed migration')
         loaded = self.path(fragment)
@@ -1627,7 +1656,7 @@ class Lifecycle:
                     # When the new package adds [Install], the equivalent
                     # boot choice for a static unit is to leave it disabled.
                     require(current in ('static', 'disabled'), 'Main boot choice changed during retained reinstall')
-                    self.paired_main_unit(self.assets(), current)
+                    self.paired_main_unit(self.assets(), current, retained=True)
                 elif current != expected:
                     require(current == 'disabled' and expected in ('enabled', 'enabled-runtime'),
                             'Main boot choice changed during retained reinstall')
@@ -1740,7 +1769,14 @@ class Lifecycle:
         if generation_binding:
             require(modern, 'This package has no complete generation-reader cohort')
             generation = manifest['generation']
-            require(set(generation) == {'files', 'readers', 'unitSha256', 'writerProtocol'}
+            fields = {'files', 'readers', 'unitSha256', 'writerProtocol'}
+            predecessors = generation.get('publishedPredecessorManifestSha256s')
+            if 'publishedPredecessorManifestSha256s' in generation:
+                fields.add('publishedPredecessorManifestSha256s')
+                require(isinstance(predecessors, list) and 1 <= len(predecessors) <= 8
+                        and all(is_digest(item) for item in predecessors)
+                        and predecessors == sorted(set(predecessors)), 'Invalid generation predecessor manifest list')
+            require(set(generation) == fields
                     and type(generation['writerProtocol']) is int and generation['writerProtocol'] == 1
                     and isinstance(generation['files'], dict)
                     and 1 <= len(generation['files']) <= 512 and is_digest(generation['unitSha256']))
@@ -1766,14 +1802,25 @@ class Lifecycle:
                 observed = namespace['validate'](physical, generation, lambda p: self.read(p, private=False), self.owner, unit=unit)
             except namespace['Refused']:
                 raise Refused('Generation-reader package is not paired; preserve keys and original operation IDs') from None
-            binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
-                           manifestSha256=hashlib.sha256(manifest_raw).hexdigest(),
-                           launcherSha256s={Path(name).name: value for name, value in observed.items()})
-            return dict(binding, cohortSha256=hashlib.sha256(encoded(binding)).hexdigest())
+            binding = generation_cohort_reference(hashlib.sha256(manifest_raw).hexdigest(),
+                {Path(name).name: value for name, value in observed.items()})
+            result = dict(binding, cohortSha256=hashlib.sha256(encoded(binding)).hexdigest())
+            if predecessors is not None:
+                result['publishedPredecessorManifestSha256s'] = predecessors
+            return result
         return manifest
 
     def generation_assets(self):
         return self.assets(generation_binding=True)
+
+    def completed_generation_successor(self, manifest_sha256, key_sha256):
+        history = self.state / 'package-history'
+        self.directory(history, private=True)
+        records = [validate_maintenance(decode(self.read(path)), path.name[:-5]) for path in history.iterdir()]
+        parents = {value['previousMaintenanceId'] for value in records}
+        heads = [value for value in records if value['maintenanceId'] not in parents]
+        require(len(heads) == 1 and heads[0]['manifestSha256'] == manifest_sha256
+                and heads[0]['keySha256'] == key_sha256, 'Original package maintenance has not committed the successor')
 
     @contextlib.contextmanager
     def recovery_locked(self):
@@ -1922,28 +1969,54 @@ class Lifecycle:
             yield dict(archived=archived_private,closedRestores=closed_restores)
         finally:os.close(fd)
 
+    def check_container_adapter(self):
+        path = self.path(CONTAINER_ADAPTER_DROPIN)
+        raw = self.read(path, limit=4096, private=False)
+        require(hashlib.sha256(raw).hexdigest() == CONTAINER_ADAPTER_SHA256,
+                'Unrecognized container systemd adapter; preserve installation')
+        try:
+            result = self.runner(['/usr/bin/systemd-detect-virt', '--container'],
+                                 capture_output=True, text=True, timeout=5, check=False,
+                                 env={'PATH': '/usr/bin:/bin', 'LANG': 'C'})
+        except subprocess.SubprocessError as error:
+            raise Refused('Cannot verify the container systemd adapter runtime') from error
+        require(result.returncode == 0 and result.stdout.strip() == 'lxc',
+                'Container systemd adapter requires its LXC runtime')
+
     def no_overrides(self):
-        for prefix in ("/etc", "/run", "/usr/lib", "/lib"):
-            base = self.path(prefix + "/systemd/system")
-            for name in NATIVE_MAIN_UNITS:
-                if prefix in ("/etc", "/run"):
-                    require(not os.path.lexists(base / name), "Custom key-service unit requires reviewed migration")
-                stem, kind = name.rsplit(".", 1)
-                parts = stem.split("-")
-                folders = [name + ".d", kind + ".d"]
-                folders += ["-".join(parts[:i]) + "-." + kind + ".d" for i in range(1, len(parts))]
-                agent_installed = os.path.lexists("/var/lib/kura-management-agent") or \
-                    self.runner(["/usr/bin/dpkg", "-s", "kura-management-agent"],
-                                capture_output=True, text=True, timeout=5, check=False,
-                                env={"PATH": "/usr/bin:/bin", "LANG": "C"}).returncode == 0
-                for folder in folders:
-                    path = base / folder
-                    if os.path.lexists(path):
-                        confs = list(path.glob("*.conf"))
-                        require(not path.is_symlink() and path.is_dir() and path.lstat().st_uid == self.owner
-                                and not path.lstat().st_mode & 0o022
-                                and (not confs or agent_installed),
-                                "Custom key-service drop-in requires reviewed migration")
+        folders = set()
+        for name in NATIVE_MAIN_UNITS:
+            stem, kind = name.rsplit('.', 1)
+            parts = stem.split('-')
+            folders.update((name + '.d', kind + '.d'))
+            folders.update('-'.join(parts[:i]) + '-.' + kind + '.d' for i in range(1, len(parts)))
+
+        vendor_paths = ['/usr/lib/systemd/system']
+        legacy_lib = self.path('/lib')
+        if legacy_lib.is_symlink():
+            require(legacy_lib.lstat().st_uid == self.owner
+                    and legacy_lib.resolve(strict=True) == self.path('/usr/lib'),
+                    'Unexpected systemd vendor directory alias')
+        else:
+            vendor_paths.append('/lib/systemd/system')
+
+        for directory in (*SYSTEMD_OVERRIDE_PATHS, *vendor_paths):
+            base = self.path(directory)
+            if not os.path.lexists(base):
+                continue
+            self.directory(base)
+            if directory not in vendor_paths:
+                require(not any(os.path.lexists(base / name) for name in NATIVE_MAIN_UNITS),
+                        'Custom key-service unit requires reviewed migration')
+            for folder in sorted(folders):
+                path = base / folder
+                if not os.path.lexists(path):
+                    continue
+                self.directory(path)
+                for source in path.glob('*.conf'):
+                    require(source == self.path(CONTAINER_ADAPTER_DROPIN),
+                            'Custom key-service drop-in requires reviewed migration')
+                    self.check_container_adapter()
 
     def command(self, arguments):
         result = self.runner(["/usr/bin/systemctl", *arguments], capture_output=True, text=True,

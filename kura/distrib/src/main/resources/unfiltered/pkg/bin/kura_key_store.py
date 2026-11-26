@@ -3,6 +3,7 @@
 """Private Core encryption-key provisioning; never rotate existing encrypted data."""
 import array
 import contextlib
+import ctypes
 import fcntl
 import hashlib
 import json
@@ -32,12 +33,16 @@ GENERATION_RECEIPT_PATH = "/etc/kura/credentials/key-generations.json"
 GENERATION_FORMAT = "yofc-kura-gateway-key-generations-v1"
 GENERATION_DROPIN = "/etc/systemd/system/kura.service.d/40-kura-key-generations.conf"
 GENERATION_TEMPLATE = "share/key-management/key-generations.conf"
+NETWORKING_DROPIN = "/usr/lib/systemd/system/kura.service.d/kura-networking.conf"
+NETWORKING_DEPENDENCIES_SHA = "06589b8dede5926f63d760ec0a94a51aa6ef6ce6ddffee1c78dfcf978ec30473"
 RING_MAGIC = b"YOFC-KURA-KEYRING-v1\n"
 LIFECYCLE_SOURCE_LIMIT = 160 * 1024
 JOURNAL_SOURCE_LIMIT = 128 * 1024
 FALLBACK_USER = "kurad"
 FALLBACK_CREDENTIALS_DIRECTORY = "/var/lib/kura-credentials"
+GENERATION_CREDENTIALS_DIRECTORY = "/var/lib/kura-generation-credentials"
 CANONICAL_CREDENTIALS_DIRECTORY = "/etc/kura/credentials"
+PR_SET_NO_NEW_PRIVS = 38
 
 
 def fallback_runtime_identity():
@@ -151,7 +156,24 @@ def credential_fallback_setup():
     """Materialize the direct-read key copy after the runtime account exists
     (fresh installs call this from the installer, post user creation)."""
     require(os.geteuid() == 0, "Credential fallback setup requires the package administrator")
-    require(fallback_runtime_identity() is not None, "Credential fallback requires the runtime account")
+    account = fallback_runtime_identity()
+    require(account is not None, "Credential fallback requires the runtime account")
+    projection = Path(GENERATION_CREDENTIALS_DIRECTORY)
+    if os.path.lexists(projection):
+        store = Store()
+        store.private_dir(projection)
+        require(stat.S_IMODE(projection.lstat().st_mode) == 0o710
+                and os.getxattr(projection, 'system.posix_acl_access') == credential_reader_acl(account[0], 7, 1),
+                "Unsafe generation credential directory")
+        with store.locked():
+            for path in (KEY_PATH, RING_PATH, GENERATION_RECEIPT_PATH):
+                target = projection / Path(path).name
+                require(stat.S_IMODE(target.lstat().st_mode) == 0o440
+                        and store.read(target, private=True, limit=2048, loaded_for_uid=account[0])
+                        == store.read(store.path(path), private=True, limit=2048),
+                        "Projected generation credentials differ from the original")
+            store.stable()
+        return dict(fallback=True)
     canonical = Path(CANONICAL_CREDENTIALS_DIRECTORY) / CREDENTIAL
     require(os.path.lexists(canonical), "Credential fallback requires the provisioned key")
     if credential_probe() == "absent" or fallback_active():
@@ -427,6 +449,25 @@ class Store:
         require(len(value) in (16,24,32), "Invalid persisted encryption-key length")
         return value
 
+    def check_networking_dropin(self, source):
+        vendor = self.path(NETWORKING_DROPIN)
+        if source == self.path(NETWORKING_DROPIN.removeprefix("/usr")):
+            library = self.path("/lib")
+            alias = library.lstat()
+            require(stat.S_ISLNK(alias.st_mode) and alias.st_uid == self.owner
+                    and os.readlink(library) in ("usr/lib", "/usr/lib")
+                    and source.resolve(strict=True) == vendor,
+                    "Unexpected Networking drop-in alias")
+        else:
+            require(source == vendor, "Unexpected Networking drop-in path")
+        for parent in vendor.relative_to(self.root).parents:
+            metadata = (self.root / parent).lstat()
+            require(stat.S_ISDIR(metadata.st_mode) and metadata.st_uid == self.owner
+                    and not metadata.st_mode & 0o022, "Unsafe Networking drop-in directory")
+        raw = self.read(vendor, limit=4096)
+        require(hashlib.sha256(raw).hexdigest() == NETWORKING_DEPENDENCIES_SHA,
+                "Unexpected Networking drop-in for published credentials")
+
     def dropins_safe(self, published=False):
         dangerous = ("EnvironmentFile","LoadCredential","LoadCredentialEncrypted",
                      "SetCredential","SetCredentialEncrypted","ImportCredential","ExecStart","ExecStartPre")
@@ -439,14 +480,21 @@ class Store:
                     continue
                 require(not directory.is_symlink(), "Symlinked systemd drop-in directory")
                 for source in sorted(directory.glob("*.conf")):
+                    if source == self.path("/run/systemd/system/service.d/zzz-lxc-service.conf"):
+                        api = paired_lifecycle()
+                        try:
+                            api.Lifecycle(self.root, self.owner).check_container_adapter()
+                        except api.Refused as error:
+                            raise Refused(str(error)) from error
+                        continue
                     if published:
+                        if source in (self.path(NETWORKING_DROPIN),
+                                      self.path(NETWORKING_DROPIN.removeprefix("/usr"))):
+                            self.check_networking_dropin(source)
+                            continue
                         require(source == self.path(GENERATION_DROPIN),
                                 "Unexpected Main drop-in alongside published generation credentials")
                         continue  # The publication validator checks this file under the provisioning lock.
-                    # Container runtime adapters (LXC/OrbStack global drop-ins) neutralize
-                    # hardening for every unit on the host; they are not per-service grants.
-                    if source.name == "zzz-lxc-service.conf":
-                        continue
                     text = self.read(source).decode("utf-8")
                     for line in text.splitlines():
                         line = line.strip()
@@ -458,7 +506,8 @@ class Store:
                         require(not relevant, "Custom key/startup drop-in requires a reviewed migration")
 
     def check_published_maintenance(self, api, lifecycle, metadata, receipt):
-        require(lifecycle.fence() is not None, "Published credentials require the original maintenance fence")
+        fence = lifecycle.fence()
+        require(fence is not None, "Published credentials require the original maintenance fence")
         lifecycle.check_extended_journal()
         current = lifecycle.state / "generation-current.json"
         publication = api.validate_publication(api.decode(lifecycle.read(current, 8192)))
@@ -474,13 +523,26 @@ class Store:
             api.archive_entry(lifecycle, dict(directory="operations", operationId=publication[operation]), secret)
 
         home = self.path("/opt/eclipse/kura").resolve(strict=True)
-        if "_KURA_EMBEDDED_LIFECYCLE_SOURCE" in globals():
-            manifest = lifecycle.read(home / "libexec/key-backup/manifest.json", private=False)
-            require(hashlib.sha256(manifest).hexdigest() == globals().get("_KURA_INCOMING_KEY_MANIFEST_SHA256"),
-                    "Incoming release needs a reviewed generation cohort migration")
         binding = lifecycle.generation_assets()
-        require(binding["cohortSha256"] == publication["cohortSha256"],
+        original_cohort = publication["cohortSha256"]
+        require(api.published_cohort_matches(original_cohort, binding),
                 "Installed readers or launchers differ from the published cohort")
+        if "_KURA_EMBEDDED_LIFECYCLE_SOURCE" in globals():
+            incoming = globals().get("_KURA_INCOMING_KEY_MANIFEST_SHA256")
+            if incoming != binding['manifestSha256']:
+                predecessors = globals().get("_KURA_INCOMING_KEY_PREDECESSORS", ())
+                require(fence['firstAction'] == 'upgrade' and binding['manifestSha256'] in predecessors
+                        and api.published_cohort_matches(original_cohort, binding, predecessors),
+                        "Incoming release needs a reviewed generation cohort migration")
+                starts = [api.validate_record(api.decode(lifecycle.read(path)), path.name[:-5])
+                          for path in (lifecycle.state / "operations").iterdir()]
+                accepted = [record["response"] for record in starts
+                            if record["action"] == "generation-core-start" and record["state"] == "SUCCEEDED"
+                            and record["response"]["publicationId"] == publication["operationId"]]
+                require(len(accepted) == 1 and accepted[0]["cohortSha256"] == original_cohort
+                        and accepted[0]["activeKeySha256"] == metadata["activeKeySha256"]
+                        and accepted[0]["ringSha256"] == metadata["ringSha256"],
+                        "Cohort replacement requires the original completed generation startup")
         dropin = self.path(GENERATION_DROPIN)
         lifecycle.directory(dropin.parent, private=True)
         require(stat.S_IMODE(dropin.lstat().st_mode) == 0o400 and
@@ -753,6 +815,14 @@ class Store:
             require(self.unit_key(Path(target)) == self.key(self.path(KEY_PATH)),
                     "Installed service does not use the provisioned key")
 
+def credential_reader_acl(uid, owner_permissions, reader_permissions):
+    undefined = 0xffffffff
+    return struct.pack("<I", 2) + b"".join(
+        struct.pack("<HHI", *entry) for entry in
+        ((1, owner_permissions, undefined), (2, reader_permissions, uid), (4, 0, undefined),
+         (16, reader_permissions, undefined), (32, 0, undefined)))
+
+
 def loaded_permissions_private(fd, metadata, reader_uid=None):
     mode = stat.S_IMODE(metadata.st_mode)
     if not mode & 0o077:
@@ -767,13 +837,8 @@ def loaded_permissions_private(fd, metadata, reader_uid=None):
         acl = os.getxattr(fd,"system.posix_acl_access")
     except (AttributeError,OSError):
         return False
-    if len(acl) != 44 or struct.unpack_from("<I",acl)[0] != 2:
-        return False
-    entries = [struct.unpack_from("<HHI",acl,offset) for offset in range(4,44,8)]
-    undefined = 0xffffffff
     reader_uid = os.geteuid() if reader_uid is None else reader_uid
-    return entries == [(1,4,undefined),(2,4,reader_uid),(4,0,undefined),
-                       (16,4,undefined),(32,0,undefined)]
+    return acl == credential_reader_acl(reader_uid, 4, 4)
 
 def read_loaded(directory, name, limit, *, with_metadata=False):
     source = directory / name
@@ -796,18 +861,22 @@ def read_loaded(directory, name, limit, *, with_metadata=False):
     finally:
         os.close(fd)
 
+def loaded_credential_directory():
+    directory = Path(os.environ.get("CREDENTIALS_DIRECTORY", ""))
+    if directory.is_absolute():
+        return directory
+    projection = Path(GENERATION_CREDENTIALS_DIRECTORY)
+    if os.path.lexists(projection):
+        return projection
+    require(fallback_active(), "Kura encryption credential is unavailable")
+    return Path(FALLBACK_CREDENTIALS_DIRECTORY)
+
+
 def loaded_credential_proof(name):
     """ACL/identity receipt for the same-UID Java reader. No raw bytes or Root RPC."""
     limits={CREDENTIAL:32,RING_CREDENTIAL:512}
     require(name in limits,'Unsupported loaded credential')
-    directory=os.environ.get('CREDENTIALS_DIRECTORY','')
-    if not directory or not Path(directory).is_absolute():
-        if fallback_active():
-            # Kernels without credential injection read the provisioned key
-            # directly with the fallback runtime identity.
-            directory=FALLBACK_CREDENTIALS_DIRECTORY
-    require(directory and Path(directory).is_absolute(),'Kura encryption credential is unavailable')
-    value,m=read_loaded(Path(directory),name,limits[name],with_metadata=True)
+    value,m=read_loaded(loaded_credential_directory(),name,limits[name],with_metadata=True)
     identity=(m.st_dev,m.st_ino,m.st_uid,m.st_gid,m.st_mode,m.st_nlink,m.st_size,m.st_mtime_ns,m.st_ctime_ns)
     print(':'.join(map(str,('v'+str(LOADED_CREDENTIAL_PROOF_PROTOCOL),name,*identity,hashlib.sha256(value).hexdigest()))))
 
@@ -878,14 +947,7 @@ def credential_start_admission(key_sha256, ring_sha256):
                          dict(schema=1, state="CREDENTIAL_READY", **expected))
 
 def loaded_binding(require_generations=False):
-    directory = os.environ.get("CREDENTIALS_DIRECTORY", "")
-    if not directory or not Path(directory).is_absolute():
-        if fallback_active():
-            # Kernels without credential injection read the provisioned key
-            # directly with the fallback runtime identity.
-            directory = FALLBACK_CREDENTIALS_DIRECTORY
-    require(directory and Path(directory).is_absolute(), "Kura encryption credential is unavailable")
-    directory = Path(directory)
+    directory = loaded_credential_directory()
     value = read_loaded(directory, CREDENTIAL, 32)
     require(len(value) in (16, 24, 32), "Invalid loaded Kura encryption credential")
     names = (RING_CREDENTIAL, "key-generations.json")
@@ -905,8 +967,20 @@ def check_loaded(require_generations=False, require_root=False):
     elif metadata is not None:
         generation_start_admission(metadata)
 
+
+def require_no_new_privileges():
+    require(sys.platform == 'linux', 'Managed Main requires Linux process admission')
+    prctl = ctypes.CDLL(None).prctl
+    prctl.argtypes = (ctypes.c_int, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong, ctypes.c_ulong)
+    prctl.restype = ctypes.c_int
+    require(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == 0, 'Cannot enforce NoNewPrivs for managed Main')
+
+
 def exec_java(arguments):
     require(bool(arguments), 'Missing managed Java arguments')
+    # All packaged Main launchers converge here, including guarded recovery.
+    # Preserve the same process across admission and exec.
+    require_no_new_privileges()
     recovery = None
     if 'KURA_CONTROLLED_RECOVERY_ID' in os.environ or os.path.lexists('/var/lib/kura-recovery-launch'):
         home = Path(__file__).resolve().parents[1]

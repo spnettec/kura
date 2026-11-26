@@ -19,7 +19,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kura_clock_broker import HOME, canonical_alias, protected, public_file
 from kura_clock_journal import Refused, decode, encode, require
-from kura_journal_export import main_peer, paired_unit
+from kura_journal_export import PROOF_FILES, activation_streams, generation_verifier, main_peer, paired_unit
 from kura_reboot_broker import (ENVIRONMENT, MAIN_UNIT, file_hash, proc_status, socket_peer, verify_alive,
                                verify_identity)
 
@@ -44,7 +44,8 @@ SOURCES = ('bin/kura_command_executor.py', 'bin/kura_journal_export.py',
            'bin/kura_clock_broker.py', 'bin/kura_clock_journal.py', 'bin/kura_reboot_broker.py',
            'bin/kura_reboot_journal.py', 'bin/kura_reboot_protocol.py',
            f'install/{SOCKET_UNIT}', f'install/{SERVICE}',
-           f'install/{ICMP_SOCKET_UNIT}', f'install/{ICMP_SERVICE}')
+           f'install/{ICMP_SOCKET_UNIT}', f'install/{ICMP_SERVICE}',
+           *(f'install/{name}' for name in PROOF_FILES))
 
 
 def package_cohort(home):
@@ -170,16 +171,20 @@ def execute(stream, peer, directory, command, files):
                 child.wait()
 
 
-def serve(stream, unit):
+def serve(stream, unit, proof=None):
     unit_hash = verify_actor(unit)
+    verify = generation_verifier(proof, unit, ACTOR_HOME)
     files = []
     try:
         with socket_peer(stream) as peer:
             directory, command = main_peer(peer, unit_hash, CLIENT, None, command_from_args,
-                                           command_line=read_command_line)
+                                           command_line=read_command_line, generation_proof=verify)
             receive_stdio(stream, files)
             require(main_peer(peer, unit_hash, CLIENT, None, command_from_args,
-                              command_line=read_command_line) == (directory, command), 'UNAUTHORIZED')
+                              command_line=read_command_line, generation_proof=verify) == (directory, command),
+                    'UNAUTHORIZED')
+            if proof is not None:
+                proof.close()
             execute(stream, peer, directory, command, files)
     finally:
         for file in files:
@@ -230,18 +235,20 @@ def icmp_request(family, address):
     return family, address
 
 
-def serve_icmp(stream, unit):
+def serve_icmp(stream, unit, proof=None):
     unit_hash = verify_actor(unit, account_name=ICMP_ACCOUNT, socket_unit=ICMP_SOCKET_UNIT,
                              template=ICMP_SERVICE, capabilities=CAP_NET_RAW)
+    verify = generation_verifier(proof, unit, ACTOR_HOME)
     with socket_peer(stream) as peer:
-        args = main_peer(peer, unit_hash, ICMP_CLIENT, 2, icmp_request)
+        args = main_peer(peer, unit_hash, ICMP_CLIENT, 2, icmp_request, generation_proof=verify)
         family, address = args
         protected(ICMP_BINARY)
         # Keep hostname resolution for the destination and skip reverse lookups when rendering replies.
         result = subprocess.run([str(ICMP_BINARY), family, '-n', '-c', '5', '-W', '1', '--', address],
                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 env=ENVIRONMENT, timeout=12)
-        require(main_peer(peer, unit_hash, ICMP_CLIENT, 2, icmp_request) == args, 'UNAUTHORIZED')
+        require(main_peer(peer, unit_hash, ICMP_CLIENT, 2, icmp_request, generation_proof=verify) == args,
+                'UNAUTHORIZED')
         stream.settimeout(4)
         stream.sendall(b'\x00' if result.returncode == 0 else b'\x01')
 
@@ -258,12 +265,10 @@ def client_icmp(family, address):
 if __name__ == '__main__':
     try:
         args = sys.argv[1:]
-        if len(args) == 2 and args[0] == 'serve':
-            with socket.socket(fileno=os.dup(0)) as connection:
-                serve(connection, args[1])
-        elif len(args) == 2 and args[0] == 'icmp-serve':
-            with socket.socket(fileno=os.dup(0)) as connection:
-                serve_icmp(connection, args[1])
+        if len(args) == 2 and args[0] in ('serve', 'icmp-serve'):
+            with activation_streams() as (connection, proof):
+                worker = serve if args[0] == 'serve' else serve_icmp
+                worker(connection, args[1], proof)
         elif len(args) == 3 and args[0] == 'icmp-client':
             sys.exit(client_icmp(*args[1:]))
         elif len(args) > 4 and args[0] == 'client':

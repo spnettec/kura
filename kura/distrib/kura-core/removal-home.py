@@ -77,6 +77,9 @@ def check_purge_mounts(retained):
                     *retained.parent.glob('.kura-retained.purging-*'),
                     ROOT / 'etc/systemd/system/kura.service.d', ROOT / 'var/log/kura',
                     ROOT / 'tmp/.kura', ROOT / 'tmp/kura')
+    record_path = retained / 'removal-home.json'
+    if os.path.lexists(record_path) and 'packageTag' in json.loads(generation_input(record_path, 8192)):
+        no_mounts_below(PARENT / package_record(retained)['holder'])
 
 
 def removal_tag(record, context=b'kura-core-removal-packages-v1\0'):
@@ -102,6 +105,12 @@ def generation_input(path, limit=65536):
         return raw
 
 
+def removal_cohort(manifest, launchers):
+    binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
+                   manifestSha256=manifest, launcherSha256s=launchers)
+    return hashlib.sha256(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('ascii')).hexdigest()
+
+
 def retained_generation(retained, operation):
     current = JOURNAL_KEY.parent / 'generation-current.json'
     saved = retained / 'published-generation'
@@ -124,12 +133,11 @@ def retained_generation(retained, operation):
     publication = json.loads(raw)
     digest = lambda data: hashlib.sha256(data).hexdigest()
     hashes = {name: digest(generation_input(saved / name)) for name in GENERATION_LAUNCHERS}
-    binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
-                   manifestSha256=receipt['manifestSha256'], launcherSha256s=hashes)
     require(receipt['publicationSha256'] == digest(raw) and receipt['publicationId'] == publication['operationId']
             and receipt['dropinSha256'] == digest(generation_input(GENERATION_DROPIN))
             and receipt['cohortSha256'] == publication['cohortSha256']
-            and receipt['cohortSha256'] == digest(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('ascii')),
+            and receipt['cohortSha256'] == removal_cohort(
+                receipt.get('publicationManifestSha256', receipt['manifestSha256']), hashes),
             'Retained launchers or credentials differ from the original publication')
     return receipt
 
@@ -153,9 +161,10 @@ def purged_generation(operation, *, completed=True):
             'Unsafe published-generation purge permissions')
     record = json.loads(generation_input(saved / 'captured.json', 8192))
     tag = record.pop('tag')
-    require(set(record) == {'schema', 'purpose', 'phase', 'operation', 'root', 'publicationId',
-                            'publicationSha256', 'cohortSha256', 'manifestSha256', 'dropinSha256',
-                            'launcherSha256s', 'sourceReceiptSha256'}
+    require(set(record) - {'publicationManifestSha256'} == {
+                'schema', 'purpose', 'phase', 'operation', 'root', 'publicationId',
+                'publicationSha256', 'cohortSha256', 'manifestSha256', 'dropinSha256',
+                'launcherSha256s', 'sourceReceiptSha256'}
             and type(record['schema']) is int and record['schema'] == 1
             and record['purpose'] == 'kura-core-purged-generation-v1' and record['phase'] == 'captured'
             and record['operation'] == operation and record['root'] == identity(ROOT)
@@ -170,12 +179,11 @@ def purged_generation(operation, *, completed=True):
     raw = generation_input(JOURNAL_KEY.parent / 'generation-current.json', 8192)
     publication = json.loads(raw)
     hashes = {name: digest(generation_input(saved / name)) for name in GENERATION_LAUNCHERS}
-    binding = dict(schema=1, purpose='yofc-kura-key-generation-package-v1',
-                   manifestSha256=record['manifestSha256'], launcherSha256s=hashes)
     require(record['publicationSha256'] == digest(raw) and record['publicationId'] == publication['operationId']
             and record['dropinSha256'] == digest(generation_input(saved / 'dropin'))
             and hashes == record['launcherSha256s'] and record['cohortSha256'] == publication['cohortSha256']
-            and record['cohortSha256'] == digest(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('ascii')),
+            and record['cohortSha256'] == removal_cohort(
+                record.get('publicationManifestSha256', record['manifestSha256']), hashes),
             'Purged credential cohort differs from its original publication')
     return record
 
@@ -200,6 +208,8 @@ def capture_purged_generation(retained):
                     ('publicationId', 'publicationSha256', 'cohortSha256', 'manifestSha256', 'dropinSha256')},
                   launcherSha256s={name: digest(payload[name]) for name in GENERATION_LAUNCHERS},
                   sourceReceiptSha256=digest(generation_input(retained / 'published-generation/receipt.json')))
+    if 'publicationManifestSha256' in original:
+        record['publicationManifestSha256'] = original['publicationManifestSha256']
     record['tag'] = removal_tag(record, PURGED_TAG)
     payload['captured.json'] = json.dumps(record, sort_keys=True, separators=(',', ':')).encode('ascii')
     for directory in (PURGED_GENERATIONS, saved):
@@ -250,31 +260,55 @@ def capture_generation(physical, retained, operation):
     for name in GENERATION_LAUNCHERS:
         write_new(saved / name, generation_input(physical / 'bin' / name))
     digest = lambda data: hashlib.sha256(data).hexdigest()
+    manifest = generation_input(physical / 'libexec/key-backup/manifest.json')
+    current_manifest = digest(manifest)
+    predecessors = json.loads(manifest)['generation'].get('publishedPredecessorManifestSha256s', ())
+    hashes = {name: digest(generation_input(saved / name)) for name in GENERATION_LAUNCHERS}
+    matches = [pin for pin in (current_manifest, *predecessors)
+               if removal_cohort(pin, hashes) == publication['cohortSha256']]
+    require(len(matches) == 1, 'Retained launchers differ from the original published cohort')
     receipt = dict(schema=1, operation=operation, root=identity(ROOT), retained=identity(retained),
                    publicationId=publication['operationId'], publicationSha256=digest(raw),
                    cohortSha256=publication['cohortSha256'],
-                   manifestSha256=digest(generation_input(physical / 'libexec/key-backup/manifest.json')),
+                   manifestSha256=current_manifest,
                    dropinSha256=digest(generation_input(GENERATION_DROPIN)))
+    if matches[0] != current_manifest:
+        receipt['publicationManifestSha256'] = matches[0]
     receipt['tag'] = removal_tag(receipt, GENERATION_TAG)
     write_new(saved / 'receipt.json', json.dumps(receipt, sort_keys=True, separators=(',', ':')).encode('ascii'))
     retained_generation(retained, operation)
     sync_dir(retained)
 
 
-def capture_history(physical, retained, record):
+def capture_history(physical, record):
+    data = physical / 'data'
+    if os.path.lexists(data):
+        info = data.lstat()
+        require(stat.S_ISDIR(info.st_mode), 'Unsafe original runtime data directory')
+        record['runtimeDataDirectory'] = dict(device=info.st_dev, inode=info.st_ino, ctimeNs=info.st_ctime_ns)
     packages = physical / 'packages'
-    if not packages.is_dir() or packages.is_symlink():
-        return
-    registry = (packages / 'dpa.properties').resolve()
-    pattern = re.compile(re.escape('.' + registry.name) + r'\.(install|uninstall)-[0-9a-f]{64}\.done')
-    if not registry.parent.is_dir() or not any(pattern.fullmatch(p.name) for p in registry.parent.iterdir()):
+    if packages.is_dir() and not packages.is_symlink():
+        registry = (packages / 'dpa.properties').resolve()
+        pattern = re.compile(re.escape('.' + registry.name) + r'\.(install|uninstall)-[0-9a-f]{64}\.done')
+        if registry.parent.is_dir() and any(pattern.fullmatch(path.name) for path in registry.parent.iterdir()):
+            record['packages'] = identity(packages)
+    if not retained_trees(record):
         return
     # Park on the installation filesystem, even when /var/lib is a different mount.
     holder = Path(tempfile.mkdtemp(prefix='.kura-removed-packages-', dir=PARENT))
     sync_dir(PARENT)
-    record.update(packages=identity(packages), holder=holder.name, holderIdentity=identity(holder),
-                  retained=identity(retained))
+    record.update(holder=holder.name, holderIdentity=identity(holder))
     record['packageTag'] = removal_tag(record)
+
+
+def retained_trees(record):
+    trees = {}
+    if 'packages' in record:
+        trees['packages'] = record['packages']
+    if 'runtimeDataDirectory' in record:
+        data = record['runtimeDataDirectory']
+        trees['data'] = [data['device'], data['inode']]
+    return trees
 
 
 def package_record(retained):
@@ -363,29 +397,40 @@ def locate_retention(destination):
 
 def park(retained):
     record, physical, holder = paired_removal(retained)
-    source, saved = physical / 'packages', holder / 'packages'
-    if os.path.lexists(source):
-        require(identity(source) == record['packages'] and not os.path.lexists(saved),
-                'Original deployment directory changed before removal')
-        no_mounts_below(source)
+    no_mounts_below(holder)
+    transfers = []
+    for name, recorded in retained_trees(record).items():
+        source, saved = physical / name, holder / name
+        if os.path.lexists(source):
+            require(identity(source) == recorded and not os.path.lexists(saved),
+                    f'Original {name} directory changed before removal')
+            if name == 'data':
+                require(source.lstat().st_ctime_ns == record['runtimeDataDirectory']['ctimeNs'],
+                        'Original runtime data directory changed before removal')
+            no_mounts_below(source)
+            transfers.append((source, saved))
+        else:
+            require(identity(saved) == recorded, f'Retained {name} directory changed')
+    for source, saved in transfers:
         source.rename(saved)
-    require(identity(saved) == record['packages'], 'Retained deployment directory changed')
     sync_dir(holder)
     sync_dir(physical)
 
 
-def purge_packages(retained):
+def purge_parked_trees(retained):
     record = package_record(retained)
     holder = PARENT / record['holder']
     if not os.path.lexists(holder):
         return
     protected(holder, True)
     require(identity(holder) == record['holderIdentity'], 'Original purge holding directory changed')
-    saved = holder / 'packages'
-    if os.path.lexists(saved):
-        require(identity(saved) == record['packages'], 'Different deployment directory at purge')
-        no_mounts_below(saved)
-        shutil.rmtree(saved)
+    trees = retained_trees(record)
+    parked = list(holder.iterdir())
+    require(all(path.name in trees and identity(path) == trees[path.name] for path in parked),
+            'Different original directory at purge')
+    no_mounts_below(holder)
+    for path in parked:
+        shutil.rmtree(path)
     holder.rmdir()
     sync_dir(PARENT)
 
@@ -417,7 +462,7 @@ def purge_retained(retained):
                 'Retained directory belongs to another removal')
         remove(retained)
         if 'packageTag' in record:
-            purge_packages(retained)
+            purge_parked_trees(retained)
         no_mounts_below(retained)
         retained.rename(target)
     sync_dir(retained.parent)
@@ -457,7 +502,7 @@ def capture(retained):
                 os.fsync(stream.fileno())
             sync_dir(saved)
     capture_generation(physical, retained, operation)
-    capture_history(physical, retained, record)
+    capture_history(physical, record)
     raw = json.dumps(record, sort_keys=True).encode()
     write_new(retained / 'removal-home.json', raw)
     # An inode number can be reused after a directory is removed.
@@ -484,8 +529,9 @@ def remove(retained):
         holder = PARENT / bound['holder']
         if os.path.lexists(PARENT / rec['name']) or os.path.lexists(PARENT / ('.kura-removing-' + operation)):
             protected(holder, True)
-            require(identity(holder) == bound['holderIdentity'] and identity(holder / 'packages') == bound['packages'],
-                    'Original deployment directory was not parked before removal')
+            require(identity(holder) == bound['holderIdentity']
+                    and all(identity(holder / name) == expected for name, expected in retained_trees(bound).items()),
+                    'Original retained directories were not parked before removal')
     name = rec['name']
     require(Path(name).name == name and (name == 'kura' or name.startswith('kura_')),
             'Invalid original installation name')

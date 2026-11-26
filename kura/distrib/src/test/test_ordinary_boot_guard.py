@@ -1,4 +1,5 @@
 """Exercise the guard shipped in both Core maintainer scripts before side effects."""
+from contextlib import suppress
 import hashlib
 import fcntl
 import json
@@ -257,7 +258,10 @@ STUB
         self.assertEqual(counter.read_text(), 'once\n')
         pid = int(child_pid.read_text())
         os.kill(pid, 0)
-        self.addCleanup(lambda: os.kill(pid, signal.SIGTERM) if subprocess.run(['kill', '-0', str(pid)], capture_output=True).returncode == 0 else None)
+        def stop_child():
+            with suppress(ProcessLookupError):
+                os.kill(pid, signal.SIGTERM)
+        self.addCleanup(stop_child)
         for name in ['core.lock', 'system-change.lock']:
             with (self.root / name).open('r+') as f:
                 fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)

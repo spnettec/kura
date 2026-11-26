@@ -6,6 +6,24 @@ startup entry points do not acquire an admission path for removed installations.
 """
 
 
+def check_removed_generation_release(api, lifecycle, saved, publication, secret):
+    removed_manifest = saved['manifestSha256']
+    if removed_manifest == _KURA_INCOMING_KEY_MANIFEST_SHA256:
+        return
+    predecessors = _KURA_INCOMING_KEY_PREDECESSORS
+    origin_manifest = saved.get('publicationManifestSha256', removed_manifest)
+    require(removed_manifest in predecessors and origin_manifest in predecessors,
+            'Incoming release differs from the retained generation cohort')
+
+    operations = lifecycle.state / 'operations'
+    lifecycle.directory(operations, private=True)
+    records = [api.validate_record(api.decode(lifecycle.read(path)), path.stem) for path in operations.iterdir()]
+    starts = [record for record in records if record['action'] == 'generation-core-start'
+              and record['state'] == 'SUCCEEDED' and record['response']['publicationId'] == publication['operationId']]
+    require(len(starts) == 1, 'Cohort replacement requires the original completed generation startup')
+    api.archive_entry(lifecycle, dict(directory='operations', operationId=starts[0]['operationId']), secret)
+
+
 def prepare_retained_generation(*, unpacked_layout=False):
     removal = {'__name__': 'packaged_removal'}
     exec(compile(_KURA_REMOVAL_HOME_SOURCE, '<packaged-removal>', 'exec'), removal)
@@ -46,8 +64,7 @@ def prepare_retained_generation(*, unpacked_layout=False):
             purged = not os.path.lexists(retained)
             saved = (removal['purged_generation'](fence['id']) if purged else
                      removal['retained_generation'](retained, fence['id']))
-            require(saved and saved['manifestSha256'] == _KURA_INCOMING_KEY_MANIFEST_SHA256,
-                    'Incoming release differs from the retained generation cohort')
+            require(saved, 'Original removed credential cohort is absent')
 
             publication = api.validate_publication(api.decode(lifecycle.read(lifecycle.state / 'generation-current.json', 8192)))
             slot = lifecycle.state / 'generations' / publication['preparationId']
@@ -59,6 +76,7 @@ def prepare_retained_generation(*, unpacked_layout=False):
             require(len(secret) == 32, 'Invalid original journal key')
             for key in ('operationId', 'verificationId'):
                 api.archive_entry(lifecycle, dict(directory='operations', operationId=publication[key]), secret)
+            check_removed_generation_release(api, lifecycle, saved, publication, secret)
             if not purged:
                 archive = retained / 'encryption'
                 removal['protected'](archive, True)

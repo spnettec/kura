@@ -2,7 +2,8 @@
 Description=Kura ICMP reachability probe
 PartOf=kura.service
 Requisite=kura.service
-After=kura.service
+Wants=kura-main-generation-proof.socket
+After=kura.service kura-main-generation-proof.socket
 CollectMode=inactive-or-failed
 
 [Service]
@@ -10,8 +11,9 @@ Type=exec
 User=kura-icmp-probe
 Group=kura-icmp-probe
 UMask=0077
-ExecStart=/usr/bin/python3 -I -B /usr/libexec/kura-command-executor/kura_command_executor.py icmp-serve %n
-StandardInput=socket
+ExecStart=/usr/bin/setpriv --no-new-privs /usr/bin/python3 -I -B /usr/libexec/kura-command-executor/kura_command_executor.py icmp-serve %n
+StandardInput=null
+OpenFile=/run/kura-main-generation-proof.sock:generation-proof:graceful
 StandardOutput=null
 StandardError=journal
 NoNewPrivileges=yes

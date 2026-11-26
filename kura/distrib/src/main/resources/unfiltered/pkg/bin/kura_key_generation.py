@@ -18,7 +18,10 @@ import time
 from kura_key_service import (Failure, require, fields, digest, operation_id, encode, decode, rename_no_replace,
                               KEY_PATH, RECEIPT_PATH, RING_PATH, GENERATION_RECEIPT_PATH,
                               GENERATION_FORMAT, key_generations)
-from kura_key_service_lifecycle import (Lifecycle, Refused, validate_generation_metadata, validate_publication,
+from kura_key_store import (GENERATION_CREDENTIALS_DIRECTORY, NETWORKING_DROPIN, Refused as CredentialRefused,
+                            credential_reader_acl)
+from kura_key_service_lifecycle import (CONTAINER_ADAPTER_DROPIN, Lifecycle, Refused, validate_generation_metadata,
+    validate_publication, published_cohort_matches,
     handoff_revocations, handoff_revocation_view, HANDOFF_REVOCATION_PURPOSE, HANDOFF_REVOCATION_CONTEXT,
     validate_start_lease, START_LEASE_CONTEXT, handoff_operation_request)
 
@@ -34,6 +37,12 @@ PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'SubState', 'MainPID', 'ControlP
 SYSTEMCTL = ('/usr/bin/systemctl', '--system', '--no-ask-password', '--no-pager')
 START = ('/usr/bin/busctl', '--system', '--timeout=15s', 'call', 'org.freedesktop.systemd1',
          '/org/freedesktop/systemd1', 'org.freedesktop.systemd1.Manager', 'StartUnit', 'ss', 'kura.service', 'fail')
+LEGACY_AGENT = 'kura-management-agent.service'
+LEGACY_AGENT_VENDOR = '/usr/lib/systemd/system/' + LEGACY_AGENT
+LEGACY_AGENT_SHA = 'f6dadc58e2dec0297aa2a0649e240cea42aafa80e8b31030f55c1c0e38befa85'
+LEGACY_AGENT_PROPERTIES = dict(Id=LEGACY_AGENT, Names=LEGACY_AGENT, LoadState='loaded',
+    FragmentPath=LEGACY_AGENT_VENDOR, SourcePath='', Transient='no', NeedDaemonReload='no',
+    UnitFileState='disabled', ActiveState='inactive', SubState='dead', Job='', MainPID='0', ControlPID='0')
 
 
 class Generations:
@@ -60,7 +69,29 @@ class Generations:
         require(result['FragmentPath'] in ('/lib/systemd/system/kura.service', '/usr/lib/systemd/system/kura.service')
                 and self.manager.store.path(result['FragmentPath']).resolve(strict=True)
                 == self.manager.store.path('/lib/systemd/system/kura.service').resolve(strict=True), 'UNMANAGED_CORE')
-        require(result['DropInPaths'] in (('', DROPIN) if recovery else ((DROPIN if generation_mode else ''),)), 'UNMANAGED_CORE')
+        dropins = result['DropInPaths'].split()
+        result['ContainerAdapter'] = CONTAINER_ADAPTER_DROPIN in dropins
+        if result['ContainerAdapter']:
+            try:
+                Lifecycle(self.manager.root, self.manager.owner).check_container_adapter()
+            except (OSError, Refused) as error:
+                raise Failure('UNMANAGED_CORE') from error
+            dropins.remove(CONTAINER_ADAPTER_DROPIN)
+        networking = [path for path in dropins if path in (NETWORKING_DROPIN, NETWORKING_DROPIN.removeprefix('/usr'))]
+        require(len(networking) <= 1, 'UNMANAGED_CORE')
+        if networking:
+            path = networking[0]
+            try:
+                self.manager.store.check_networking_dropin(self.manager.store.path(path))
+            except (OSError, CredentialRefused) as error:
+                raise Failure('UNMANAGED_CORE') from error
+            dropins.remove(path)
+        # Recovery uses this value to decide whether the generation drop-in
+        # still needs to be loaded. The paired dependency and platform drop-ins
+        # are independent of the generation mode.
+        result['DropInPaths'] = ' '.join(dropins)
+        allowed = ('', DROPIN) if recovery else (DROPIN if generation_mode else '',)
+        require(result['DropInPaths'] in allowed, 'UNMANAGED_CORE')
         require(all(re.fullmatch(r'[0-9]{1,10}', result[k]) is not None for k in ('MainPID', 'ControlPID')), 'UNMANAGED_CORE')
         require(result['ControlGroup'] in ('', '/system.slice/kura.service')
                 and re.fullmatch(r'(?:[0-9a-f]{32})?', result['InvocationID']) is not None, 'UNMANAGED_CORE')
@@ -124,13 +155,43 @@ class Generations:
         require(len(values) == len(entries) and values.get('populated') in ('0', '1'), 'UNSUPPORTED_CGROUP')
         return values['populated'] == '0' and not processes.strip()
 
-    def no_optional_agent(self):
-        # Its existing single-key validation path is not a generation delegation.
-        for name in ('kura-management-agent.service', 'kura-management-agent.socket'):
-            raw = self.command((*SYSTEMCTL, 'show', name, '--property=LoadState'))
-            require(raw.strip() == 'LoadState=not-found', 'AGENT_GENERATION_UNAVAILABLE')
-            for base in ('/etc/systemd/system', '/run/systemd/system', '/lib/systemd/system', '/usr/lib/systemd/system'):
-                require(not os.path.lexists(self.manager.store.path(base + '/' + name)), 'AGENT_GENERATION_UNAVAILABLE')
+    def check_legacy_agent(self):
+        manager = self.manager
+        unavailable = 'AGENT_GENERATION_UNAVAILABLE'
+        roots = ('/etc/systemd/system', '/run/systemd/system', '/lib/systemd/system', '/usr/lib/systemd/system')
+        socket_unit = 'kura-management-agent.socket'
+        require(self.command((*SYSTEMCTL, 'show', socket_unit, '--property=LoadState')).strip()
+                == 'LoadState=not-found'
+                and not any(os.path.lexists(manager.store.path(root + '/' + socket_unit)) for root in roots), unavailable)
+        raw = self.command((*SYSTEMCTL, 'show', LEGACY_AGENT, '--property=LoadState')).strip()
+        paths = [manager.store.path(root + '/' + LEGACY_AGENT) for root in roots]
+        if raw == 'LoadState=not-found':
+            require(not any(os.path.lexists(path) for path in paths), unavailable)
+            return
+        require(raw == 'LoadState=loaded' and not any(os.path.lexists(path) for path in paths[:2]), unavailable)
+        # The modern package also ships the old unit. Only its disabled,
+        # unprovisioned vendor copy is eligible, never a legacy runtime.
+        vendor = manager.store.path(LEGACY_AGENT_VENDOR)
+        try:
+            require(vendor.resolve(strict=True) == vendor
+                    and all(not os.path.lexists(path) or path.resolve(strict=True) == vendor for path in paths[2:])
+                    and not any(os.path.lexists(manager.store.path(path)) for path in (
+                        '/etc/kura-management-agent/agent.env', '/var/lib/kura-management-agent', '/run/kura-management-agent')),
+                    unavailable)
+            lifecycle = Lifecycle(manager.root, manager.owner)
+            require(hashlib.sha256(lifecycle.read(vendor, limit=4096, private=False)).hexdigest()
+                    == LEGACY_AGENT_SHA, unavailable)
+            output = self.command((*SYSTEMCTL, 'show', LEGACY_AGENT, '--all',
+                                   '--property=' + ','.join((*LEGACY_AGENT_PROPERTIES, 'DropInPaths'))))
+            rows = output.splitlines()
+            require(len(rows) == len(LEGACY_AGENT_PROPERTIES) + 1 and all('=' in row for row in rows), unavailable)
+            properties = dict(row.split('=', 1) for row in rows)
+            dropins = properties.pop('DropInPaths', None)
+            require(properties == LEGACY_AGENT_PROPERTIES and dropins in ('', CONTAINER_ADAPTER_DROPIN), unavailable)
+            if dropins:
+                lifecycle.check_container_adapter()
+        except (OSError, Refused) as error:
+            raise Failure(unavailable) from error
 
     def current(self):
         manager = self.manager
@@ -166,7 +227,14 @@ class Generations:
         require(len(matches) == 1, 'GENERATION_START_REQUIRED')
         response = matches[0]['response']
         require(response['ringSha256'] == source['ringSha256'] and response['activeKeySha256'] == source['keySha256']
-                and response['cohortSha256'] == cohort['cohortSha256'], 'COHORT_CHANGED')
+                and response['cohortSha256'] == current['cohortSha256']
+                and published_cohort_matches(current['cohortSha256'], cohort), 'COHORT_CHANGED')
+        if response['cohortSha256'] != cohort['cohortSha256']:
+            try:
+                Lifecycle(manager.root, manager.owner).completed_generation_successor(
+                    cohort['manifestSha256'], source['keySha256'])
+            except (OSError, Refused):
+                raise Failure('COHORT_CHANGED') from None
 
     def prepared(self, request):
         manager = self.manager
@@ -184,7 +252,7 @@ class Generations:
                 and history['sourceGenerationReceipt'] == metadata, 'CONFLICT')
         cohort = manager.require_generation_cohort()
         template = self.dropin(generation_mode=source['ringSha256'] is not None)
-        self.no_optional_agent()
+        self.check_legacy_agent()
         return raw, history, prepared, source, cohort, template
 
     def active_core(self, source, cohort):
@@ -214,6 +282,7 @@ class Generations:
         require(unit['ActiveState'] == 'inactive' and unit['SubState'] == 'dead'
                 and unit['MainPID'] == '0' and unit['ControlPID'] == '0' and self.cgroup_empty(), 'CORE_NOT_DRAINED')
         self.no_foreign_processes(uid)
+        return unit
 
     def publication_paths(self):
         manager = self.manager
@@ -299,6 +368,55 @@ class Generations:
                     generationReceipt=(encode(dict(schema=1, purpose=GENERATION_FORMAT, **metadata)), 0o600),
                     dropin=(template, 0o400), current=(publication, 0o600))
 
+    def project_credentials(self, targets, history, uid):
+        # The reviewed adapter clears LoadCredential. Keep the projection
+        # Root-owned and grant only the managed account traversal and read.
+        manager = self.manager
+        require(uid > 0, 'UNMANAGED_CORE')
+        directory = manager.store.path(GENERATION_CREDENTIALS_DIRECTORY)
+        manager.directory(directory.parent)
+        directory.mkdir(mode=0o700, exist_ok=True)
+        manager.directory(directory)
+        acl = credential_reader_acl(uid, 7, 1)
+        mode = stat.S_IMODE(directory.lstat().st_mode)
+        require(mode == 0o700 or mode == 0o710
+                and os.getxattr(directory, 'system.posix_acl_access') == acl, 'UNSAFE_FILESYSTEM')
+        stage = directory / '.pending'
+        stage.mkdir(mode=0o700, exist_ok=True)
+        manager.directory(stage, private=True)
+        previous = history['sourceGenerationReceipt']
+        previous_proof = encode(dict(schema=1, purpose=GENERATION_FORMAT, **previous)) if previous is not None else None
+        sources = ((KEY_PATH, 'activeKey', history['source']['keySha256']),
+                   (RING_PATH, 'ring', history['source']['ringSha256']),
+                   (GENERATION_RECEIPT_PATH, 'generationReceipt',
+                    hashlib.sha256(previous_proof).hexdigest() if previous_proof is not None else None))
+        for source, name, prior_digest in sources:
+            # Only the original or already published bytes can occupy a leaf
+            # during continuation. The canonical source stays in the journal.
+            path = directory / Path(source).name
+            data = targets[name][0]
+            if os.path.lexists(path):
+                require(stat.S_IMODE(path.lstat().st_mode) == 0o440, 'UNSAFE_FILESYSTEM')
+                current = manager.store.read(path, private=True, limit=2048, loaded_for_uid=uid)
+                if current == data:
+                    continue
+                require(prior_digest is not None and hashlib.sha256(current).hexdigest() == prior_digest, 'CONFLICT')
+            candidate = stage / path.name
+            if not os.path.lexists(candidate):
+                manager.atomic(candidate, data, mode=0o400, no_replace=True)
+            require(manager.store.read(candidate, private=True, limit=2048, loaded_for_uid=uid) == data, 'CONFLICT')
+            fd = os.open(candidate, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+            try:
+                os.setxattr(fd, 'system.posix_acl_access', credential_reader_acl(uid, 4, 4))
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+            os.replace(candidate, path)
+            manager.sync(stage)
+        os.setxattr(directory, 'system.posix_acl_access', acl)
+        manager.sync(directory)
+        manager.sync(directory.parent)
+
     def publication_progress(self, value, targets, source_files):
         manager = self.manager
         paths = self.publication_paths()
@@ -324,6 +442,7 @@ class Generations:
 
     def finish_publication(self, value, raw, history, cohort, template, record, source_files, uid, *, recovering=False):
         manager = self.manager
+        self.check_legacy_agent()
         targets = self.publication_targets(value, raw, history, template)
         paths, expected, done = self.publication_progress(value, targets, source_files)
         for name in ('ring', 'activeKey', 'provisioned', 'generationReceipt', 'dropin'):
@@ -337,9 +456,14 @@ class Generations:
             reload_needed = True
         if reload_needed:
             self.command((*SYSTEMCTL, 'daemon-reload'))
-        self.stopped(generation_mode=True, uid=uid)
+        unit = self.stopped(generation_mode=True, uid=uid)
         require(manager.generations()[1] == value['generation'] and manager.require_generation_cohort() == cohort, 'COHORT_CHANGED')
         self.dropin(generation_mode=True)
+        if unit['ContainerAdapter']:
+            try:
+                self.project_credentials(targets, history, uid)
+            except CredentialRefused as error:
+                raise Failure('UNSAFE_FILESYSTEM') from error
         for name in ('publication', 'current'):
             if not done[name]:
                 data, mode = expected[name]
@@ -407,7 +531,7 @@ class Generations:
                                                            **history['sourceGenerationReceipt']), 'CONFLICT')
                 cohort = manager.require_generation_cohort()
                 require(cohort['cohortSha256'] == value['cohortSha256'], 'COHORT_CHANGED')
-                self.no_optional_agent()
+                self.check_legacy_agent()
                 template = self.dropin(generation_mode=os.path.lexists(manager.store.path(DROPIN)))
                 require(value['stoppedWriter']['bootId'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
                         'UNSAFE_WRITER_STATE')
@@ -525,7 +649,7 @@ class Generations:
         _, metadata, _ = manager.generations()
         cohort = manager.require_generation_cohort()
         require(metadata == current['generation'] and request['expectedCohortSha256'] == cohort['cohortSha256'] == current['cohortSha256'], 'COHORT_CHANGED')
-        self.no_optional_agent(); self.dropin(generation_mode=True)
+        self.check_legacy_agent(); self.dropin(generation_mode=True)
         self.stopped(generation_mode=True, uid=pwd.getpwnam('kurad').pw_uid)
         for path in manager.operations.iterdir():
             prior = manager.record(path.name[:-5])
@@ -891,7 +1015,7 @@ class Handoffs:
         _, metadata, _ = manager.generations(); cohort = manager.require_generation_cohort()
         require(metadata == publication['generation'] and cohort['cohortSha256'] == publication['cohortSha256']
             == request['expectedCohortSha256'], 'COHORT_CHANGED')
-        component.no_optional_agent(); component.dropin(generation_mode=True)
+        component.check_legacy_agent(); component.dropin(generation_mode=True)
         uid = pwd.getpwnam('kurad').pw_uid
         require(value['owner']['uid'] == uid, 'OWNER_CHANGED')
         component.stopped(generation_mode=True, uid=uid)
@@ -1224,8 +1348,7 @@ class ProviderStoreRewrap:
             self.check_profile(policy, core)
             publication = core.current()
             _, _, _, generation, _, source = manager.generation_source()
-            require(generation == publication['generation'] and cohort['cohortSha256'] == publication['cohortSha256'],
-                    'COHORT_CHANGED')
+            require(generation == publication['generation'], 'COHORT_CHANGED')
             core.require_start(source, cohort)
             account = pwd.getpwnam('kurad')
             locks.enter_context(manager.exclusive_writers())
@@ -1267,7 +1390,7 @@ class SnapshotRewrap(ProviderStoreRewrap):
     def check_profile(self, policy, core):
         # An agent or guarded boot can bind an exact snapshot digest to a
         # restore intent. Rewrap is admitted only for standalone package history.
-        core.no_optional_agent()
+        core.check_legacy_agent()
         require(core.command((*SYSTEMCTL, 'show', 'kura-management-agent-v2.service', '--property=LoadState')).strip()
                 == 'LoadState=not-found', 'AGENT_GENERATION_UNAVAILABLE')
         protected = ('/etc/kura/ordinary-boot-policy.json', '/var/lib/kura-management-agent',

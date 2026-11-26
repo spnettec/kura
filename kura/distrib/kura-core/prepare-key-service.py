@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: EPL-2.0
 """Assemble the fixed private worker and its manifest; never touch a gateway."""
+import ast
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import sys
+import tarfile
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src/main/resources/unfiltered/pkg/bin"))
@@ -79,7 +83,35 @@ def verify_crypto_imports(assembly, modules=None):
     return checked
 
 
-def prepare(assembly, cipher_target, offline_target):
+def bind_published_predecessors(manifest, paths):
+    if not paths:
+        return
+    field = 'publishedPredecessorManifestSha256s'
+    administrative = {'bin/kura_key_service_lifecycle.py', 'bin/kura_key_store.py', 'bin/kura_key_generation.py'}
+
+    def stable_assets(files):
+        return dict.fromkeys(files) | {k: v for k, v in files.items() if k not in administrative}
+
+    def boot_contract(value):
+        generation = value['generation']
+        require(value['schema'] == 2 and value['protocol'] == 2
+                and set(value) == {'schema', 'protocol', 'files', 'units', 'generation'}
+                and set(generation) - {field} == {'writerProtocol', 'unitSha256', 'files', 'readers'})
+        return (value['units'], stable_assets(value['files']), generation['writerProtocol'],
+                generation['unitSha256'], generation['readers'], stable_assets(generation['files']))
+
+    contract = boot_contract(manifest)
+    hashes = set()
+    for path in paths:
+        require(path.is_file() and not path.is_symlink() and path.stat().st_size <= 65536)
+        raw = path.read_bytes()
+        require(boot_contract(json.loads(raw)) == contract)
+        hashes.add(hashlib.sha256(raw).hexdigest())
+    require(1 <= len(hashes) <= 8)
+    manifest['generation'][field] = sorted(hashes)
+
+
+def prepare(assembly, cipher_target, offline_target, predecessors=()):
     require(assembly.is_dir() and not assembly.is_symlink())
     verify_crypto_imports(assembly)
     helpers = ["bin/kura_key_store.py", "bin/kura_key_service.py", "bin/kura_key_service_lifecycle.py",
@@ -148,6 +180,7 @@ def prepare(assembly, cipher_target, offline_target):
                       unitSha256=digest(main_unit), writerProtocol=1)
     manifest = dict(schema=2, protocol=2, files={name: digest(assembly / name) for name in sorted(base_files)},
                     units={name: digest(assembly / "install" / name) for name in units if name != 'kura.service'}, generation=generation)
+    bind_published_predecessors(manifest, predecessors)
     cohort.validate(assembly, generation, Path.read_bytes, os.geteuid(), unit=unit_bytes)
     (destination / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n")
     return manifest
@@ -173,13 +206,7 @@ def embed_main_link_migration(preinst):
     preinst.write_text(content.replace(token, '_KURA_EMBEDDED_MAIN_LINK_MIGRATION_SOURCE = ' + repr(source)))
 
 
-def embed_upgrade_copy(preinst, assembly):
-    token = 'raise RuntimeError("Kura upgrade copy was not embedded")'
-    source = Path(__file__).with_name('preinst-upgrade-copy.py').read_bytes()
-    require(0 < len(source) <= 32768)
-    compile(source, 'preinst-upgrade-copy.py', 'exec', dont_inherit=True)
-    content = preinst.read_text()
-    require(content.count(token) == 1)
+def upgrade_payload(assembly):
     directories, files = [], {}
     for path in sorted(assembly.rglob('*')):
         name = path.relative_to(assembly).as_posix()
@@ -190,11 +217,90 @@ def embed_upgrade_copy(preinst, assembly):
             require(path.is_file())
             with path.open('rb') as stream:
                 files[name] = (path.stat().st_size, hashlib.file_digest(stream, 'sha256').hexdigest())
+    return dict(home=assembly.name, directories=directories, files=files)
+
+
+def layout_repair_predecessor(assembly, archive):
+    require(archive.is_file() and not archive.is_symlink())
+    raw = subprocess.check_output(['dpkg-deb', '--ctrl-tarfile', str(archive)], timeout=20)
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r:') as control:
+        parts = {member.name.removeprefix('./'): control.extractfile(member).read()
+                 for member in control if member.isfile()}
+    metadata = parts['control']
+    version = re.search(rb'(?m)^Version: ([0-9][0-9A-Za-z.+:~_-]{0,199})$', metadata)
+    require(version and re.search(rb'(?m)^Package: kura-core$', metadata))
+    previous = re.search(rb'(?m)^_KURA_EMBEDDED_UPGRADE_PAYLOAD = (.+)$', parts['preinst'])
+    require(previous is not None)
+    published = ast.literal_eval(previous[1].decode())
+    require(set(published) == {'home', 'directories', 'files', 'controls'})
+    payload = upgrade_payload(assembly)
+    require(all(published[name] == value for name, value in payload.items()))
+    postinst = hashlib.sha256(parts['postinst']).hexdigest()
+    require(published['controls']['postinst'] == postinst)
+    manifest = payload['files']['libexec/key-backup/manifest.json'][1]
+    return dict(packageVersion=version[1].decode(), manifestSha256=manifest, postinstSha256=postinst)
+
+
+def issued_layout_plan(assembly, earlier, issued, path):
+    observed = json.loads(path.read_bytes())
+    require(set(observed) == {'maintenanceId', 'root', 'machineSha256', 'recovery', 'records', 'scripts', 'data'})
+    digest = lambda value: isinstance(value, str) and re.fullmatch(r'[0-9a-f]{64}', value) is not None
+    identity = lambda value: isinstance(value, list) and len(value) == 2 and all(type(x) is int and x > 0 for x in value)
+    operation = observed['maintenanceId']
+    require(isinstance(operation, str) and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', operation))
+    require(identity(observed['root']) and identity(observed['data']) and digest(observed['machineSha256']))
+    recovery = observed['recovery']
+    require(set(recovery) == {'mode', 'device', 'inode'} and recovery['mode'] == 'reinstall'
+            and identity([recovery['device'], recovery['inode']]))
+    records = observed['records']
+    require(set(records) == {'intent.json', 'layout-repair.json', 'setup-layout-intent.json'}
+            and all(len(value) == 3 and identity(value[:2]) and digest(value[2]) for value in records.values()))
+    scripts = {item.name: hashlib.sha256(item.read_bytes()).hexdigest()
+               for item in sorted((assembly / 'bin').glob('*.sh')) if item.is_file() and not item.is_symlink()}
+    require(scripts.keys() == observed['scripts'].keys() and all(map(digest, observed['scripts'].values())))
+    templates = {name: value for name, value in scripts.items() if value != observed['scripts'][name]}
+    require(templates.keys() == {'start_kura.sh', 'start_kura_background.sh', 'start_kura_debug.sh'})
+    require(earlier['manifestSha256'] == issued['manifestSha256']
+            and earlier['packageVersion'] != issued['packageVersion'])
+    config = ast.parse((assembly / 'bin/kura_dhcp_configuration.py').read_bytes())
+    default, = [ast.literal_eval(node.value) for node in config.body if isinstance(node, ast.Assign)
+                and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == 'DEFAULT']
+    return dict(schema=1, **observed, earlier=earlier, issued=issued, templates=templates,
+                dhcpSha256=hashlib.sha256(default).hexdigest(),
+                installPolicySha256=hashlib.sha256((assembly / 'install/manage_kura_users.sh').read_bytes()).hexdigest())
+
+
+def layout_repair_source():
+    return '\n'.join(Path(__file__).with_name(name).read_text()
+                     for name in ('prelayout-repair.py', 'issued-layout-repair.py'))
+
+
+def embed_layout_repair(preinst, postinst, assembly, predecessor, issued=None):
+    token = 'raise RuntimeError("Kura retained layout repair was not embedded")'
+    content = preinst.read_text()
+    require(content.count(token) == 1)
+    names = dict(_KURA_LAYOUT_REPAIR_PREDECESSOR=predecessor, _KURA_LAYOUT_REPAIR_HOME=assembly.name,
+                 _KURA_LAYOUT_REPAIR_POSTINST_SHA256=hashlib.sha256(postinst.read_bytes()).hexdigest(),
+                 _KURA_ISSUED_LAYOUT_PLAN=issued)
+    source = layout_repair_source()
+    helper = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source
+    compile(helper, 'prelayout-repair.py', 'exec', dont_inherit=True)
+    preinst.write_text(content.replace(token, helper))
+
+
+def embed_upgrade_copy(preinst, assembly):
+    token = 'raise RuntimeError("Kura upgrade copy was not embedded")'
+    source = Path(__file__).with_name('preinst-upgrade-copy.py').read_bytes()
+    require(0 < len(source) <= 32768)
+    compile(source, 'preinst-upgrade-copy.py', 'exec', dont_inherit=True)
+    content = preinst.read_text()
+    require(content.count(token) == 1)
     controls = {}
     for hook in ('postinst', 'prerm', 'postrm'):
         with preinst.with_name(hook).open('rb') as stream:
             controls[hook] = hashlib.file_digest(stream, 'sha256').hexdigest()
-    data = dict(home=assembly.name, directories=directories, files=files, controls=controls)
+    data = dict(upgrade_payload(assembly), controls=controls)
     inputs = '_KURA_EMBEDDED_UPGRADE_PAYLOAD = ' + repr(data)
     helper = '_KURA_EMBEDDED_UPGRADE_COPY_SOURCE = ' + repr(source)
     preinst.write_text(content.replace(token, inputs + '\n' + helper))
@@ -204,7 +310,10 @@ def embed_policy_readers(preinst,lifecycle,journal,manifest):
     token='raise RuntimeError("Kura key-policy readers were not embedded")'
     require(preinst.is_file() and not preinst.is_symlink())
     require(manifest.is_file() and not manifest.is_symlink())
-    assignments = ['_KURA_INCOMING_KEY_MANIFEST_SHA256 = ' + repr(hashlib.sha256(manifest.read_bytes()).hexdigest())]
+    raw = manifest.read_bytes()
+    predecessors = json.loads(raw)['generation'].get('publishedPredecessorManifestSha256s', [])
+    assignments = ['_KURA_INCOMING_KEY_MANIFEST_SHA256 = ' + repr(hashlib.sha256(raw).hexdigest()),
+                   '_KURA_INCOMING_KEY_PREDECESSORS = ' + repr(tuple(predecessors))]
     readers = (('_KURA_EMBEDDED_LIFECYCLE_SOURCE', lifecycle, 160 * 1024),
                ('_KURA_EMBEDDED_JOURNAL_SOURCE', journal, 128 * 1024),
                ('_KURA_REMOVAL_HOME_SOURCE', Path(__file__).with_name('removal-home.py'), 32768))
@@ -327,9 +436,11 @@ def embed_reboot_guard(control):
     control.write_text(content.replace(token, source))
 
 
-def embed_configure_phases(control, assembly):
+def embed_configure_phases(control, assembly, repair_predecessor=None, issued=None):
     token = 'raise RuntimeError("Kura Core configure phases were not embedded")'
-    names = dict(CORE_CONFIGURE_HOME=assembly.name)
+    manifest = json.loads((assembly/'libexec/key-backup/manifest.json').read_bytes())
+    names = dict(CORE_CONFIGURE_HOME=assembly.name, CORE_CONFIGURE_REPAIR_PREDECESSOR=repair_predecessor,
+                 CORE_CONFIGURE_VENDOR_UNITS=tuple(sorted(manifest['units'])), CORE_CONFIGURE_ISSUED_LAYOUT_PLAN=issued)
     packages = assembly / 'packages'
     factory = {}
     for path in sorted(packages.iterdir()):
@@ -348,7 +459,7 @@ def embed_configure_phases(control, assembly):
             ('CORE_CONFIGURE_CLOCK_SETUP_SHA', 'bin/kura_clock_setup.py'),
             ('CORE_CONFIGURE_REBOOT_SETUP_SHA', 'bin/kura_reboot_setup.py')):
         names[name] = hashlib.sha256((assembly / relative).read_bytes()).hexdigest()
-    source = Path(__file__).with_name('postinst-configure.py').read_text()
+    source = layout_repair_source() + '\n' + Path(__file__).with_name('postinst-configure.py').read_text()
     source = ''.join(f'{key} = {value!r}\n' for key, value in names.items()) + source
     compile(source, 'postinst-configure.py', 'exec', dont_inherit=True)
     content = control.read_text()
@@ -358,7 +469,9 @@ def embed_configure_phases(control, assembly):
 
 if __name__ == "__main__":
     require(len(sys.argv) == 5)
-    prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
+    previous = os.environ.get('KURA_PUBLISHED_GENERATION_PREDECESSORS')
+    predecessors = tuple(Path(path) for path in previous.split(os.pathsep)) if previous else ()
+    prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), predecessors)
     prepare_broker_packages(Path(sys.argv[1]), sys.argv[4])
     embed_journal_reader(Path(sys.argv[1]).parent/'filtered-control/preinst',Path(sys.argv[1])/'bin/kura_key_journal.py')
     embed_main_link_migration(Path(sys.argv[1]).parent/'filtered-control/preinst')
@@ -379,7 +492,17 @@ if __name__ == "__main__":
         control = Path(sys.argv[1]).parent / 'filtered-control' / hook
         embed_package_helper(control, Path(__file__).with_name('addon-code-policy.py'), 'addon-code policy')
         embed_package_helper(control, Path(sys.argv[1]) / 'bin/kura_watchdog_maintenance.py', 'watchdog maintenance')
-    embed_configure_phases(Path(sys.argv[1]).parent/'filtered-control/postinst', Path(sys.argv[1]))
+    assembly = Path(sys.argv[1])
+    repair = os.environ.get('KURA_RETAINED_LAYOUT_REPAIR_DEB')
+    predecessor = layout_repair_predecessor(assembly, Path(repair)) if repair else None
+    reviewed = os.environ.get('KURA_ISSUED_LAYOUT_REPAIR_PLAN')
+    earlier = os.environ.get('KURA_ISSUED_LAYOUT_EARLIER_DEB')
+    require(bool(reviewed) == bool(earlier) and (not reviewed or predecessor is not None))
+    issued = (issued_layout_plan(assembly, layout_repair_predecessor(assembly, Path(earlier)),
+                                 predecessor, Path(reviewed)) if reviewed else None)
+    control = assembly.parent/'filtered-control'
+    embed_configure_phases(control/'postinst', assembly, predecessor, issued)
+    embed_layout_repair(control/'preinst', control/'postinst', assembly, predecessor, issued)
     for hook in ('preinst', 'prerm'):
         embed_clock_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
         embed_reboot_guard(Path(sys.argv[1]).parent/'filtered-control'/hook)
