@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: EPL-2.0
 """Pair the installed Kura Main to one private, single-use Netfilter worker."""
 import hashlib
+import contextlib
+import fcntl
 import json
 import os
 from pathlib import Path
 import re
 import socket
 import struct
+import stat
 import subprocess
 import sys
 import time
@@ -23,6 +26,7 @@ HOME = Path('/usr/libexec') / NAME
 SOCKET = NAME + '.socket'
 ACTOR = NAME + '@.service'
 WORKER = HOME / 'worker'
+CORE_HOME = Path('/opt/eclipse/kura')
 SOURCES = tuple(name for name in MARKER_SOURCES if name.startswith('bin/')) + (
     'bin/kura_firewall_publish.py', 'install/' + SOCKET, 'install/' + ACTOR)
 MAX_REQUEST = 8 * 1024 * 1024
@@ -49,6 +53,13 @@ def verify_actor(unit):
     verify_identity(status, 0, 0)
     require(status['NoNewPrivs'].strip() == '1' and all(int(status[field], 16) == 1 << 12
             for field in ('CapPrm', 'CapEff', 'CapBnd', 'CapAmb', 'CapInh')), 'UNPAIRED_FIREWALL_ACTOR')
+    cohort = verify_sources()
+    paired_unit(SOCKET, SOCKET, cohort['files'][SOCKET])
+    paired_unit(unit, ACTOR, cohort['files'][ACTOR])
+    return cohort['mainUnitSha256']
+
+
+def verify_sources():
     cohort = decode(public_file(HOME / 'cohort.json'))
     require(set(cohort) == {'schema', 'files', 'mainUnitSha256'} and type(cohort['schema']) is int
             and cohort['schema'] == 1 and re.fullmatch(r'[0-9a-f]{64}', cohort['mainUnitSha256'])
@@ -56,9 +67,90 @@ def verify_actor(unit):
     for name, digest in cohort['files'].items():
         raw = public_file(HOME / name, MAX_REQUEST if name == 'worker' else 1024 * 1024)
         require(hashlib.sha256(raw).hexdigest() == digest, 'UNPAIRED_FIREWALL_ACTOR')
-    paired_unit(SOCKET, SOCKET, cohort['files'][SOCKET])
-    paired_unit(unit, ACTOR, cohort['files'][ACTOR])
-    return cohort['mainUnitSha256']
+    return cohort
+
+
+@contextlib.contextmanager
+def package_lock(manager):
+    path = manager.store.path('/var/lib/dpkg/lock')
+    manager.directory(path.parent)
+    fd = os.open(path, os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
+    try:
+        info = os.fstat(fd)
+        require(stat.S_ISREG(info.st_mode) and info.st_uid == manager.owner and info.st_gid == 0
+                and info.st_nlink == 1 and info.st_size == 0 and stat.S_IMODE(info.st_mode) in (0o600, 0o640)
+                and os.path.samestat(info, path.lstat()), 'UNPAIRED_CORE_PACKAGE_LOCK')
+        try:
+            fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise Refused('CORE_PACKAGE_MAINTENANCE_ACTIVE') from None
+        yield
+    finally:
+        os.close(fd)
+
+
+def initialize_domain(manager, policy):
+    # The arguments exist only for isolated tests. The CLI always uses live /.
+    with package_lock(manager), manager.lock(manager.state / 'admission.lock', True):
+        manager.maintenance()
+        policy.assets()
+        cohort = verify_sources()
+        require(hashlib.sha256(public_file(CORE_HOME / 'bin/kura_firewall_publish.py')).hexdigest()
+                == cohort['files']['kura_firewall_publish.py'], 'UNPAIRED_FIREWALL_INITIALIZER')
+        main = paired_unit('kura.service', 'kura.service', cohort['mainUnitSha256'],
+                           ('MainPID', 'ControlPID', 'ActiveState'), main=True)
+        require(main['MainPID'] == main['ControlPID'] == '0' and main['ActiveState'] == 'inactive',
+                'CORE_MAIN_NOT_IDLE')
+        writers = manager.writer_lock(create=True)
+        try:
+            try:
+                fcntl.flock(writers, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise Refused('CORE_WRITERS_ACTIVE') from None
+            policy.directory(policy.path('/var/lib/kura-legacy-firewall/publication'), private=True, create=True)
+
+            def inherit():
+                os.dup2(writers, 3)
+                if writers != 3:
+                    os.close(writers)
+
+            # FD3 is already open if the writer descriptor is above 3. Preserve
+            # that slot through Python's close_fds pass, then replace it only in
+            # the child. Parent package/admission/writer fences remain held.
+            result = subprocess.run(['/usr/bin/setpriv', '--bounding-set=-all', '--inh-caps=-all',
+                                     '--ambient-caps=-all', '--no-new-privs',
+                                     str(WORKER), '--initialize-persistent-root'],
+                                    pass_fds=tuple(sorted({3, writers})), preexec_fn=inherit,
+                                    capture_output=True, timeout=20, env=ENVIRONMENT, cwd='/')
+            if result.returncode != 0:
+                reason = next((name for name in ('UNSUPPORTED_ROOT_IDENTITY', 'LEGACY_DOMAIN',
+                                                'UNRESOLVED', 'UNPAIRED', 'BUSY')
+                               if name.encode() in result.stderr), 'ROOT_DOMAIN_INITIALIZATION_FAILED')
+                raise Refused(reason)
+            require(0 < len(result.stdout) <= 1024, 'INVALID_ROOT_DOMAIN_RESULT')
+            value = decode(result.stdout)
+            require(set(value) == {'schema', 'state', 'rootScopeScheme', 'rootScope'}
+                    and type(value['schema']) is int and value['schema'] == 2
+                    and value['state'] in ('INITIALIZED', 'EXISTS') and value['rootScopeScheme'] == 'kernel-fh-v2'
+                    and isinstance(value['rootScope'], str) and re.fullmatch('[0-9a-f]{64}', value['rootScope']),
+                    'INVALID_ROOT_DOMAIN_RESULT')
+            return value
+        finally:
+            os.close(writers)
+
+
+def initialize_persistent_root():
+    require(sys.platform == 'linux' and os.geteuid() == os.getegid() == 0
+            and Path(__file__).resolve(strict=True) == (CORE_HOME / 'bin/kura_firewall_publish.py').resolve(strict=True),
+            'UNPAIRED_FIREWALL_INITIALIZER')
+    # Lazy imports keep the socket actor's flat, capability-restricted cohort
+    # independent of the key service. Only this fixed Core CLI uses its lock API.
+    from kura_key_service import Manager, Failure
+    from kura_key_service_lifecycle import Lifecycle, Refused as CoreRefused
+    try:
+        return initialize_domain(Manager(), Lifecycle())
+    except (Failure, CoreRefused):
+        raise Refused('CORE_ROOT_DOMAIN_UNAVAILABLE') from None
 
 
 def frame(stream, maximum):
@@ -131,6 +223,9 @@ def serve(stream, unit):
 
 def main():
     try:
+        if sys.argv[1:] == ['--initialize-persistent-root']:
+            sys.stdout.buffer.write(encode(initialize_persistent_root()) + b'\n')
+            return 0
         require(len(sys.argv) == 2, 'UNPAIRED_FIREWALL_ACTOR')
         with socket.socket(fileno=0) as stream:
             serve(stream, sys.argv[1])
