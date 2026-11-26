@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 import unittest
+import zipfile
 from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'main/resources/filtered/pkg/bin/start_kura_background.sh'
@@ -31,6 +32,11 @@ class OrdinaryLauncherTests(unittest.TestCase):
         self.generator = self.root / 'generator-called'
         (self.root / 'framework').mkdir()
         (self.root / 'framework/config.ini').write_text('osgi.framework=fixture\n')
+        self.api = self.root / 'plugins/3s/org.eclipse.kura.api.jar'
+        self.fixture_bundle(self.api, 'org.eclipse.kura.api', 'Export-Package',
+                            ','.join(f'org.eclipse.kura.{package};version="2.0.0"'
+                                     for package in ('channel', 'comm', 'driver', 'message')))
+        self.bundle_line = (r'osgi.bundles=reference\:file\:' + str(self.api) + r'@3\:start' + '\n').encode()
         for name in ('start_kura_background.sh', 'start_kura.sh', 'start_kura_debug.sh'):
             source = (SCRIPT.parent / name).read_text()
             # Only isolate the test's PATH and existing global output paths. The
@@ -44,7 +50,7 @@ class OrdinaryLauncherTests(unittest.TestCase):
                 source = source.replace('@' + key + '@', value).replace('${' + key + '}', value)
             (self.bin / name).write_text(source)
         resources = SCRIPT.parents[3] / 'unfiltered/pkg/bin'
-        for name in ['kura_key_store.py', 'kura_credential_env.sh', 'kura_framework_config.py']:
+        for name in ['kura_key_store.py', 'kura_credential_env.sh', 'kura_framework_config.py', 'kura_key_cohort.py']:
             shutil.copyfile(resources / name, self.bin / name)
         # These tests record shell/JVM arguments; the native suite separately exercises
         # the actual Linux Root peer, descriptor and JVM lifetime. Isolate those
@@ -80,7 +86,9 @@ sys.exit(module['main'](sys.argv[1:]))
         self.credential = self.credentials / 'kura_encryption_key'
         self.credential.write_bytes(bytes(range(32)))
         self.credential.chmod(0o400)
-        (self.bin / 'gen_config_ini.sh').write_text('#!/bin/sh\ntouch "' + str(self.generator) + '"\nprintf "osgi.bundles=\\n"\n')
+        (self.bin / 'gen_config_ini.sh').write_text(
+            '#!/bin/sh\ntouch "' + str(self.generator) + '"\n'
+            + "printf '%s\\n' '" + self.bundle_line.decode().rstrip('\n') + "'\n")
         (self.fake / 'ps').write_text('#!/bin/sh\nexit 0\n')
         (self.fake / 'pgrep').write_text('#!/bin/sh\nexit 1\n')
         (self.fake / 'nohup').write_text('#!/bin/sh\nexec "$@"\n')
@@ -88,6 +96,13 @@ sys.exit(module['main'](sys.argv[1:]))
         (self.fake / 'java').write_text('#!' + interpreter + '\nimport json,os,sys\nfrom pathlib import Path\nPath(os.environ["YOFC_LAUNCH_ARGUMENTS"]).write_text(json.dumps(sys.argv[1:]))\n')
         for path in [self.bin / 'gen_config_ini.sh', *self.fake.iterdir()]:
             path.chmod(0o700)
+
+    @staticmethod
+    def fixture_bundle(path, symbolic_name, header, value):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(path, 'w') as jar:
+            jar.writestr('META-INF/MANIFEST.MF',
+                         f'Manifest-Version: 1.0\nBundle-SymbolicName: {symbolic_name}\n{header}: {value}\n\n')
 
     def launch(self, argument_file=None, root_denies=False, script='start_kura_background.sh', arguments=(), pass_fds=(), extra_env=None):
         env = dict(os.environ, YOFC_LAUNCH_ARGUMENTS=str(self.record))
@@ -266,7 +281,8 @@ except OSError:
         template = self.root / 'framework/config.ini'
         plugins = self.root / 'plugins'
         (plugins / '4s').mkdir(parents=True)
-        (plugins / '4s' / 'example.jar').touch()
+        self.fixture_bundle(plugins / '4s/example.jar', 'fixture.example', 'Import-Package',
+                            'org.eclipse.kura.channel;org.eclipse.kura.comm;version="[2.0,3)"')
         config = self.root / 'configuration/config.ini'
         config.parent.mkdir()
         config.write_bytes(b'earlier configuration')
@@ -293,7 +309,7 @@ except OSError:
         directory.mkdir()
         config = directory / 'config.ini'
         previous = b'previous complete configuration'
-        expected = (self.root / 'framework/config.ini').read_bytes() + b'osgi.bundles=\n'
+        expected = (self.root / 'framework/config.ini').read_bytes() + self.bundle_line
         real_sync = os.fsync
         for failure in ('file', 'directory'):
             with self.subTest(failure=failure):
@@ -357,12 +373,34 @@ except OSError:
         self.assertEqual(set(config.parent.iterdir()), {config})
         self.assertFalse((self.root / 'lease-entry-called').exists())
 
+    def test_wrong_api_consumer_keeps_last_configuration_and_never_starts_java(self):
+        generator = self.bin / 'gen_config_ini.sh'
+        shutil.copyfile(SCRIPT.parents[3] / 'unfiltered/pkg/bin/gen_config_ini.sh', generator)
+        old = self.root / 'siblings/wires/5s/old-wires.jar'
+        self.fixture_bundle(old, 'fixture.old.wires', 'Import-Package',
+                            'org.eclipse.kura.configuration;version="[1.2,2)",'
+                            'org.eclipse.kura.driver;version="[1,2)"')
+        directory = self.root / 'configuration'
+        directory.mkdir()
+        config = directory / 'config.ini'
+        config.write_bytes(b'previous complete configuration')
+        before = config.stat()
+        for name in ('start_kura_background.sh', 'start_kura.sh', 'start_kura_debug.sh'):
+            with self.subTest(launcher=name):
+                result = self.launch(script=name)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('old-wires.jar requires org.eclipse.kura.driver', result.stderr)
+                self.assertEqual(config.read_bytes(), b'previous complete configuration')
+                self.assertEqual(config.stat().st_ino, before.st_ino)
+                self.assertEqual(set(directory.iterdir()), {config})
+                self.assertFalse((self.root / 'lease-entry-called').exists())
+                self.assertFalse((self.root / 'kura.pid').exists())
+
     def test_failed_generation_preserves_last_configuration_for_every_launcher(self):
         generator = self.bin / 'gen_config_ini.sh'
         shutil.copyfile(SCRIPT.parents[3] / 'unfiltered/pkg/bin/gen_config_ini.sh', generator)
         # An incomplete package layout may have no framework configuration template.
         (self.root / 'framework/config.ini').unlink()
-        (self.root / 'plugins').mkdir()
         directory = self.root / 'configuration'
         directory.mkdir()
         config = directory / 'config.ini'

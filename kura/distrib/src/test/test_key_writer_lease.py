@@ -98,6 +98,27 @@ class WriterLeaseTest(unittest.TestCase):
         finally:
             os.close(fd)
 
+    def test_cold_boot_maintenance_creates_only_volatile_lock_and_fences_new_writers(self):
+        before = self.snapshot()
+        self.assertFalse((self.root / 'run/kura-key-service/writers').exists())
+        with self.manager.exclusive_writers() as metadata:
+            original = metadata.st_ino
+            self.assertEqual((0, 1, 0o600, 0),
+                             (metadata.st_uid, metadata.st_nlink, stat.S_IMODE(metadata.st_mode), metadata.st_size))
+            self.refused('WRITERS_FENCED', self.acquire)
+            self.assertEqual(['lease.lock'], sorted(p.name for p in self.manager.writer_directory().iterdir()))
+        with service.Manager(self.root).exclusive_writers() as metadata:
+            self.assertEqual(original, metadata.st_ino)
+        self.assertEqual(before, self.snapshot())
+
+    def test_cold_boot_maintenance_keeps_pending_while_ordinary_writer_stays_refused(self):
+        self.put(self.state / 'provider-rewrap-pending.json', b'original pending intent')
+        before = self.snapshot()
+        with self.manager.exclusive_writers():
+            self.refused('UNRESOLVED_OPERATION', self.acquire)
+        self.assertEqual(before, self.snapshot())
+        self.assertEqual(['lease.lock'], sorted(p.name for p in self.manager.writer_directory().iterdir()))
+
     def test_lease_binds_exact_package_and_launcher_bytes_before_exec(self):
         expected = self.policy.generation_assets()['cohortSha256']
         response, descriptor = self.acquire()
@@ -168,13 +189,16 @@ class WriterLeaseTest(unittest.TestCase):
         inode = path.stat().st_ino
         path.write_bytes(b'foreign-state')
         self.refused('UNSAFE_WRITER_STATE', self.acquire)
+        self.refused('UNSAFE_WRITER_STATE', self.exclusive)
         self.assertEqual(inode, path.stat().st_ino)
         path.write_bytes(b'')
         path.chmod(0o644)
         self.refused('UNSAFE_WRITER_STATE', self.acquire)
+        self.refused('UNSAFE_WRITER_STATE', self.exclusive)
         path.chmod(0o600)
         os.link(path, path.parent / 'foreign-hardlink')
         self.refused('UNSAFE_WRITER_STATE', self.acquire)
+        self.refused('UNSAFE_WRITER_STATE', self.exclusive)
         self.assertEqual(inode, path.stat().st_ino)
 
     def broker(self, sender=None):

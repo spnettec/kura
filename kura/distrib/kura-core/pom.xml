@@ -34,6 +34,7 @@
         <target.device>linux</target.device>
         <dist.build.name>linux</dist.build.name>
         <dist.kura.version.label>YOFC SMART IOT EDGE GATEWAY V${kura.version}</dist.kura.version.label>
+        <package.abi.suffix>+api2</package.abi.suffix>
         <core.deb.path>${project.build.directory}/kura_${package.version}-${package.revision}_${deb.arch}.deb</core.deb.path>
     </properties>
     <dependencies>

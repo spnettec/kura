@@ -11,7 +11,7 @@
 #  Eurotech
 #
 Package: kura-core
-Version: [[version]]-[[package.revision]]
+Version: [[package.version]]-[[package.revision]]
 Section: admin
 Priority: optional
 Pre-Depends: python3, polkitd (>= 0.106)
@@ -22,8 +22,15 @@ Depends: systemd, kmod, python3-dbus, openjdk-21-jre-headless | temurin-21-jdk |
  network-manager | networkmanager, bind9 | bind, dnsmasq | isc-dhcp-server, isc-dhcp-client | dhcpcd, iw, iptables, modemmanager,
  logrotate, gpsd
 Breaks: kura-networking (<< 3.0.0~git202611210559.d0a80e0-1),
- kura-firewall-only (<< 3.0.0~git202611210524.71f30b6-1)
-Provides: kura-core-networking-unit-v2, kura-core-firewall-readback-v1, kura-core-firewall-forwarding-v1, kura-core-firewall-boot-model-v1, kura-core-firewall-boot-step-v1, kura-core-firewall-boot-forwarding-v1, kura-core-firewall-initialize-v1
+ kura-firewall-only (<< 3.0.0~git202611210524.71f30b6-1),
+ kura-camel (<< 1.0.0+api2~),
+ kura-cloud (<< 3.0.0+api2~),
+ kura-deployment (<< 2.0.0+api2~),
+ kura-management-ui (<< 3.0.0+api2~),
+ kura-opcua (<< 2.0.0+api2~),
+ kura-position (<< 2.0.0+api2~),
+ kura-wires (<< 3.0.0+api2~)
+Provides: kura-core-osgi-api2, kura-core-networking-unit-v2, kura-core-firewall-readback-v1, kura-core-firewall-forwarding-v1, kura-core-firewall-boot-model-v1, kura-core-firewall-boot-step-v1, kura-core-firewall-boot-forwarding-v1, kura-core-firewall-initialize-v1
 Suggests: kura-artemis, kura-camel, kura-deployment, kura-management-ui, kura-networking, kura-opcua, kura-position, kura-triton, kura-wires
 Architecture: ${deb.arch}
 Maintainer: Eclipse Kura Developers <kura-dev@eclipse.org>

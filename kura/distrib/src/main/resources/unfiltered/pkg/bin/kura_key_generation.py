@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: EPL-2.0
 """Fixed-unit generation publication. Original uncertain dispatches are never retried."""
 import contextlib
+import errno
+import fcntl
+import grp
 import hashlib
 import hmac
 import os
@@ -40,6 +43,24 @@ START = ('/usr/bin/busctl', '--system', '--timeout=15s', 'call', 'org.freedeskto
 LEGACY_AGENT = 'kura-management-agent.service'
 LEGACY_AGENT_VENDOR = '/usr/lib/systemd/system/' + LEGACY_AGENT
 LEGACY_AGENT_SHA = 'f6dadc58e2dec0297aa2a0649e240cea42aafa80e8b31030f55c1c0e38befa85'
+NATIVE_AGENT = 'kura-management-agent-v2.service'
+NATIVE_AGENT_UNIT = '/usr/lib/systemd/system/' + NATIVE_AGENT
+NATIVE_AGENT_PROGRAM = '/usr/bin/yofc-management-agent'
+# The reviewed Agent release that takes system-change.lock for all recovery writers.
+NATIVE_AGENT_UNIT_SHA = '1292acb990bb33332a478e8ac48dcf1a7cf4efbb6b43bbb45e424fb6475363dc'
+NATIVE_AGENT_PROGRAM_SHA = 'c14ea7de8785e4c452ddaf91cec2aeeb8e4b6e42c5918d3827e8c99e17a358c6'
+NATIVE_AGENT_CONFIG = '/etc/kura-management-agent-runtime'
+NATIVE_AGENT_IDENTITY = '/etc/kura-management-runtime/agent.json'
+NATIVE_AGENT_ADMIN = '/var/lib/kura-management-agent-admin'
+NATIVE_AGENT_STATE = '/var/lib/kura-management-agent-runtime'
+NATIVE_AGENT_LOCK = '/run/lock/kura-management-agent-setup.lock'
+NATIVE_AGENT_ACCOUNT = 'kura-management-agent'
+NATIVE_AGENT_GROUP = 'kura-management'
+NATIVE_AGENT_PENDING = ('.initialization-pending', '.source-update-pending.json', '.kura-peer-pending.json',
+                        '.material-pending.json', '.kura-remote-switch-pending.json',
+                        '.transport-endpoint-pending.json', '.retained-removal-pending.json')
+NATIVE_AGENT_PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'MainPID', 'ControlPID', 'Job', 'FragmentPath',
+                           'DropInPaths', 'NeedDaemonReload', 'ControlGroup', 'InvocationID', 'User', 'Group')
 LEGACY_AGENT_PROPERTIES = dict(Id=LEGACY_AGENT, Names=LEGACY_AGENT, LoadState='loaded',
     FragmentPath=LEGACY_AGENT_VENDOR, SourcePath='', Transient='no', NeedDaemonReload='no',
     UnitFileState='disabled', ActiveState='inactive', SubState='dead', Job='', MainPID='0', ControlPID='0')
@@ -1170,8 +1191,8 @@ class ProviderStoreRewrap:
     def selection(self):
         return {}
 
-    def check_profile(self, policy, core):
-        pass
+    def check_profile(self, policy, core, locks):
+        return {}
 
     def check_original(self, original):
         pass
@@ -1345,7 +1366,7 @@ class ProviderStoreRewrap:
             policy.no_overrides()
             policy.check_pending_keystore_passwords()
             core, cohort = manager.generation_component()
-            self.check_profile(policy, core)
+            profile = self.check_profile(policy, core, locks)
             publication = core.current()
             _, _, _, generation, _, source = manager.generation_source()
             require(generation == publication['generation'], 'COHORT_CHANGED')
@@ -1360,12 +1381,13 @@ class ProviderStoreRewrap:
             directory = locks.enter_context(self.data_directory(home, account))
             binding = dict(schema=1, operationId=self.identity, namespaceSha256=self.namespace,
                            publicationId=publication['operationId'], cohortSha256=cohort['cohortSha256'],
-                           data=self.identity_of(os.fstat(directory)), **source, **self.selection())
+                           data=self.identity_of(os.fstat(directory)), **source, **self.selection(), **profile)
             if action == 'apply':
                 intent = self.prepare(directory, account, binding, home, source, secret)
             else:
                 intent = self.record(secret, 'intent')
-                require(all(intent[key] == value for key, value in binding.items()), 'PROVIDER_REWRAP_INPUT_CHANGED')
+                require(all(key in intent and intent[key] == value for key, value in binding.items())
+                        and intent.get('agentState') == binding.get('agentState'), 'PROVIDER_REWRAP_INPUT_CHANGED')
             return self.finish(directory, account, intent, secret)
 
 
@@ -1387,15 +1409,171 @@ class SnapshotRewrap(ProviderStoreRewrap):
     def selection(self):
         return dict(snapshotId=self.snapshot)
 
-    def check_profile(self, policy, core):
-        # An agent or guarded boot can bind an exact snapshot digest to a
-        # restore intent. Rewrap is admitted only for standalone package history.
+    @staticmethod
+    def native_unit(core):
+        raw = core.command((*SYSTEMCTL, 'show', NATIVE_AGENT, '--all',
+                            '--property=' + ','.join(NATIVE_AGENT_PROPERTIES)))
+        rows = raw.splitlines()
+        require(len(rows) == len(NATIVE_AGENT_PROPERTIES) and all('=' in row for row in rows),
+                'AGENT_GENERATION_UNAVAILABLE')
+        unit = dict(row.split('=', 1) for row in rows)
+        require(set(unit) == set(NATIVE_AGENT_PROPERTIES), 'AGENT_GENERATION_UNAVAILABLE')
+        return unit
+
+    @staticmethod
+    @contextlib.contextmanager
+    def agent_lock(path, owner, *, setup=False, package=False):
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK
+        if setup:
+            flags |= os.O_CREAT
+        if package:
+            flags = (flags & ~os.O_RDONLY) | os.O_RDWR
+        fd = os.open(path, flags, 0o600)
+        try:
+            meta = os.fstat(fd)
+            mode = (0o640, 0o600) if package else (0o600,)
+            require(stat.S_ISREG(meta.st_mode) and meta.st_uid == owner and meta.st_nlink == 1
+                    and stat.S_IMODE(meta.st_mode) in mode and meta.st_size == 0,
+                    'AGENT_GENERATION_UNAVAILABLE')
+            try:
+                lock = fcntl.lockf if package else fcntl.flock
+                lock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as error:
+                if error.errno not in (errno.EACCES, errno.EAGAIN):
+                    raise
+                raise Failure('AGENT_WRITERS_ACTIVE') from None
+            require(os.path.samestat(meta, path.lstat()), 'AGENT_GENERATION_UNAVAILABLE')
+            yield meta
+        finally:
+            os.close(fd)
+
+    @staticmethod
+    def agent_directory(path, uid, gid):
+        meta = path.lstat()
+        require(stat.S_ISDIR(meta.st_mode) and stat.S_IMODE(meta.st_mode) == 0o700
+                and (meta.st_uid, meta.st_gid) == (uid, gid), 'AGENT_GENERATION_UNAVAILABLE')
+        return meta
+
+    def require_agent_history_unreferenced(self, state, uid, gid):
+        # Old restore plans and receipts bind the complete inventory, not just their target.
+        require(not os.path.lexists(state / 'ordinary-boot'), 'SNAPSHOT_HISTORY_REFERENCED')
+        history = state / 'recovery'
+        if not os.path.lexists(history):
+            return
+        self.agent_directory(history, uid, gid)
+        for path in history.iterdir():
+            require(path.name in ('staging', 'backups', 'receipts'), 'SNAPSHOT_HISTORY_REFERENCED')
+            self.agent_directory(path, uid, gid)
+            require(next(path.iterdir(), None) is None, 'SNAPSHOT_HISTORY_REFERENCED')
+
+    @staticmethod
+    def check_agent_process(policy, unit, binary, state, lock, uid):
+        require(unit['Job'] == '' and unit['ControlPID'] == '0'
+                and unit['ActiveState'] in ('active', 'inactive'), 'AGENT_GENERATION_UNAVAILABLE')
+        if unit['ActiveState'] == 'inactive':
+            require(unit['MainPID'] == '0', 'AGENT_GENERATION_UNAVAILABLE')
+            return
+        pid = unit['MainPID']
+        group = '/system.slice/' + NATIVE_AGENT
+        require(re.fullmatch('[1-9][0-9]{0,9}', pid) is not None and int(pid) > 1
+                and unit['ControlGroup'] == group and re.fullmatch('[0-9a-f]{32}', unit['InvocationID'])
+                and unit['InvocationID'] != '0' * 32, 'AGENT_GENERATION_UNAVAILABLE')
+        proc = policy.path('/proc/' + pid)
+        process_state = proc / 'root' / NATIVE_AGENT_STATE.lstrip('/')
+        environment = (proc / 'environ').read_bytes().split(b'\0')
+        expected = {b'AGENT_RUNTIME_IDENTITY=' + NATIVE_AGENT_IDENTITY.encode(),
+                    b'AGENT_STATE_DB=' + (NATIVE_AGENT_STATE + '/results.sqlite').encode()}
+        selected = {value for value in environment
+                    if value.split(b'=', 1)[0] in (b'AGENT_RUNTIME_IDENTITY', b'AGENT_STATE_DB')}
+        require(proc.stat().st_uid == uid and os.path.samestat((proc / 'exe').stat(), binary)
+                and os.path.samestat(process_state.stat(), state)
+                and os.path.samestat((process_state / 'system-change.lock').stat(), lock)
+                and (proc / 'cgroup').read_text().splitlines() == ['0::' + group]
+                and selected == expected, 'AGENT_GENERATION_UNAVAILABLE')
+
+    def check_native_agent(self, policy, core, locks):
+        path = policy.path
+        owner = self.manager.owner
+        vendor = path(NATIVE_AGENT_UNIT)
+        profile_paths = (NATIVE_AGENT_CONFIG, '/etc/kura-management-runtime', NATIVE_AGENT_ADMIN, NATIVE_AGENT_STATE)
+
+        # Hold the dpkg backend lock even for an absent Agent. The setup lock
+        # covers direct native administration outside package maintenance.
+        package_lock = path('/var/lib/dpkg/lock')
+        policy.directory(package_lock.parent)
+        locks.enter_context(self.agent_lock(package_lock, owner, package=True))
+        locks.enter_context(self.agent_lock(path(NATIVE_AGENT_LOCK), owner, setup=True))
+        unit = self.native_unit(core)
+        if unit['LoadState'] == 'not-found':
+            require(not any(os.path.lexists(path(name)) for name in (*profile_paths, NATIVE_AGENT_UNIT)),
+                    'AGENT_GENERATION_UNAVAILABLE')
+            return {}
+
+        require(unit['LoadState'] == 'loaded' and unit['Id'] == NATIVE_AGENT
+                and unit['User'] == NATIVE_AGENT_ACCOUNT and unit['Group'] == NATIVE_AGENT_GROUP
+                and unit['FragmentPath'] == NATIVE_AGENT_UNIT and unit['NeedDaemonReload'] == 'no'
+                and unit['DropInPaths'] in ('', CONTAINER_ADAPTER_DROPIN), 'AGENT_GENERATION_UNAVAILABLE')
+        if unit['DropInPaths']:
+            policy.check_container_adapter()
+        require(hashlib.sha256(policy.read(vendor, 4096, private=False)).hexdigest() == NATIVE_AGENT_UNIT_SHA,
+                'AGENT_GENERATION_UNAVAILABLE')
+        if not any(os.path.lexists(path(name)) for name in profile_paths):
+            require(unit['ActiveState'] == 'inactive' and unit['MainPID'] == unit['ControlPID'] == '0'
+                    and unit['Job'] == '', 'AGENT_GENERATION_UNAVAILABLE')
+            return {}
+
+        identity_raw = policy.read(path(NATIVE_AGENT_IDENTITY), 8192, private=False)
+        try:
+            identity = decode(identity_raw)
+        except Failure as error:
+            raise Failure('AGENT_GENERATION_UNAVAILABLE') from error
+        account = pwd.getpwnam(NATIVE_AGENT_ACCOUNT)
+        gid = grp.getgrnam(NATIVE_AGENT_GROUP).gr_gid
+        require(all(type(identity.get(name)) is int for name in ('schemaVersion', 'uid', 'gid'))
+                and identity['schemaVersion'] == 1 and identity.get('profile') == 'native-nonroot-v1'
+                and identity.get('user') == NATIVE_AGENT_ACCOUNT
+                and identity['uid'] == account.pw_uid > 0 and identity['gid'] == gid > 0
+                and identity.get('stateDirectory') == NATIVE_AGENT_STATE
+                and identity.get('unitSha256') == NATIVE_AGENT_UNIT_SHA
+                and identity.get('binarySha256') == NATIVE_AGENT_PROGRAM_SHA,
+                'AGENT_GENERATION_UNAVAILABLE')
+        admin = path(NATIVE_AGENT_ADMIN)
+        initialized = policy.read(admin / 'initialization.json', 8192)
+        try:
+            initialization = decode(initialized)
+        except Failure as error:
+            raise Failure('AGENT_GENERATION_UNAVAILABLE') from error
+        require(initialization.get('identity') == identity
+                and not any(os.path.lexists(admin / name) for name in NATIVE_AGENT_PENDING),
+                'AGENT_GENERATION_UNAVAILABLE')
+        program = path(NATIVE_AGENT_PROGRAM)
+        binary = program.lstat()
+        require(hashlib.sha256(policy.read(program, 24 * 1024 * 1024, private=False)).hexdigest()
+                == NATIVE_AGENT_PROGRAM_SHA and os.path.samestat(binary, program.lstat()),
+                'AGENT_GENERATION_UNAVAILABLE')
+        state_path = path(NATIVE_AGENT_STATE)
+        state = self.agent_directory(state_path, account.pw_uid, gid)
+        lock = locks.enter_context(self.agent_lock(state_path / 'system-change.lock', account.pw_uid))
+        require(lock.st_gid == gid and os.path.samestat(state, state_path.lstat()), 'AGENT_GENERATION_UNAVAILABLE')
+        self.check_agent_process(policy, unit, binary, state, lock, account.pw_uid)
+        require(self.native_unit(core) == unit, 'AGENT_GENERATION_UNAVAILABLE')
+        self.require_agent_history_unreferenced(state_path, account.pw_uid, gid)
+        return {'agentState': dict(directory=self.identity_of(state), lock=self.identity_of(lock),
+                                   profileSha256=hashlib.sha256(identity_raw).hexdigest())}
+
+    def check_profile(self, policy, core, locks):
         core.check_legacy_agent()
-        require(core.command((*SYSTEMCTL, 'show', 'kura-management-agent-v2.service', '--property=LoadState')).strip()
-                == 'LoadState=not-found', 'AGENT_GENERATION_UNAVAILABLE')
         protected = ('/etc/kura/ordinary-boot-policy.json', '/var/lib/kura-management-agent',
-                     '/etc/kura-management-agent-runtime', '/var/lib/kura-key-recovery/pending.json')
+                     '/var/lib/kura-key-recovery/pending.json')
         require(not any(os.path.lexists(policy.path(path)) for path in protected), 'SNAPSHOT_HISTORY_REFERENCED')
+        try:
+            profile = self.check_native_agent(policy, core, locks)
+        except (OSError, Refused, KeyError, ValueError) as error:
+            raise Failure('AGENT_GENERATION_UNAVAILABLE') from error
+        # Setup may have been in progress before the native locks were taken.
+        core.check_legacy_agent()
+        require(not any(os.path.lexists(policy.path(path)) for path in protected), 'SNAPSHOT_HISTORY_REFERENCED')
+        return profile
 
     def check_original(self, original):
         require(original['sha256'] == self.expected_source, 'SNAPSHOT_SOURCE_CHANGED')
