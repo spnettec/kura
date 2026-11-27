@@ -63,7 +63,7 @@ class StrictIdentityBooleanTest {
         IdentityService identity = mock(IdentityService.class);
         IdentityRestServiceV2 service = new IdentityRestServiceV2(); service.bindIdentityService(identity);
         IdentityConfigurationDTO dto = GSON.fromJson("{\"identity\":{\"name\":\"strict-boolean-fixture\"},\"passwordConfiguration\":"+flags+"}", IdentityConfigurationDTO.class);
-        WebApplicationException error = assertThrows(WebApplicationException.class, () -> service.updateIdentity(dto));
+        WebApplicationException error = assertThrows(WebApplicationException.class, () -> service.updateIdentity(dto, null));
         assertEquals(400, error.getResponse().getStatus());
         assertTrue(GSON.toJsonTree(error.getResponse().getEntity()).getAsJsonObject()
                 .get("message").getAsString().contains("Missing 'password"));
@@ -82,7 +82,7 @@ class StrictIdentityBooleanTest {
             IdentityService identity = mock(IdentityService.class);
             IdentityRestServiceV2 service = new IdentityRestServiceV2(); service.bindIdentityService(identity);
             IdentityConfigurationDTO dto = GSON.fromJson("{\"identity\":{\"name\":\"strict-boolean-fixture\"},\"passwordConfiguration\":{\"passwordChangeNeeded\":"+change+",\"passwordAuthEnabled\":"+auth+"}}", IdentityConfigurationDTO.class);
-            assertEquals(200, service.updateIdentity(dto).getStatus());
+            assertEquals(200, service.updateIdentity(dto, null).getStatus());
             ArgumentCaptor<IdentityConfiguration> argument = ArgumentCaptor.forClass(IdentityConfiguration.class);
             verify(identity).updateIdentityConfiguration(argument.capture());
             PasswordConfiguration password = argument.getValue().getComponent(PasswordConfiguration.class).orElseThrow();

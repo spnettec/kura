@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2024, 2025 Eurotech and/or its affiliates and others
+ * Copyright (c) 2024, 2026 Eurotech and/or its affiliates and others
  *
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -12,12 +12,16 @@
  ******************************************************************************/
 package org.eclipse.kura.internal.rest.identity.provider;
 
+import java.util.Collections;
+import java.util.Optional;
+
 import org.eclipse.kura.KuraErrorCode;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.cloudconnection.request.RequestHandler;
 import org.eclipse.kura.cloudconnection.request.RequestHandlerRegistry;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.identity.PasswordStrengthVerificationService;
+import org.eclipse.kura.identity.IdentityService;
 import org.eclipse.kura.internal.rest.identity.provider.dto.PermissionDTO;
 import org.eclipse.kura.internal.rest.identity.provider.dto.UserConfigDTO;
 import org.eclipse.kura.internal.rest.identity.provider.dto.UserDTO;
@@ -25,6 +29,12 @@ import org.eclipse.kura.internal.rest.identity.provider.dto.ValidatorOptionsDTO;
 import org.eclipse.kura.request.handler.jaxrs.DefaultExceptionHandler;
 import org.eclipse.kura.request.handler.jaxrs.JaxRsRequestHandlerProxy;
 import org.eclipse.kura.util.validation.ValidatorOptions;
+import org.eclipse.osgi.service.environment.EnvironmentInfo;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.useradmin.Role;
 import org.osgi.service.useradmin.UserAdmin;
 import org.slf4j.Logger;
@@ -38,6 +48,8 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -62,6 +74,10 @@ public class IdentityRestServiceV1 {
     private CryptoService cryptoService;
     private UserAdmin userAdmin;
     private PasswordStrengthVerificationService passwordStrengthVerificationService;
+    private IdentityService identityService;
+    private final IdentityAccessGuard accessGuard = new IdentityAccessGuard(() -> this.identityService,
+            () -> this.legacyIdentityManagement);
+    private volatile boolean legacyIdentityManagement;
 
     public void bindCryptoService(CryptoService cryptoService) {
         this.cryptoService = cryptoService;
@@ -72,6 +88,17 @@ public class IdentityRestServiceV1 {
         this.passwordStrengthVerificationService = passwordStrengthVerificationService;
     }
 
+    @Reference
+    public void bindIdentityService(final IdentityService identityService) {
+        this.identityService = identityService;
+    }
+
+    @Reference
+    public void bindEnvironmentInfo(final EnvironmentInfo environmentInfo) {
+        this.legacyIdentityManagement = IdentityAccessGuard.isLegacyIdentityManagementEnabled(environmentInfo);
+    }
+
+    @Reference
     public void bindUserAdmin(UserAdmin userAdmin) {
         this.userAdmin = userAdmin;
         this.userAdmin.createRole(KURA_PERMISSION_REST_ROLE, Role.GROUP);
@@ -110,9 +137,12 @@ public class IdentityRestServiceV1 {
     @RolesAllowed(REST_ROLE_NAME)
     @Path("/identities")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createUser(final UserDTO userName) {
+    public Response createUser(final UserDTO userName, @Context final ContainerRequestContext requestContext) {
         try {
             logger.debug(DEBUG_MESSAGE, "createUser");
+            this.accessGuard.requireCanManageIdentity(requestContext, userName.getUserName());
+            this.accessGuard.requireCanAssignPermissions(requestContext,
+                    Optional.ofNullable(userName.getPermissions()).orElseGet(Collections::emptySet));
             this.legacyIdentityService.createUser(userName);
         } catch (Exception e) {
             throw DefaultExceptionHandler.toWebApplicationException(e);
@@ -125,9 +155,13 @@ public class IdentityRestServiceV1 {
     @RolesAllowed(REST_ROLE_NAME)
     @Path("/identities")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateUser(final UserDTO user) {
+    public Response updateUser(final UserDTO user, @Context final ContainerRequestContext requestContext) {
         try {
             logger.debug(DEBUG_MESSAGE, "updateUser");
+            this.accessGuard.requireCanManageIdentity(requestContext, user.getUserName());
+            if (user.getPermissions() != null) {
+                this.accessGuard.requireCanAssignPermissions(requestContext, user.getPermissions());
+            }
             this.legacyIdentityService.updateUser(user);
         } catch (Exception e) {
             throw DefaultExceptionHandler.toWebApplicationException(e);
@@ -161,9 +195,10 @@ public class IdentityRestServiceV1 {
     @RolesAllowed(REST_ROLE_NAME)
     @Path("/identities")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deleteUser(final UserDTO userName) {
+    public Response deleteUser(final UserDTO userName, @Context final ContainerRequestContext requestContext) {
         try {
             logger.debug(DEBUG_MESSAGE, "deleteUser");
+            this.accessGuard.requireCanManageIdentity(requestContext, userName.getUserName());
             this.legacyIdentityService.deleteUser(userName.getUserName());
         } catch (KuraException e) {
             if (e.getCode().equals(KuraErrorCode.NOT_FOUND)) {
